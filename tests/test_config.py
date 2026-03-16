@@ -97,8 +97,8 @@ class TestConfig:
         config = Config()
 
         # 测试中文标签
-        weights = config._parse_weights('木木：1.8，露营：1.5')
-        assert weights == {'木木': 1.8, '露营': 1.5}
+        weights = config._parse_weights('宝宝：1.8，露营：1.5')
+        assert weights == {'宝宝': 1.8, '露营': 1.5}
 
         # 测试英文标签
         weights = config._parse_weights('tag1:2.0,tag2:1.5')

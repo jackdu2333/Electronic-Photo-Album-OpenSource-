@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Baby Age Logic (Only if name matches or any tag exists if name is generic)
                 const targetName = window.BABY_CONFIG.name || "宝宝";
-                if (photoData.tags && (photoData.tags.indexOf(targetName) !== -1 || photoData.tags.indexOf('木木') !== -1)) {
+                if (photoData.tags && (photoData.tags.indexOf(targetName) !== -1)) {
                     const ageText = getBabyAge(date);
                     if (ageText) {
                         htmlContent += `<br><span style="font-size: 0.9em; opacity: 0.9;">${ageText}</span>`;

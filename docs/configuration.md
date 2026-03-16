@@ -65,7 +65,7 @@ ADMIN_USERS=admin:password1,user2:password2
 - **说明**: 宝宝昵称。留空则不显示宝宝相关功能
 
 ```bash
-BABY_NAME=木木
+BABY_NAME=宝宝
 ```
 
 ### BABY_BIRTHDAY
@@ -117,7 +117,7 @@ WEATHER_ENABLED=true
 ### TAG_WEIGHTS
 - **类型**: 字符串
 - **格式**: `标签 1:权重 1，标签 2:权重 2`
-- **默认**: `木木：1.8，露营：1.5，旅行：1.3`
+- **默认**: `宝宝：1.8，露营：1.5，旅行：1.3`
 - **说明**: 标签权重配置，权重越高越容易被展示
 
 ```bash
@@ -283,7 +283,7 @@ ADMIN_USERS=admin:MySecurePassword123
 # ====================
 # 宝宝配置
 # ====================
-BABY_NAME=木木
+BABY_NAME=宝宝
 BABY_BIRTHDAY=2025-08-10
 
 # ====================
@@ -296,7 +296,7 @@ WEATHER_ENABLED=true
 # ====================
 # 推荐算法配置
 # ====================
-TAG_WEIGHTS=木木：1.8，露营：1.5，旅行：1.3
+TAG_WEIGHTS=宝宝：1.8，露营：1.5，旅行：1.3
 SEASONAL_WEIGHT_CURRENT=1.8
 SEASONAL_WEIGHT_ADJACENT=1.4
 SEASONAL_WEIGHT_OTHER=0.85

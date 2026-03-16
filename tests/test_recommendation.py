@@ -45,9 +45,9 @@ class TestRecommendationAlgorithm:
 
         # 插入不同标签和权重的照片
         test_photos = [
-            ('photo1.jpg', '2024-01-15', '1', '木木，户外', 2.0, 0),
+            ('photo1.jpg', '2024-01-15', '1', '宝宝，户外', 2.0, 0),
             ('photo2.jpg', '2024-06-20', '6', '露营，夏天', 1.8, 0),
-            ('photo3.jpg', '2023-12-01', '12', '木木，室内', 1.5, 0),
+            ('photo3.jpg', '2023-12-01', '12', '宝宝，室内', 1.5, 0),
             ('photo4.jpg', '2024-03-10', '3', '春天，户外', 1.0, 0),
             ('photo5.jpg', '2023-08-15', '8', '游泳，夏天', 0.5, 0),
         ]
@@ -62,9 +62,9 @@ class TestRecommendationAlgorithm:
         # 设置测试索引
         clear_photo_index()
         test_index = [
-            {'url': 'photo1.jpg', 'date': '2024-01-15', 'month': 1, 'tags': '木木，户外', 'weight': 2.0},
+            {'url': 'photo1.jpg', 'date': '2024-01-15', 'month': 1, 'tags': '宝宝，户外', 'weight': 2.0},
             {'url': 'photo2.jpg', 'date': '2024-06-20', 'month': 6, 'tags': '露营，夏天', 'weight': 1.8},
-            {'url': 'photo3.jpg', 'date': '2023-12-01', 'month': 12, 'tags': '木木，室内', 'weight': 1.5},
+            {'url': 'photo3.jpg', 'date': '2023-12-01', 'month': 12, 'tags': '宝宝，室内', 'weight': 1.5},
             {'url': 'photo4.jpg', 'date': '2024-03-10', 'month': 3, 'tags': '春天，户外', 'weight': 1.0},
             {'url': 'photo5.jpg', 'date': '2023-08-15', 'month': 8, 'tags': '游泳，夏天', 'weight': 0.5},
         ]
@@ -138,9 +138,9 @@ class TestWeightedScoring:
         from config import Config
 
         config = Config()
-        weights = config._parse_weights('木木：2.0，露营：1.5')
+        weights = config._parse_weights('宝宝：2.0，露营：1.5')
 
-        assert weights['木木'] == 2.0
+        assert weights['宝宝'] == 2.0
         assert weights['露营'] == 1.5
         assert weights.get('不存在的标签', 1.0) == 1.0  # 默认权重
 
@@ -172,8 +172,8 @@ class TestPhotoMetadata:
     def test_tags_parsing(self):
         """标签解析"""
         # 验证标签分隔符处理
-        tags_str = "木木，户外，夏天"
-        tags = [t.strip() for t in tags_str.split(',')]
+        tags_str = "宝宝，户外，夏天"
+        tags = [t.strip() for t in tags_str.split('，')]
         assert len(tags) == 3
-        assert "木木" in tags
+        assert "宝宝" in tags
         assert "户外" in tags
