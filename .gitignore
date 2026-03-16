@@ -63,5 +63,5 @@ secrets/
 cookies.txt
 *.cookie
 
-# Android Project (不包含在开源版本中)
-android_project/
+# Android Project (已包含在开源版本中，用于 CI 构建)
+# android_project/
