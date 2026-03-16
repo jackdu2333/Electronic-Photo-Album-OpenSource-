@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Android
+.gradle/
+local.properties
+.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.aab
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project Specific
+backups/
+static/photos/
+uploads/
+!static/photos/.keep
+!uploads/.keep
+logs/
+data/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Data files
+photo_metadata.json
+messages.json
+
+# Docker
+docker-compose.override.yml
+
+# Certificates
+*.pem
+*.key
+*.crt
+
+# Secrets
+secrets/
+cookies.txt
+*.cookie
+
+# Android Project (不包含在开源版本中)
+android_project/

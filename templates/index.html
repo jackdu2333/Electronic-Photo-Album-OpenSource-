@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字相框 - Digital Photo Frame</title>
+    <!-- Config from backend -->
+    <script>
+        window.BABY_CONFIG = {
+            name: '{{ baby_name | default("", true) }}',
+            birthday: '{{ baby_birthday | default("", true) }}'
+        };
+    </script>
+    <!-- Google Font 'Inter' -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- Global Styles --- */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            /* Flex container for split layout */
+        }
+
+        /* --- Layout --- */
+        .info-panel {
+            width: 35%;
+            height: 100%;
+            padding: 0;
+            padding-left: 60px;
+            padding-top: 15vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 15px;
+            /* Reduced gap to save space */
+            position: relative;
+            /* Ensure absolute children position relative to this */
+        }
+
+        .photo-panel {
+            width: 65%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* --- Info Components (iOS Style) --- */
+
+        .greeting {
+            font-size: 24px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: -10px;
+        }
+
+        .time {
+            font-size: 120px;
+            font-weight: 300;
+            color: #fff;
+            line-height: 1.0;
+            letter-spacing: -2px;
+        }
+
+        .date {
+            font-size: 28px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 1px;
+            margin-top: 5px;
+            white-space: nowrap;
+        }
+
+        .weather-widget {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+            /* Reduced margin */
+            padding-left: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .weather-icon {
+            font-size: 40px;
+            line-height: 1;
+        }
+
+        .weather-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .weather-temp {
+            font-size: 32px;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+
+        .weather-desc {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 400;
+        }
+
+        /* --- Chat Interface --- */
+        #chat-container {
+            /* flex: 1; Removed */
+            height: 180px;
+            /* Limit height roughly to 3 messages */
+            width: 100%;
+            margin-top: auto;
+            /* Push to bottom */
+            margin-bottom: 60px;
+            overflow-y: scroll;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            /* IE/Edge */
+            -webkit-overflow-scrolling: touch;
+            /* Smooth scrolling on iOS */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            /* Fade out the top a bit */
+            mask-image: linear-gradient(to bottom, transparent, black 20%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%);
+        }
+
+        #chat-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        #chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-bottom: 10px;
+            /* Removed justify-content: flex-end to fix scrolling issues */
+            /* min-height: 100%; Removed to allow natural flow */
+        }
+
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .sender-name {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 2px;
+            margin-left: 10px;
+        }
+
+        .message-bubble {
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 16px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        /* My Message (Right) */
+        .my-message {
+            align-self: flex-end;
+            align-items: flex-end;
+            /* For name alignment if we showed it */
+        }
+
+        .my-message .message-bubble {
+            background-color: rgba(10, 132, 255, 0.8);
+            /* iOS Blue */
+            color: white;
+            border-bottom-right-radius: 12px;
+        }
+
+        /* Their Message (Left) */
+        .their-message {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .their-message .message-bubble {
+            background-color: rgba(255, 255, 255, 0.2);
+            /* iOS Gray */
+            color: white;
+            border-bottom-left-radius: 12px;
+        }
+
+        #chat-input-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            /* Fixed: relative to info-panel now */
+            padding: 15px 20px 15px 60px;
+            /* Match info-panel padding */
+            box-sizing: border-box;
+            display: flex;
+            gap: 10px;
+            /* background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); Optional bg gradient */
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #chat-input-area:hover,
+        #chat-input-area:focus-within {
+            opacity: 1;
+        }
+
+        #chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.15);
+            /* Slightly lighter */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 12px 15px;
+            /* Taller input */
+            color: white;
+            outline: none;
+            font-size: 16px;
+            backdrop-filter: blur(5px);
+        }
+
+        #chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        #chat-send-btn {
+            background: none;
+            border: none;
+            color: #0a84ff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        #chat-send-btn:active {
+            transform: scale(0.9);
+        }
+
+        @media (max-width: 768px) {
+            #chat-input-area {
+                width: 100%;
+                padding-left: 40px;
+                padding-right: 20px;
+            }
+        }
+
+        #slideshow-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background-color: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .slide-group {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .slide-group.active {
+            opacity: 1;
+        }
+
+        .slide-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: blur(20px) brightness(70%);
+            z-index: 1;
+        }
+
+        /* Added .slide fallback just in case old JS loads */
+        .slide-fg,
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 2;
+            filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+        }
+
+        .slide-date {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            z-index: 10;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            font-family: 'Inter', sans-serif;
+            text-align: right;
+            line-height: 1.4;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 0.5s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #555;
+            font-size: 1.2rem;
+        }
+
+        /* --- Navigation Controls --- */
+        #controls {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .photo-panel:hover #controls {
+            opacity: 1;
+        }
+
+        #controls button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            font-size: 24px;
+            padding: 0;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        #controls button:hover {
+            background: rgba(255, 255, 255, 0.8);
+            color: #333;
+            transform: scale(1.1);
+        }
+
+        /* --- V2.2 Mobile: Portrait Mode --- */
+        /* Photo TOP, Info BOTTOM */
+        @media screen and (max-width: 1024px) and (orientation: portrait) {
+            body {
+                flex-direction: column;
+                overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .photo-panel {
+                width: 100%;
+                height: 55vw;
+                /* Proportional to width */
+                min-height: 240px;
+                padding: 10px;
+                order: 1;
+                /* TOP */
+            }
+
+            .info-panel {
+                width: 100%;
+                height: auto;
+                padding: 20px 24px 80px 24px;
+                padding-top: 20px;
+                order: 2;
+                /* BOTTOM */
+                justify-content: flex-start;
+            }
+
+            .time {
+                font-size: 72px;
+            }
+
+            .greeting {
+                font-size: 18px;
+            }
+
+            .date {
+                font-size: 16px;
+            }
+
+            #chat-container {
+                height: 120px;
+            }
+
+            #controls {
+                opacity: 1;
+                bottom: 12px;
+                right: 12px;
+            }
+        }
+
+        /* --- V2.2 Mobile: Landscape Mode --- */
+        /* Same as desktop: Info LEFT, Photo RIGHT */
+        @media screen and (max-width: 1024px) and (orientation: landscape) {
+            body {
+                flex-direction: row;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            .info-panel {
+                width: 35%;
+                height: 100%;
+                padding-top: 15vh;
+                padding-left: 30px;
+                order: 1;
+            }
+
+            .photo-panel {
+                width: 65%;
+                height: 100%;
+                padding: 15px;
+                order: 2;
+            }
+
+            .time {
+                font-size: 80px;
+            }
+
+            .date {
+                font-size: 22px;
+            }
+        }
+
+        /* --- V2.2 Admin Toggle (mobile only) --- */
+        #mobile-admin-entry {
+            display: none;
+        }
+
+        #admin-toggle-btn {
+            display: none;
+        }
+
+        @media screen and (max-width: 1024px) {
+            #admin-toggle-btn {
+                display: flex;
+                position: fixed;
+                top: 14px;
+                right: 14px;
+                width: 38px;
+                height: 38px;
+                border-radius: 50%;
+                background: rgba(0, 0, 0, 0.35);
+                border: 1px solid rgba(255, 255, 255, 0.25);
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 18px;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                backdrop-filter: blur(8px);
+                z-index: 300;
+                transition: transform 0.25s ease, background 0.2s ease;
+            }
+
+            #admin-toggle-btn.open {
+                transform: rotate(90deg);
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            #mobile-admin-entry.visible {
+                display: flex;
+                position: fixed;
+                top: 60px;
+                right: 14px;
+                flex-direction: column;
+                gap: 10px;
+                width: 160px;
+                z-index: 300;
+                animation: slideDown 0.2s ease;
+            }
+
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-8px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .admin-btn {
+                background: rgba(30, 30, 30, 0.75);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 12px;
+                padding: 12px 16px;
+                color: #fff;
+                font-size: 14px;
+                text-decoration: none;
+                backdrop-filter: blur(12px);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 500;
+            }
+
+            .admin-btn:active {
+                background: rgba(255, 255, 255, 0.25);
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+    <!-- Left Panel: Info -->
+    <div class="info-panel">
+        <!-- V2.2 Gear Toggle Button (mobile only) -->
+        <button id="admin-toggle-btn" title="管理入口">⚙️</button>
+        <!-- V2.2 Mobile Admin Entry (hidden by default) -->
+        <div id="mobile-admin-entry">
+            <a href="/admin" class="admin-btn">📤 上传照片</a>
+            <a href="/admin/manage" class="admin-btn">🖼️ 相册整理</a>
+        </div>
+
+        <div class="greeting" id="greeting">Hello</div>
+        <div class="time" id="clock-time">--:--</div>
+        <div class="date" id="clock-date">----年--月--日 星期-</div>
+
+        <div class="weather-widget">
+            <div class="weather-icon" id="weather-icon">☁️</div>
+            <div class="weather-info">
+                <span class="weather-temp" id="weather-temp">--°C</span>
+                <span class="weather-desc" id="weather-desc">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div id="chat-container">
+            <div id="chat-messages">
+                <!-- Messages will be injected here -->
+            </div>
+        </div>
+
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="留个言..." autocomplete="off">
+            <button id="chat-send-btn">➤</button>
+        </div>
+    </div>
+
+    <!-- Right Panel: Photo -->
+    <div class="photo-panel">
+        <div id="slideshow-container">
+            <!-- Images will be injected here by script.js -->
+            <div id="loading">Loading photos...</div>
+        </div>
+        <!-- Controls outside container -->
+        <div id="controls">
+            <button id="prev-btn" onclick="prevImage()">&#10094;</button>
+            <button id="next-btn" onclick="nextImage()">&#10095;</button>
+        </div>
+    </div>
+
+    <!-- V2.2 Admin Toggle JS -->
+    <script>
+        (function () {
+            const toggleBtn = document.getElementById('admin-toggle-btn');
+            const adminEntry = document.getElementById('mobile-admin-entry');
+            if (!toggleBtn || !adminEntry) return;
+            toggleBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const isOpen = adminEntry.classList.toggle('visible');
+                toggleBtn.classList.toggle('open', isOpen);
+            });
+            // Click anywhere else to close
+            document.addEventListener('click', function () {
+                adminEntry.classList.remove('visible');
+                toggleBtn.classList.remove('open');
+            });
+        })();
+    </script>
+
+    <!-- Load existing slideshow logic (Cache busted for V1.3) -->
+    <script>
+        const CURRENT_USER = "{{ username }}";
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=1.4"></script>
+
+    <!-- V1.3 Info Logic -->
+    <script>
+        /* --- Greeting --- */
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            let timeGreeting = "";
+            if (hour >= 5 && hour < 11) {
+                timeGreeting = "早上好";
+            } else if (hour >= 11 && hour < 13) {
+                timeGreeting = "中午好";
+            } else if (hour >= 13 && hour < 18) {
+                timeGreeting = "下午好";
+            } else if (hour >= 18 && hour < 23) {
+                timeGreeting = "晚上好";
+            } else {
+                timeGreeting = "夜深了"; // 23:00 - 05:00
+            }
+
+            // 使用当前登录用户的用户名
+            let name = CURRENT_USER || "访客";
+            // 如果是邮箱或完整用户名，只取第一部分
+            if (name.includes('@')) {
+                name = name.split('@')[0];
+            }
+
+            // 特殊问候语：夜深了
+            if (hour >= 23 || hour < 5) {
+                document.getElementById('greeting').textContent = `${timeGreeting}，${name}`;
+            } else {
+                document.getElementById('greeting').textContent = `${timeGreeting}，${name}`;
+            }
+        }
+
+        /* --- Clock & Date --- */
+        function updateClock() {
+            const now = new Date();
+
+            // Time: HH:MM
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock-time').textContent = `${hours}:${minutes}`;
+
+            // Date: YYYY年MM月DD日 星期X
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekday = weekdays[now.getDay()];
+
+            document.getElementById('clock-date').textContent = `${year}年${month}月${day}日 ${weekday}`;
+
+            // Update greeting every minute as well
+            updateGreeting();
+        }
+
+        setInterval(updateClock, 1000); // Update every second
+        updateClock(); // Initial call
+
+        /* --- Weather (Open-Meteo) --- */
+        // Coordinates from backend API
+        const WEATHER_API = '/api/weather-config';
+
+        // WMO Weather interpretation
+        function getWeatherIcon(code) {
+            if (code === 0) return '☀️';
+            if (code === 1 || code === 2 || code === 3) return '⛅';
+            if (code >= 45 && code <= 48) return '🌫️';
+            if (code >= 51 && code <= 55) return '🌧️';
+            if (code >= 61 && code <= 67) return '🌧️';
+            if (code >= 71 && code <= 77) return '❄️';
+            if (code >= 80 && code <= 82) return '🌧️';
+            if (code >= 95 && code <= 99) return '⛈️';
+            return '☁️';
+        }
+
+        function getWeatherDesc(code) {
+            const map = {
+                0: '晴', 1: '多云', 2: '多云', 3: '阴',
+                45: '雾', 48: '雾',
+                51: '小雨', 53: '中雨', 55: '大雨',
+                61: '小雨', 63: '中雨', 65: '大雨',
+                71: '小雪', 73: '中雪', 75: '大雪',
+                95: '雷雨', 96: '雷雨', 99: '雷雨'
+            };
+            return map[code] || '未知'; // simplified
+        }
+
+        async function fetchWeather() {
+            try {
+                const response = await fetch(WEATHER_API);
+                const data = await response.json();
+
+                if (data.enabled && data.current) {
+                    const temp = Math.round(data.current.temperature_2m);
+                    const code = data.current.weather_code;
+
+                    document.getElementById('weather-temp').textContent = `${temp}°C`;
+                    document.getElementById('weather-icon').textContent = getWeatherIcon(code);
+                    document.getElementById('weather-desc').textContent = getWeatherDesc(code);
+                } else if (!data.enabled) {
+                    // Weather disabled in config
+                    document.getElementById('weather-widget').style.display = 'none';
+                } else {
+                    document.getElementById('weather-desc').textContent = '天气离线';
+                }
+            } catch (error) {
+                console.error('Error fetching weather:', error);
+                document.getElementById('weather-desc').textContent = '天气离线';
+            }
+        }
+
+        // Fetch weather every 30 minutes
+        setInterval(fetchWeather, 30 * 60 * 1000);
+        fetchWeather(); // Initial call
+
+    </script>
+</body>
+
+</html>

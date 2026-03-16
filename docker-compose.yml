@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  photoframe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: digital-photo-frame
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-5000}:5000"
+    volumes:
+      # 照片数据持久化
+      - ./data/photos:/app/static/photos
+      # 数据库持久化
+      - ./data/photos.db:/app/photos.db
+      # 元数据持久化
+      - ./data/photo_metadata.json:/app/photo_metadata.json
+      # 留言板数据持久化
+      - ./data/messages.json:/app/messages.json
+      # 日志持久化
+      - ./logs:/app/logs
+    environment:
+      # 必需配置
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - ADMIN_USERS=${ADMIN_USERS:-admin:password}
+      # 可选配置
+      - FLASK_DEBUG=${FLASK_DEBUG:-false}
+      - BABY_NAME=${BABY_NAME:-}
+      - BABY_BIRTHDAY=${BABY_BIRTHDAY:-}
+      - WEATHER_LAT=${WEATHER_LAT:-31.3041}
+      - WEATHER_LON=${WEATHER_LON:-120.5954}
+      - WEATHER_ENABLED=${WEATHER_ENABLED:-true}
+      - TAG_WEIGHTS=${TAG_WEIGHTS:-宝宝：1.8，露营：1.5，旅行：1.3}
+      - SLIDE_DURATION_SECONDS=${SLIDE_DURATION_SECONDS:-300}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - photoframe-net
+
+networks:
+  photoframe-net:
+    driver: bridge

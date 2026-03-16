@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>照片管理 - OneTwo Photo Frame</title>
+    <!-- Google Font 'Inter' -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --card-bg: #fff;
+            --text-main: #333;
+            --text-sub: #666;
+            --primary: #3498db;
+            --primary-hover: #2980b9;
+            --border: #e1e4e8;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-weight: 600;
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* --- Filters --- */
+        .filter-toolbar {
+            background: #fff;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 15px;
+
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            /* Prevent padding from breaking 100% width */
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+
+
+        .filter-tips {
+            font-size: 12px;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        /* --- Grid Layout --- */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- Card Styles --- */
+        .photo-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .photo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .img-container {
+            height: 200px;
+            background-color: #eee;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+            /* Hint that it might be clickable/viewable */
+        }
+
+        .card-body {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .file-name {
+            font-size: 12px;
+            color: var(--text-sub);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 5px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #888;
+        }
+
+        input[type="text"] {
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        /* --- Date Input Group --- */
+        .date-input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .date-part {
+            padding: 8px 5px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        .date-part:focus {
+            border-color: var(--primary);
+        }
+
+        .date-part.year {
+            width: 40px;
+        }
+
+        .date-part.month {
+            width: 35px;
+        }
+
+        .date-part.day {
+            width: 35px;
+        }
+
+        .date-label {
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        .action-row {
+            margin-top: auto;
+            padding-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .save-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .save-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .save-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* --- Footer / Load More --- */
+        .load-more-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .load-more-btn {
+            background-color: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-sub);
+            padding: 10px 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .load-more-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* --- Toast --- */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        .toast {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            background: #2ecc71;
+            color: #fff;
+        }
+
+        .toast.error {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        /* --- Mobile Optimization --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+                margin-bottom: 20px;
+            }
+
+            .header-actions {
+                width: 100%;
+                text-align: right;
+            }
+
+            .filter-toolbar {
+                padding: 15px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .search-input {
+                font-size: 16px;
+                /* Prevent iOS zoom */
+                padding: 12px;
+            }
+
+            .photo-grid {
+                grid-template-columns: 1fr;
+                /* Full width cards */
+                gap: 15px;
+            }
+
+            .photo-card {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                /* Slightly more visible shadow */
+            }
+
+            /* Better touch targets for inputs */
+            input[type="text"],
+            .date-part {
+                font-size: 16px;
+                padding: 10px;
+            }
+
+            .date-input-group {
+                gap: 8px;
+            }
+
+            .date-part.year {
+                width: 50px;
+            }
+
+            .date-part.month,
+            .date-part.day {
+                width: 40px;
+            }
+
+            .save-btn {
+                padding: 12px 20px;
+                font-size: 15px;
+                width: 100%;
+                /* Full width button easier to tap */
+                margin-top: 10px;
+            }
+
+            .card-body {
+                padding: 20px;
+                /* More breathing room */
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>💎 照片管理</h1>
+        <div class="header-actions">
+            <a href="/admin" class="back-link">← 返回控制台</a>
+        </div>
+    </header>
+
+    <!-- Filter Toolbar -->
+    <div class="filter-toolbar">
+        <div class="search-container">
+
+            <input type="text" id="search-input" class="search-input" placeholder="智能搜素: '6月', '25年6月', '宝宝' ...">
+        </div>
+        <div class="filter-tips">
+            支持搜素: 2025年, 6月, 旅行 等关键词
+        </div>
+    </div>
+
+    <div class="photo-grid" id="photo-grid">
+        <!-- Cards injected via JS -->
+    </div>
+
+    <div class="load-more-container">
+        <button id="load-more-btn" class="load-more-btn">加载更多</button>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // State
+        let allPhotos = [];
+        let filteredPhotos = []; // New filtered list
+        let displayCount = 0;
+        const BATCH_SIZE = 24;
+
+        // Elements
+        const grid = document.getElementById('photo-grid');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        const searchInput = document.getElementById('search-input');
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPhotos();
+
+            // Event Listeners
+            searchInput.addEventListener('input', debounce(applyFilters, 300));
+        });
+
+        // 1. Fetch backend list
+        async function fetchPhotos() {
+            try {
+                const res = await fetch('/api/all_photos');
+                if (!res.ok) throw new Error('Failed to load photos');
+                allPhotos = await res.json();
+
+                // Init filtered list
+                filteredPhotos = [...allPhotos];
+
+                // Render initial batch
+                renderBatch();
+            } catch (err) {
+                console.error(err);
+                showToast('加载失败: ' + err.message, 'error');
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 2. Smart Search Logic
+        function parseQuery(query) {
+            query = query.toLowerCase().trim();
+            const criteria = {
+                year: null,
+                month: null,
+                text: query // Original query for fallback tag matching
+            };
+
+            if (!query) return criteria;
+
+            // Chinese Numeral Map
+            const cnMonthMap = {
+                '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6,
+                '七': 7, '八': 8, '九': 9, '十': 10, '十一': 11, '十二': 12
+            };
+
+            // 1. Extract Year
+            // Matches: 2025年, 25年, 2025, '25
+            // Be careful not to match day if possible, but simplest is 4 digit or "X年"
+            const yearRegex = /(20\d{2}|\d{2})\s*年/;
+            const yearMatch = query.match(yearRegex);
+
+            if (yearMatch) {
+                let y = yearMatch[1];
+                if (y.length === 2) y = '20' + y;
+                criteria.year = y;
+            } else {
+                // Try pure 20xx matches if 4 digits
+                const pureYear = query.match(/\b(20\d{2})\b/);
+                if (pureYear) criteria.year = pureYear[1];
+            }
+
+            // 2. Extract Month
+            // Matches: 6月, 六月, 06月
+            const monthRegex = /(\d{1,2}|[一二三四五六七八九十]+)\s*月/;
+            const monthMatch = query.match(monthRegex);
+
+            if (monthMatch) {
+                const mRaw = monthMatch[1];
+                if (cnMonthMap[mRaw]) {
+                    criteria.month = cnMonthMap[mRaw];
+                } else if (!isNaN(parseInt(mRaw))) {
+                    criteria.month = parseInt(mRaw);
+                }
+            }
+
+            return criteria;
+        }
+
+        function applyFilters() {
+            const query = searchInput.value;
+            const criteria = parseQuery(query);
+
+            // console.log("Criteria:", criteria);
+
+            filteredPhotos = allPhotos.filter(p => {
+                if (!query) return true;
+
+                // 1. Date Check
+                let dateMatch = false;
+
+                if (p.date) {
+                    const [yStr, mStr, dStr] = p.date.split('-');
+                    const pYear = yStr;
+                    const pMonth = parseInt(mStr);
+
+                    let yOk = true;
+                    let mOk = true;
+
+                    if (criteria.year && pYear !== criteria.year) yOk = false;
+                    if (criteria.month && pMonth !== criteria.month) mOk = false;
+
+                    // Only consider date match valid if at least one criterion was present AND satisfied
+                    if ((criteria.year || criteria.month) && yOk && mOk) {
+                        dateMatch = true;
+                    }
+                }
+
+                // 2. Tag/Text Check (Simple Substring)
+                let textMatch = false;
+                // Search in tags
+                if (p.tags && p.tags.toLowerCase().includes(criteria.text)) textMatch = true;
+                // Search in filename/url just in case
+                if (p.url.toLowerCase().includes(criteria.text)) textMatch = true;
+
+                // Logic:
+                // If the user entered specific date constraints (e.g. "6月"), we prioritize date matches.
+                // BUT, they might also have a tag called "6月".
+                // User requirement: "我输入六月...展示所有拍摄时间是六月份的照片"
+                // "输入某一个标签...展示所有包含这个标签的图片"
+                // So it's an OR. Either it matches the Date logic, OR it matches the Tag logic.
+
+                return dateMatch || textMatch;
+            });
+
+            // Reset display count and grid
+            displayCount = 0;
+            grid.innerHTML = '';
+            loadMoreBtn.style.display = 'block';
+            loadMoreBtn.textContent = '加载更多';
+
+            renderBatch();
+        }
+
+        // 2. Render Batch (consuming filteredPhotos)
+        function renderBatch() {
+            const nextBatch = filteredPhotos.slice(displayCount, displayCount + BATCH_SIZE);
+
+            if (nextBatch.length === 0) {
+                if (displayCount === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px;">没有找到匹配的照片</div>';
+                    loadMoreBtn.style.display = 'none';
+                } else {
+                    loadMoreBtn.style.display = 'none'; // No more to load
+                }
+                return;
+            }
+
+            nextBatch.forEach(photo => createPhotoCard(photo));
+            displayCount += nextBatch.length;
+
+            // Hide button if all shown
+            if (displayCount >= filteredPhotos.length) {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+
+        loadMoreBtn.addEventListener('click', renderBatch);
+
+        // 3. Create Card Logic
+        function createPhotoCard(photo) {
+            const div = document.createElement('div');
+            div.className = 'photo-card';
+
+            // Format existing date if present (YYYY-MM-DD)
+            let yy = '', mm = '', dd = '';
+            if (photo.date) {
+                const parts = photo.date.split('-');
+                if (parts.length === 3) {
+                    yy = parts[0].slice(-2); // Take last 2 digits
+                    mm = parts[1];
+                    dd = parts[2];
+                }
+            }
+
+            const tagsValue = photo.tags ? photo.tags : '';
+            const thumbUrl = `/static/photos/${photo.url}`;
+
+            div.innerHTML = `
+                <div class="img-container">
+                    <img src="${thumbUrl}" loading="lazy" alt="${photo.url}">
+                </div>
+                <div class="card-body">
+                    <div class="file-name" title="${photo.url}">${photo.url}</div>
+                    
+                    <div class="form-group">
+                        <label>日期</label>
+                        <div class="date-input-group">
+                            <input type="text" class="date-part year" maxlength="2" placeholder="YY" value="${yy}">
+                            <span class="date-label">年</span>
+                            <input type="text" class="date-part month" maxlength="2" placeholder="MM" value="${mm}">
+                            <span class="date-label">月</span>
+                            <input type="text" class="date-part day" maxlength="2" placeholder="DD" value="${dd}">
+                            <span class="date-label">日</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>标签 (逗号分隔)</label>
+                        <input type="text" class="tags-input" placeholder="例如: 宝宝, 生日" value="${tagsValue}">
+                    </div>
+
+                    <div class="action-row">
+                        <button class="save-btn" onclick="savePhoto('${photo.url}', this)">保存</button>
+                    </div>
+                </div>
+            `;
+
+            grid.appendChild(div);
+        }
+
+        // 4. Save Logic
+        window.savePhoto = async function (filename, btn) {
+            const card = btn.closest('.card-body');
+
+            const yy = card.querySelector('.date-part.year').value.trim();
+            const mm = card.querySelector('.date-part.month').value.trim();
+            const dd = card.querySelector('.date-part.day').value.trim();
+            const tagsInput = card.querySelector('.tags-input');
+
+            // Reconstruct YYYY-MM-DD
+            let newDate = null;
+            if (yy && mm && dd) {
+                // Pad with 20 if logic implies current century
+                const fullYear = '20' + yy;
+                // Pad months/days
+                const fullMonth = mm.padStart(2, '0');
+                const fullDay = dd.padStart(2, '0');
+                newDate = `${fullYear}-${fullMonth}-${fullDay}`;
+            }
+
+            const newTags = tagsInput.value;
+
+            // Simple UI feedback
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            try {
+                const res = await fetch('/api/update_photo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: filename,
+                        date: newDate,
+                        tags: newTags
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showToast('保存成功', 'success');
+
+                    // Update the local data to reflect changes immediately in specific card (optional but good UX)
+                    const pIndex = allPhotos.findIndex(p => p.url === filename);
+                    if (pIndex !== -1) {
+                        allPhotos[pIndex].date = newDate;
+                        allPhotos[pIndex].tags = newTags;
+                    }
+
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('保存失败', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        };
+
+        // 5. Toast Util
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const div = document.createElement('div');
+            div.className = `toast ${type}`;
+            div.textContent = msg;
+            container.appendChild(div);
+
+            // Reflow
+            void div.offsetWidth;
+            div.classList.add('show');
+
+            setTimeout(() => {
+                div.classList.remove('show');
+                setTimeout(() => div.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

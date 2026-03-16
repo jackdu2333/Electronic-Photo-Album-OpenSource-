@@ -1,0 +1,19 @@
+# Core Dependencies
+Flask>=2.3.0
+Flask-BasicAuth>=0.2.0
+Flask-WTF>=1.2.0
+gunicorn>=21.0.0
+werkzeug>=2.3.0
+
+# Image Processing
+Pillow>=9.0.0
+pillow-heif>=0.10.0
+
+# Security
+python-magic>=0.4.27
+
+# Optional: Development Tools
+black>=23.0.0
+ruff>=0.1.0
+pytest>=7.0.0
+pytest-cov>=4.0.0

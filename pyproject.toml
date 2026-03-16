@@ -1,0 +1,97 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "digital-photo-frame"
+version = "2.0.0"
+description = "A smart digital photo frame system for home and family use"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+keywords = ["photo-frame", "flask", "digital-signage", "smart-home"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Multimedia :: Graphics :: Viewers",
+]
+
+dependencies = [
+    "Flask>=2.3.0",
+    "Flask-BasicAuth>=0.2.0",
+    "gunicorn>=21.0.0",
+    "Pillow>=9.0.0",
+    "pillow-heif>=0.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/YOUR_USERNAME/digital-photo-frame"
+Documentation = "https://github.com/YOUR_USERNAME/digital-photo-frame#readme"
+Repository = "https://github.com/YOUR_USERNAME/digital-photo-frame.git"
+Issues = "https://github.com/YOUR_USERNAME/digital-photo-frame/issues"
+Changelog = "https://github.com/YOUR_USERNAME/digital-photo-frame/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+py-modules = ["app", "config"]
+
+[tool.setuptools.package-data]
+"*" = ["templates/*.html", "static/*", "static/**/*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "-v --cov=app --cov-report=term-missing"

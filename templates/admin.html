@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>相框管理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="admin-body">
+
+    <!-- iOS-style Navigation Bar -->
+    <header class="ios-nav-bar">
+        <div class="ios-nav-inner">
+            <a href="{{ url_for('main.index') }}" class="ios-nav-back" target="_blank">
+                <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
+                    <path d="M8.5 1L1.5 8L8.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                相框
+            </a>
+            <h1 class="ios-nav-title">管理后台</h1>
+            <a href="{{ url_for('main.manage_page') }}" class="ios-nav-action">整理</a>
+        </div>
+    </header>
+
+    <main class="admin-main-ios">
+
+        <!-- Upload Card -->
+        <section class="ios-section">
+            <div class="ios-section-header">
+                <span class="ios-section-label">上传照片</span>
+            </div>
+            <div class="ios-card upload-card-ios">
+                <!-- Drop Zone (Refactored to Label for native click support) -->
+                <label id="drop-zone" for="file-input" class="drop-zone-ios">
+                    <div class="drop-zone-prompt">
+                        <div class="upload-icon-circle">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg>
+                        </div>
+                        <p class="drop-zone-title">点击或拖拽上传</p>
+                        <p class="drop-zone-sub">支持 JPG、PNG、HEIC 等格式</p>
+                    </div>
+                    <input type="file" id="file-input" name="files" multiple accept="image/*" class="file-input-hidden">
+                </label>
+
+                <!-- Preview Grid (hidden initially) -->
+                <div id="upload-preview-area" class="preview-area hidden">
+                    <div class="preview-header-ios">
+                        <span id="selected-count" class="selected-count-label">已选择 0 个文件</span>
+                        <button id="clear-selection-btn" class="ios-link-btn danger">清空</button>
+                    </div>
+                    <div id="preview-grid" class="preview-grid-ios"></div>
+                    <div class="upload-actions-ios">
+                        <button id="upload-btn" class="ios-btn ios-btn-primary ios-btn-full">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="20" />
+                            </svg>
+                            开始上传
+                        </button>
+                        <button id="upload-force-btn" class="ios-btn ios-btn-warning ios-btn-full">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            上传并立即展示 (10分钟)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div id="progress-container" class="progress-container-ios hidden">
+                    <div class="progress-track-ios">
+                        <div id="progress-bar" class="progress-fill-ios"></div>
+                    </div>
+                    <span id="progress-text" class="progress-text-ios">准备上传...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery Section -->
+        <section class="ios-section">
+            <div class="ios-section-header">
+                <span class="ios-section-label">相册</span>
+                <button id="refresh-gallery-btn" class="ios-link-btn">刷新</button>
+            </div>
+            <div class="ios-card gallery-outer-card">
+                <div id="gallery-grid" class="gallery-grid-ios">
+                    <div class="loading-spinner">正在加载...</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="toast-container"></div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
