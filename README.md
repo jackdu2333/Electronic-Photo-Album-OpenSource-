@@ -6,7 +6,7 @@
 
 一个开源的智能电子相框系统，支持照片幻灯片展示、留言板、智能推荐等功能。适合家庭使用，可将旧平板或电视改造成智能相框。
 
-![Digital Photo Frame Demo](https://via.placeholder.com/800x450.png?text=Digital+Photo+Frame+Demo)
+![Digital Photo Frame Demo](docs/images/preview.png)
 
 ---
 
