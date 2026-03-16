@@ -1,8 +1,8 @@
 # Digital Photo Frame - 数字电子相框
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
-[![Docker](https://img.shields.io/badge/Docker-Available-2496ED.svg)](https://www.docker.com/)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
+![Docker](https://img.shields.io/badge/Docker-Available-2496ED.svg)
 
 一个开源的智能电子相框系统，支持照片幻灯片展示、留言板、智能推荐等功能。适合家庭使用，可将旧平板或电视改造成智能相框。
 
@@ -14,22 +14,26 @@
 ## ✨ 功能特性
 
 ### 🖼️ 照片展示
+
 - **智能推荐算法 V2.0**: 95% 标签 + 季节加权推荐，5% 老照片"深海打捞"
 - **多格式支持**: JPG, PNG, WebP, HEIC (iOS)
 - **自动压缩**: 上传时智能压缩至指定大小，4K 分辨率上限
 - **EXIF 保留**: 自动提取拍摄日期，保留照片元数据
 
 ### 💬 互动功能
+
 - **留言板**: 家庭成员可留言互动
 - **个性化问候**: 根据登录用户显示称呼
 - **宝宝年龄**: 可选显示宝宝年龄（拍照时）
 
 ### 🌤️ 实用信息
+
 - **天气显示**: 实时显示当地天气（Open-Meteo API）
 - **时钟日历**: 显示时间、日期
 - **多用户支持**: 支持多账户登录管理
 
 ### 📱 客户端
+
 - **响应式设计**: 适配各种屏幕尺寸
 - **Android TV 支持**: 遥控器方向键切换照片
 - **全屏展示**: 支持沉浸式全屏模式
@@ -41,23 +45,27 @@
 ### 方式一：Docker 部署（推荐）
 
 1. 克隆项目：
+
 ```bash
 git clone https://github.com/YOUR_USERNAME/digital-photo-frame.git
 cd digital-photo-frame
 ```
 
 2. 配置环境变量：
+
 ```bash
 cp .env.example .env
 # 编辑 .env 文件，修改配置
 ```
 
 3. 启动容器：
+
 ```bash
 docker-compose up -d
 ```
 
 4. 访问应用：
+
 打开浏览器访问 `http://localhost:5000`
 
 默认管理员账户：`admin / password`（请在 .env 中修改）
@@ -65,11 +73,13 @@ docker-compose up -d
 ### 方式二：本地运行
 
 1. 安装依赖：
+
 ```bash
 pip install -r requirements.txt
 ```
 
 2. 运行应用：
+
 ```bash
 python app.py
 ```
@@ -79,10 +89,16 @@ python app.py
 ### 方式三：云平台一键部署
 
 #### Railway
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/)
+
+&nbsp;
+
+![Deploy on Railway](https://railway.app/button.svg)
 
 #### Render
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/)
+
+&nbsp;
+
+![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)
 
 ---
 
@@ -158,6 +174,7 @@ digital-photo-frame/
 ### 智能推荐算法 V2.0
 
 #### 常规模式（95% 概率）
+
 ```
 最终权重 = 标签权重（静态）× 季节权重（动态）
 
@@ -169,11 +186,13 @@ digital-photo-frame/
 ```
 
 #### 深海打捞模式（5% 概率）
+
 - 筛选条件：拍摄日期 > 2 年（可配置）
 - 排序策略：展示次数少优先 + 随机
 - 视觉效果：复古滤镜 + "记忆偶然被打捞"提示
 
 ### 图片处理流程
+
 1. **上传**: 支持拖拽上传，最大 200MB（可配置）
 2. **压缩**: 智能压缩至 3MB 内（可配置），保留 EXIF
 3. **元数据**: 自动提取拍摄日期，支持手动编辑
@@ -184,19 +203,25 @@ digital-photo-frame/
 ## 🔧 常见问题
 
 ### Q: 如何修改天气显示的地理位置？
+
 A: 在 `.env` 中修改 `WEATHER_LAT` 和 `WEATHER_LON` 为你所在位置的经纬度。
 
 ### Q: 如何禁用宝宝年龄显示？
+
 A: 在 `.env` 中留空 `BABY_NAME` 和 `BABY_BIRTHDAY` 即可。
 
 ### Q: 如何调整照片展示时长？
+
 A: 修改 `SLIDE_DURATION_SECONDS` 配置项（单位：秒）。
 
 ### Q: 照片存储在哪个目录？
+
 A: Docker 部署时为 `./data/photos`，本地运行为 `./static/photos`。
 
 ### Q: 如何备份数据？
+
 A: 备份以下文件：
+
 - `photos.db` - 数据库
 - `photo_metadata.json` - 照片元数据
 - `messages.json` - 留言数据
@@ -207,6 +232,7 @@ A: 备份以下文件：
 ## 🛠️ 开发指南
 
 ### 本地开发环境
+
 ```bash
 # 安装依赖
 pip install -r requirements.txt
@@ -220,6 +246,7 @@ pytest
 ```
 
 ### 代码格式化
+
 ```bash
 # 安装开发依赖
 pip install black ruff
@@ -236,6 +263,7 @@ ruff check .
 详见 [CHANGELOG.md](CHANGELOG.md)
 
 ### v2.0.0 (2026-03)
+
 - ✨ 新增：配置模块化，所有硬编码转为环境变量
 - ✨ 新增：Docker 一键部署支持
 - ✨ 新增：天气 API 后端代理
@@ -243,6 +271,7 @@ ruff check .
 - 🐛 修复：宝宝信息前端可配置
 
 ### v1.6.0 (2026-02)
+
 - ✨ 新增：宝宝年龄显示
 - ✨ 新增：深海打捞彩蛋功能
 
