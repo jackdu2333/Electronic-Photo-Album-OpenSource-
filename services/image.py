@@ -58,10 +58,9 @@ class ImageValidator:
         """
         try:
             # 读取文件头（魔法字节）
-            header = file_stream.read(14)
+            header = file_stream.read(16)
             file_stream.seek(0)  # 重置指针
-
-            if len(header) < 14:
+            if len(header) < 3:
                 return False, "文件太小，无法验证"
 
             # 检测常见图片格式
@@ -74,7 +73,7 @@ class ImageValidator:
                 return True, 'image/png'
 
             # GIF: 47 49 46 38
-            if header[:4] in (b'GIF87a', b'GIF89a'):
+            if header[:6] in (b'GIF87a', b'GIF89a'):
                 return True, 'image/gif'
 
             # WebP: RIFF....WEBP
@@ -86,12 +85,12 @@ class ImageValidator:
                 return True, 'image/heic'
 
             # 尝试用 Pillow 打开验证（兜底方案）
+            # 注意：不调用 img.verify()，verify() 后对象不可再使用且格式读取未定义
             file_stream.seek(0)
             try:
-                img = Image.open(file_stream)
-                img.verify()  # 验证完整性
+                with Image.open(file_stream) as img:
+                    fmt = img.format.lower() if img.format else 'unknown'
                 file_stream.seek(0)
-                fmt = img.format.lower() if img.format else 'unknown'
                 return True, f'image/{fmt}'
             except Exception:
                 pass
@@ -132,29 +131,32 @@ class ImageProcessor:
             target_size = int(target_size_mb * 1024 * 1024)
 
             # 1. 预处理 (Open & Orient)
-            img = Image.open(source_file)
-            # 固定方向
-            img = ImageOps.exif_transpose(img)
+            # 使用 with 确保文件句柄释放；转换/resize 产生新对象后原始 img 即可关闭
+            with Image.open(source_file) as raw_img:
+                # 固定方向
+                img = ImageOps.exif_transpose(raw_img)
 
-            # 格式统一 (JPG 不支持透明)
-            if img.mode in ('RGBA', 'P', 'LA'):
-                img = img.convert('RGB')
+                # 格式统一 (JPG 不支持透明)
+                if img.mode in ('RGBA', 'P', 'LA'):
+                    img = img.convert('RGB')
 
-            # 保留 EXIF
-            exif_data = img.info.get('exif')
+                # 保留 EXIF
+                exif_data = img.info.get('exif')
 
-            # 2. Resizing Helper (LANCZOS)
-            def resize_to_limit(image, limit_px):
-                w, h = image.size
-                if max(w, h) > limit_px:
-                    scale = limit_px / max(w, h)
-                    new_w = int(w * scale)
-                    new_h = int(h * scale)
-                    return image.resize((new_w, new_h), Image.Resampling.LANCZOS)
-                return image
+                # 2. Resizing Helper (LANCZOS)
+                def resize_to_limit(image, limit_px):
+                    w, h = image.size
+                    if max(w, h) > limit_px:
+                        scale = limit_px / max(w, h)
+                        new_w = int(w * scale)
+                        new_h = int(h * scale)
+                        return image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                    return image
 
-            # 初始尺寸限制
-            current_img = resize_to_limit(img, max_resolution_px)
+                # 初始尺寸限制（在 with 块内完成，保证 raw_img 可用）
+                current_img = resize_to_limit(img, max_resolution_px)
+                # 保存一份 original-source 尺寸用于第二轮降级（resize_to_limit 返回新对象）
+                original_for_round2 = resize_to_limit(img, max_resolution_px)
 
             output_buffer = io.BytesIO()
 
@@ -185,7 +187,7 @@ class ImageProcessor:
             # 4. 第二轮：第一轮失败 (即 quality=75 仍 > target_size)
             # 分辨率降级 -> 2560px
             logger.warning(f"Compress: High quality failed, resizing to 2560px...")
-            current_img = resize_to_limit(img, 2560)  # Resize from original source
+            current_img = resize_to_limit(original_for_round2, 2560)
 
             quality = 90
             while quality >= 70:
@@ -235,14 +237,14 @@ class ImageProcessor:
             raise ValueError("HEIC support not available (pillow_heif not installed)")
 
         try:
-            img = Image.open(source_file)
-            img = ImageOps.exif_transpose(img)
-            img = img.convert('RGB')  # HEIC 可能包含透明通道
+            with Image.open(source_file) as img:
+                img = ImageOps.exif_transpose(img)
+                img = img.convert('RGB')  # HEIC 可能包含透明通道
 
-            output = io.BytesIO()
-            img.save(output, format='JPEG', quality=95, optimize=True)
-            output.seek(0)
-            return output
+                output = io.BytesIO()
+                img.save(output, format='JPEG', quality=95, optimize=True)
+                output.seek(0)
+                return output
 
         except Exception as e:
             logger.error(f"HEIC to JPG conversion error: {e}")

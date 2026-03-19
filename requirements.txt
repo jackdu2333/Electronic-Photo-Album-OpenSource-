@@ -9,9 +9,6 @@ werkzeug>=2.3.0
 Pillow>=9.0.0
 pillow-heif>=0.10.0
 
-# Security
-python-magic>=0.4.27
-
 # Optional: Development Tools
 black>=23.0.0
 ruff>=0.1.0

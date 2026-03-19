@@ -5,6 +5,7 @@
 import os
 import json
 import logging
+import tempfile
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from PIL import Image
@@ -73,8 +74,15 @@ class PhotoMetadataService:
         file_path = filepath or METADATA_FILE
 
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(cls._metadata, f, ensure_ascii=False, indent=2)
+            # 原子写入：先写临时文件，再 os.replace() 原子替换，防止写入中断导致文件损坏
+            dir_name = os.path.dirname(os.path.abspath(file_path))
+            with tempfile.NamedTemporaryFile(
+                mode='w', encoding='utf-8', dir=dir_name,
+                delete=False, suffix='.tmp'
+            ) as tmp_f:
+                tmp_path = tmp_f.name
+                json.dump(cls._metadata, tmp_f, ensure_ascii=False, indent=2)
+            os.replace(tmp_path, file_path)
             logger.info(f"Metadata saved to {file_path}")
             return True
         except Exception as e:
@@ -124,14 +132,15 @@ class PhotoMetadataService:
         """
         # 1. Try EXIF Logic
         try:
-            image = Image.open(file_path)
-            exif_data = image._getexif()
-            if exif_data:
-                for tag_id, value in exif_data.items():
-                    tag_name = TAGS.get(tag_id, tag_id)
-                    if tag_name == 'DateTimeOriginal':
-                        # Value format: YYYY:MM:DD HH:MM:SS
-                        return value.replace(':', '-', 2)[:10]
+            # 使用上下文管理器确保文件句柄及时释放，防止长时间运行时 fd 耗尽
+            with Image.open(file_path) as image:
+                exif_data = image._getexif()
+                if exif_data:
+                    for tag_id, value in exif_data.items():
+                        tag_name = TAGS.get(tag_id, tag_id)
+                        if tag_name == 'DateTimeOriginal':
+                            # Value format: YYYY:MM:DD HH:MM:SS
+                            return value.replace(':', '-', 2)[:10]
         except Exception as e:
             logger.debug(f"EXIF extraction failed: {e}")
 

@@ -3,13 +3,14 @@
 
 支持功能：
 - 密码哈希加密（werkzeug）
-- 登录失败限制
+- 登录失败限制（有界字典，防止内存无限增长）
 - Session 超时管理
 - 密码强度验证
 """
 
 import os
 import time
+import threading
 from typing import Optional, Dict
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import session, request, make_response, current_app
@@ -84,6 +85,9 @@ def is_password_strong(password: str) -> tuple[bool, str]:
 class EnhancedAuth(BasicAuth):
     """增强的认证类，支持密码哈希和安全特性"""
 
+    # _login_attempts 最大跟踪用户名数量，防止攻击者使用海量随机用户名导致 OOM
+    _MAX_TRACKED_USERS = 500
+
     def __init__(self, app=None, users: Optional[Dict[str, str]] = None):
         """
         初始化认证系统
@@ -94,13 +98,60 @@ class EnhancedAuth(BasicAuth):
         """
         self._users = users or {}
         self._login_attempts: Dict[str, list] = {}  # 登录失败记录
+        self._login_lock = threading.Lock()          # 登录尝试记录的线程锁
         self._lockout_time = 300  # 锁定时间（秒）
         self._max_attempts = 5    # 最大失败次数
-        self._exclude_paths = ['/health', '/health/live', '/health/ready', '/login', '/static']  # 豁免路径（仅健康检查、登录页和静态文件）
+        self._exclude_paths = ['/health', '/health/live', '/health/ready', '/login', '/static']
         super().__init__(app)
 
+    def _is_excluded_path(self, path: str) -> bool:
+        """判断路径是否在认证白名单中，支持 /static 这类前缀路径"""
+        return any(path == p or path.startswith(p + '/') for p in self._exclude_paths)
 
+    # ──────────────────────────────────────────────────────────
+    # 内部：登录失败追踪（统一实现，原来有两套重复方法）
+    # ──────────────────────────────────────────────────────────
 
+    def _is_locked_out(self, username: str) -> bool:
+        """检查账户是否被锁定，并顺带清理过期记录"""
+        with self._login_lock:
+            if username not in self._login_attempts:
+                return False
+
+            cutoff = time.time() - self._lockout_time
+            # 裁剪过期记录
+            self._login_attempts[username] = [
+                t for t in self._login_attempts[username] if t > cutoff
+            ]
+            if not self._login_attempts[username]:
+                del self._login_attempts[username]
+                return False
+
+            return len(self._login_attempts[username]) >= self._max_attempts
+
+    def _record_failure(self, username: str):
+        """记录登录失败，同时防止字典无限增长"""
+        with self._login_lock:
+            # 若跟踪用户数已达上限，清理整个字典中的过期条目
+            if len(self._login_attempts) >= self._MAX_TRACKED_USERS:
+                cutoff = time.time() - self._lockout_time
+                self._login_attempts = {
+                    u: [t for t in ts if t > cutoff]
+                    for u, ts in self._login_attempts.items()
+                    if any(t > cutoff for t in ts)
+                }
+            if username not in self._login_attempts:
+                self._login_attempts[username] = []
+            self._login_attempts[username].append(time.time())
+
+    def _record_success(self, username: str):
+        """记录登录成功，清除失败记录"""
+        with self._login_lock:
+            self._login_attempts.pop(username, None)
+
+    # ──────────────────────────────────────────────────────────
+    # 对外：认证接口
+    # ──────────────────────────────────────────────────────────
 
     def check_auth(self, username: str, password: str) -> bool:
         """
@@ -113,73 +164,77 @@ class EnhancedAuth(BasicAuth):
         Returns:
             认证是否通过
         """
-        # 检查是否是豁免路径
         from flask import request
-        if request.path in self._exclude_paths:
+        if self._is_excluded_path(request.path):
             return True
 
-        # 检查账户锁定
-        if self._is_account_locked(username):
+        if self._is_locked_out(username):
             return False
 
         stored_hash = self._users.get(username)
-
         if stored_hash is None:
-            # 用户不存在，记录失败尝试
-            self._record_failed_attempt(username)
+            self._record_failure(username)
             return False
 
         if verify_password(password, stored_hash):
-            # 认证成功，清除失败记录
-            self._login_attempts.pop(username, None)
+            self._record_success(username)
             return True
         else:
-            # 认证失败，记录尝试
-            self._record_failed_attempt(username)
+            self._record_failure(username)
             return False
 
-    def _is_account_locked(self, username: str) -> bool:
-        """检查账户是否被锁定"""
-        if username not in self._login_attempts:
+    def check_credentials(self, username: str, password: str) -> bool:
+        """
+        验证用户凭证（Session 登录路径，使用密码哈希）
+
+        Args:
+            username: 用户名
+            password: 密码（明文）
+
+        Returns:
+            验证是否通过
+        """
+        if self._is_locked_out(username):
             return False
 
-        attempts = self._login_attempts[username]
-        # 只检查最近的尝试（在锁定时间窗口内）
-        cutoff = time.time() - self._lockout_time
-        recent_attempts = [t for t in attempts if t > cutoff]
-        self._login_attempts[username] = recent_attempts
+        if username not in self._users:
+            return False
 
-        return len(recent_attempts) >= self._max_attempts
+        password_hash = self._users[username]
 
-    def _record_failed_attempt(self, username: str):
-        """记录失败尝试"""
-        if username not in self._login_attempts:
-            self._login_attempts[username] = []
-        self._login_attempts[username].append(time.time())
+        # 兼容旧格式（明文密码）
+        if not password_hash.startswith('pbkdf2:'):
+            if password_hash == password:
+                # 升级为哈希存储
+                self._users[username] = hash_password(password)
+                return True
+            return False
+
+        # 新格式，使用哈希验证
+        if verify_password(password, password_hash):
+            self._record_success(username)
+            return True
+
+        self._record_failure(username)
+        return False
 
     def init_app(self, app):
         """初始化应用"""
-        # 不调用父类的 init_app，我们自己控制认证逻辑
         app.config['BASIC_AUTH_FORCE'] = True
         app.config['BASIC_AUTH_REALM'] = 'Photo Frame Admin'
 
         @app.before_request
         def require_basic_auth():
-            # 检查是否是豁免路径
             from flask import request
-            if request.path in self._exclude_paths:
+            if self._is_excluded_path(request.path):
                 return
 
-            # 检查是否需要认证
             if not current_app.config['BASIC_AUTH_FORCE']:
                 return
             if not self.authenticate():
-                # 区分 API 请求和页面请求
-                # API 请求返回 401，页面请求重定向到登录页
                 if request.path.startswith('/api/'):
                     return self.challenge()
                 else:
-                    # 页面请求重定向到登录页
                     from flask import redirect, url_for
                     return redirect(url_for('main.login_page'))
 
@@ -203,7 +258,6 @@ class EnhancedAuth(BasicAuth):
                     else hash_password(password)
                 )
                 for username, password in users.items()
-                # 兼容旧格式：可能是 user:password 或 user:hash
                 for password_hash in [password]
             }
         else:
@@ -214,82 +268,12 @@ class EnhancedAuth(BasicAuth):
         is_strong, msg = is_password_strong(password)
         if not is_strong:
             raise ValueError(f"密码强度不足：{msg}")
-
         self._users[username] = hash_password(password)
 
     def remove_user(self, username: str):
         """删除用户"""
         if username in self._users:
             del self._users[username]
-
-    def _is_locked_out(self, username: str) -> bool:
-        """检查用户是否被锁定"""
-        if username not in self._login_attempts:
-            return False
-
-        attempts = self._login_attempts[username]
-        # 清理超过 5 分钟的记录
-        now = time.time()
-        attempts = [t for t in attempts if now - t < 300]
-        self._login_attempts[username] = attempts
-
-        return len(attempts) >= self._max_attempts
-
-    def _record_failure(self, username: str):
-        """记录登录失败"""
-        now = time.time()
-        if username not in self._login_attempts:
-            self._login_attempts[username] = []
-        self._login_attempts[username].append(now)
-
-    def _record_success(self, username: str):
-        """记录登录成功，清除失败记录"""
-        if username in self._login_attempts:
-            del self._login_attempts[username]
-
-    def check_credentials(self, username: str, password: str) -> bool:
-        """
-        验证用户凭证（使用密码哈希）
-
-        Args:
-            username: 用户名
-            password: 密码（明文）
-
-        Returns:
-            验证是否通过
-        """
-        # 检查是否是豁免路径
-        from flask import request
-        if request.path in self._exclude_paths:
-            return True
-
-        # 检查是否被锁定
-        if self._is_locked_out(username):
-            return False
-
-        # 检查用户是否存在
-        if username not in self._users:
-            return False
-
-        password_hash = self._users[username]
-
-        # 兼容旧格式（明文密码）
-        if not password_hash.startswith('pbkdf2:'):
-            # 旧密码，直接比较并升级为哈希
-            if password_hash == password:
-                # 升级为哈希存储
-                self._users[username] = hash_password(password)
-                return True
-            return False
-
-        # 新格式，使用哈希验证
-        if verify_password(password, password_hash):
-            self._record_success(username)
-            return True
-
-        # 记录失败
-        self._record_failure(username)
-        return False
 
     def challenge(self) -> tuple:
         """
@@ -313,12 +297,10 @@ class EnhancedAuth(BasicAuth):
         """
         # 1. Session 已认证
         if session.get('_auth_ok'):
-            # 检查 session 过期（可选，默认 24 小时）
             login_time = session.get('_login_time', 0)
             if time.time() - login_time < 86400:  # 24 小时
                 return True
             else:
-                # Session 过期，清除
                 session.pop('_auth_ok', None)
                 session.pop('_username', None)
 

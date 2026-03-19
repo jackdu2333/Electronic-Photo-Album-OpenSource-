@@ -5,9 +5,9 @@ V2.0 双轨制推荐算法：深海打捞 5% + 常规加权 95%
 import random
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
-from .database import PhotoDAO
+from .database import AppStateDAO, PhotoDAO
 from .photo_index import get_photo_index
 
 logger = logging.getLogger(__name__)
@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 _seasonal_weights: Dict[str, float] = {}
 _deep_sea_probability: float = 0.05
 _deep_sea_years_threshold: int = 2
-_force_show_img: Optional[str] = None
-_force_show_expiry: float = 0
+_FORCE_SHOW_STATE_KEY = "force_show"
 
 
 def set_recommendation_config(seasonal_weights: Dict[str, float],
@@ -45,21 +44,24 @@ def set_force_show(img_url: str, expiry_timestamp: float):
         img_url: 照片 URL
         expiry_timestamp: 过期时间戳
     """
-    global _force_show_img, _force_show_expiry
-    _force_show_img = img_url
-    _force_show_expiry = expiry_timestamp
+    AppStateDAO.set_json(
+        _FORCE_SHOW_STATE_KEY,
+        {"img_url": img_url, "expiry_timestamp": expiry_timestamp}
+    )
 
 
 def clear_force_show():
     """清除强制展示状态"""
-    global _force_show_img, _force_show_expiry
-    _force_show_img = None
-    _force_show_expiry = 0
+    AppStateDAO.delete(_FORCE_SHOW_STATE_KEY)
 
 
 def get_force_show_state() -> tuple:
     """获取强制展示状态"""
-    return _force_show_img, _force_show_expiry
+    state = AppStateDAO.get_json(_FORCE_SHOW_STATE_KEY)
+    if not state:
+        return None, 0
+
+    return state.get("img_url"), float(state.get("expiry_timestamp", 0))
 
 
 class RecommendationService:
@@ -84,14 +86,19 @@ class RecommendationService:
         import time
 
         # ── 0. 强制展示逻辑（优先级最高）──────────────
-        if _force_show_img and time.time() < _force_show_expiry:
+        cur_force_img, cur_force_expiry = get_force_show_state()
+        if cur_force_img and time.time() < cur_force_expiry:
             photo_index = get_photo_index()
             for p in photo_index:
-                if p['url'] == _force_show_img:
+                if p['url'] == cur_force_img:
                     result = p.copy()
                     result['is_salvaged'] = False
-                    logger.info(f"[强制展示] 命中：{_force_show_img}")
+                    logger.info(f"[强制展示] 命中：{cur_force_img}")
                     return result
+            # 照片已不存在，清理掉失效状态，避免长时间轮询空命中
+            clear_force_show()
+        elif cur_force_img:
+            clear_force_show()
 
         # ── 保险：若内存索引为空则返回 ───────────────────
         photo_index = get_photo_index()
