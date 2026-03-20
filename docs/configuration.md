@@ -232,6 +232,20 @@ SLIDE_DURATION_SECONDS=180  # 3 分钟
 DATABASE_FILE=data/photos.db
 ```
 
+### SQLITE_BUSY_TIMEOUT_MS
+- **类型**: 整数
+- **默认**: `10000`
+- **说明**: SQLite 锁等待时间（毫秒）。当上传、留言、推荐统计或后台自修复同时访问数据库时，连接会先等待，而不是立刻报 `database is locked`
+
+```bash
+SQLITE_BUSY_TIMEOUT_MS=10000
+```
+
+推荐：
+- 家庭自用、小规模照片库可保持 `10000`
+- 若设备较慢或后台任务较多，可提高到 `15000` 或 `20000`
+- 不建议设得太低，否则高峰期更容易出现偶发数据库锁错误
+
 ### METADATA_FILE
 - **类型**: 字符串
 - **默认**: `photo_metadata.json`

@@ -23,7 +23,7 @@ class TestMIMEValidation:
 
         is_valid, result = validate_image_mime(jpeg_io)
         assert is_valid == True
-        assert 'JPEG' in result
+        assert 'jpeg' in result.lower()
 
     def test_validate_png(self):
         """PNG 图片验证"""
@@ -35,7 +35,7 @@ class TestMIMEValidation:
 
         is_valid, result = validate_image_mime(png_io)
         assert is_valid == True
-        assert 'PNG' in result
+        assert 'png' in result.lower()
 
     def test_validate_gif(self):
         """GIF 图片验证"""
@@ -47,7 +47,7 @@ class TestMIMEValidation:
 
         is_valid, result = validate_image_mime(gif_io)
         assert is_valid == True
-        assert 'GIF' in result
+        assert 'gif' in result.lower()
 
     def test_validate_invalid_file(self):
         """无效文件验证"""
@@ -59,7 +59,7 @@ class TestMIMEValidation:
 
         is_valid, result = validate_image_mime(text_io)
         assert is_valid == False
-        assert '无效' in result or 'magic' in result.lower()
+        assert '无法识别' in result or '验证失败' in result or 'not an image' in result.lower()
 
     def test_validate_empty_file(self):
         """空文件验证"""
@@ -80,7 +80,7 @@ class TestMIMEValidation:
 
         is_valid, result = validate_image_mime(webp_io)
         assert is_valid == True
-        assert 'WebP' in result
+        assert 'webp' in result.lower()
 
 
 class TestFileUpload:
@@ -92,12 +92,14 @@ class TestFileUpload:
         # 设置测试环境变量
         os.environ['FLASK_DEBUG'] = 'true'
         os.environ['SECRET_KEY'] = 'test-secret-key-for-testing-only-12345'
+        os.environ['ADMIN_USERS'] = 'admin:TestPass123!'
 
         import importlib
         import app
         importlib.reload(app)
 
         app.app.config['TESTING'] = True
+        app.app.config['WTF_CSRF_ENABLED'] = False
         app.app.config['UPLOAD_FOLDER'] = '/tmp/test-uploads'
 
         # 创建上传目录
@@ -117,7 +119,7 @@ class TestFileUpload:
             'files': [(io.BytesIO(b'test'), 'test.jpg')]
         }
         response = client.post('/upload', data=data)
-        assert response.status_code == 401
+        assert response.status_code == 302
 
     def test_upload_valid_image(self, client):
         """上传有效图片"""
@@ -134,10 +136,9 @@ class TestFileUpload:
         response = client.post(
             '/upload',
             data=data,
-            headers={'Authorization': 'Basic YWRtaW46Q2hhbmdlTWUxMjMh'}  # admin:ChangeMe123!
+            headers={'Authorization': 'Basic YWRtaW46VGVzdFBhc3MxMjMh'}  # admin:TestPass123!
         )
-        # 应该成功（200）或因为其他业务逻辑失败，但不应该因为 MIME 验证失败
-        assert response.status_code in [200, 400]
+        assert response.status_code == 200
 
     def test_upload_invalid_extension(self, client):
         """上传无效扩展名"""
@@ -147,7 +148,6 @@ class TestFileUpload:
         response = client.post(
             '/upload',
             data=data,
-            headers={'Authorization': 'Basic YWRtaW46Q2hhbmdlTWUxMjMh'}
+            headers={'Authorization': 'Basic YWRtaW46VGVzdFBhc3MxMjMh'}
         )
-        # 应该被 allowed_file() 拒绝
         assert response.status_code == 400

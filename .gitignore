@@ -65,3 +65,10 @@ cookies.txt
 
 # Android Project (已包含在开源版本中，用于 CI 构建)
 # android_project/
+
+# Temporary files
+tmp_*.html
+*-preview*.png
+index-*.png
+login-preview*.png
+downloaded_script.js

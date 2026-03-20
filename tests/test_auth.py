@@ -34,11 +34,8 @@ class TestAuth:
 
         # 检查包含迭代次数
         parts = pwd_hash.split('$')
-        assert len(parts) >= 4
-        assert parts[1] == 'pbkdf2'
-        assert parts[2] == 'sha256'
-        # 迭代次数应该是 600000
-        assert int(parts[3]) == 600000
+        assert len(parts) == 3
+        assert parts[0] == 'pbkdf2:sha256:600000'
 
     def test_unique_salts(self):
         """相同密码生成不同哈希（盐值不同）"""
@@ -119,6 +116,22 @@ class TestAuth:
         assert verify_password(password, pwd_hash) == True
         assert verify_password('Wrong', pwd_hash) == False
 
+    def test_static_subpaths_are_excluded_from_auth(self):
+        """静态资源子路径不应被认证拦截"""
+        from flask import Flask
+        from auth import EnhancedAuth
+
+        app = Flask(__name__)
+        app.config['SECRET_KEY'] = 'test-secret-key'
+
+        auth = EnhancedAuth()
+        auth.init_app(app)
+        auth.set_users({'admin': 'TestPass123!'}, hash_passwords=True)
+
+        with app.test_request_context('/static/photos/example.jpg'):
+            assert auth._is_excluded_path('/static/photos/example.jpg') is True
+            assert auth.check_auth('any-user', 'any-password') is True
+
 
 class TestManageUsersCLI:
     """密码管理工具测试"""
@@ -137,7 +150,7 @@ class TestManageUsersCLI:
         import subprocess
 
         result = subprocess.run(
-            ['python', 'tools/manage_users.py', 'hash', 'TestPass123!'],
+            [sys.executable, 'tools/manage_users.py', 'hash', 'TestPass123!'],
             capture_output=True,
             text=True,
             cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -153,7 +166,7 @@ class TestManageUsersCLI:
 
         # 强密码
         result = subprocess.run(
-            ['python', 'tools/manage_users.py', 'check', 'SecurePass123!'],
+            [sys.executable, 'tools/manage_users.py', 'check', 'SecurePass123!'],
             capture_output=True,
             text=True,
             cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -164,7 +177,7 @@ class TestManageUsersCLI:
 
         # 弱密码
         result = subprocess.run(
-            ['python', 'tools/manage_users.py', 'check', '123456'],
+            [sys.executable, 'tools/manage_users.py', 'check', '123456'],
             capture_output=True,
             text=True,
             cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

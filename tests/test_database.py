@@ -34,10 +34,16 @@ class TestDatabaseInit:
             c = conn.cursor()
             c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='photos'")
             result = c.fetchone()
-            conn.close()
 
             assert result is not None
             assert result[0] == 'photos'
+
+            c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='app_state'")
+            assert c.fetchone() is not None
+
+            c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='messages'")
+            assert c.fetchone() is not None
+            conn.close()
         finally:
             os.unlink(temp_db.name)
 
@@ -59,6 +65,29 @@ class TestDatabaseInit:
             conn.close()
 
             assert result[0].lower() == 'wal'
+        finally:
+            os.unlink(temp_db.name)
+
+    def test_init_db_applies_pragmas(self):
+        """初始化数据库应用稳定性 PRAGMA"""
+        from services.database import init_database, set_db_file, get_db_connection
+
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+        temp_db.close()
+
+        try:
+            init_database(temp_db.name)
+            set_db_file(temp_db.name)
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute("PRAGMA synchronous")
+            synchronous = c.fetchone()[0]
+            c.execute("PRAGMA foreign_keys")
+            foreign_keys = c.fetchone()[0]
+            conn.close()
+
+            assert synchronous in (1, 2, 3)
+            assert foreign_keys == 1
         finally:
             os.unlink(temp_db.name)
 
@@ -293,3 +322,72 @@ class TestDatabaseConcurrency:
             assert all(r == 10 for r in results)
         finally:
             os.unlink(temp_db.name)
+
+
+class TestAppStateDAO:
+    """应用状态存储测试"""
+
+    def test_force_show_state_persists_in_db(self):
+        from services.database import init_database, set_db_file, AppStateDAO
+        import tempfile
+
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+        temp_db.close()
+
+        try:
+            set_db_file(temp_db.name)
+            init_database(temp_db.name)
+
+            AppStateDAO.set_json('force_show', {'img_url': 'photo.jpg', 'expiry_timestamp': 12345})
+            state = AppStateDAO.get_json('force_show')
+
+            assert state['img_url'] == 'photo.jpg'
+            assert state['expiry_timestamp'] == 12345
+        finally:
+            os.unlink(temp_db.name)
+
+
+class TestMessageDAO:
+    """留言存储测试"""
+
+    def test_insert_message_keeps_recent_records(self):
+        from services.database import init_database, set_db_file, MessageDAO
+        import tempfile
+
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+        temp_db.close()
+
+        try:
+            set_db_file(temp_db.name)
+            init_database(temp_db.name)
+
+            for i in range(3):
+                MessageDAO.insert_message(
+                    {
+                        'id': str(i),
+                        'content': f'msg-{i}',
+                        'sender': 'tester',
+                        'timestamp': '03-19 12:00',
+                    },
+                    keep_last=2
+                )
+
+            messages = MessageDAO.get_recent(limit=10)
+            assert len(messages) == 2
+            assert [m['id'] for m in messages] == ['1', '2']
+        finally:
+            os.unlink(temp_db.name)
+
+
+class TestBackgroundRebuilder:
+    """后台自修复线程测试"""
+
+    def test_background_rebuilder_disabled_by_config(self, monkeypatch):
+        from services import photo_index
+
+        monkeypatch.setattr(photo_index.config, 'ENABLE_BACKGROUND_INDEX_REBUILD', False)
+        monkeypatch.setattr(photo_index, '_background_rebuilder_started', False)
+
+        photo_index.PhotoIndexService.start_background_rebuilder('/tmp/none', {}, None)
+
+        assert photo_index._background_rebuilder_started is False

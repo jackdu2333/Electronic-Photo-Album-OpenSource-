@@ -3,7 +3,6 @@
 照片状态、列表、删除、天气等 API
 """
 import os
-import ssl
 import json
 import logging
 import urllib.request
@@ -79,7 +78,7 @@ def update_photo():
     data = request.get_json()
     filename = data.get('filename')
     new_date = data.get('date')
-    new_tags = data.get('tags')
+    new_tags = data.get('tags', '')
 
     if not filename:
         return jsonify({'error': 'Missing filename'}), 400
@@ -88,8 +87,18 @@ def update_photo():
     PhotoMetadataService.update(filename, new_date, new_tags)
     PhotoMetadataService.save()
 
+    # 重新计算 month 和 weight，避免人工编辑后推荐数据被写坏
+    new_month = None
+    if new_date:
+        try:
+            new_month = datetime.strptime(new_date, '%Y-%m-%d').month
+        except ValueError:
+            return jsonify({'error': 'Invalid date format, expected YYYY-MM-DD'}), 400
+
+    new_weight = PhotoIndexService.calculate_weight(new_tags, config.TAG_WEIGHTS)
+
     # 更新索引
-    PhotoIndexService.update_photo(filename, new_date, None, new_tags, 1.0)
+    PhotoIndexService.update_photo(filename, new_date, new_month, new_tags, new_weight)
 
     return jsonify({'message': 'Updated successfully'})
 
@@ -161,10 +170,9 @@ def weather_config():
         return jsonify({'enabled': False})
 
     try:
-        # 调用 Open-Meteo API 获取天气 (跳过 SSL 校验以解决本地环境证书缺失问题)
-        context = ssl._create_unverified_context()
+        # 调用 Open-Meteo API 获取天气
         url = f'https://api.open-meteo.com/v1/forecast?latitude={config.WEATHER_LAT}&longitude={config.WEATHER_LON}&current=temperature_2m,weather_code&timezone=auto'
-        with urllib.request.urlopen(url, timeout=5, context=context) as response:
+        with urllib.request.urlopen(url, timeout=5) as response:
             data = json.loads(response.read().decode())
 
         result = {

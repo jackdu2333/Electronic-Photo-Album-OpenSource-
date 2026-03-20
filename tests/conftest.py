@@ -17,12 +17,14 @@ def test_env():
         'FLASK_DEBUG': os.environ.get('FLASK_DEBUG'),
         'SECRET_KEY': os.environ.get('SECRET_KEY'),
         'ADMIN_USERS': os.environ.get('ADMIN_USERS'),
+        'ENABLE_BACKGROUND_INDEX_REBUILD': os.environ.get('ENABLE_BACKGROUND_INDEX_REBUILD'),
     }
 
     # 设置测试环境
     os.environ['FLASK_DEBUG'] = 'true'
     os.environ['SECRET_KEY'] = 'test-secret-key-for-testing-only-12345678'
     os.environ['ADMIN_USERS'] = 'admin:TestPass123!'
+    os.environ['ENABLE_BACKGROUND_INDEX_REBUILD'] = 'false'
 
     yield
 

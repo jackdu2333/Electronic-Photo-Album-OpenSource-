@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>照片管理 - OneTwo Photo Frame</title>
     <!-- Google Font 'Inter' -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -423,6 +424,7 @@
         const grid = document.getElementById('photo-grid');
         const loadMoreBtn = document.getElementById('load-more-btn');
         const searchInput = document.getElementById('search-input');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
         // Init
         document.addEventListener('DOMContentLoaded', () => {
@@ -674,7 +676,10 @@
             try {
                 const res = await fetch('/api/update_photo', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
                     body: JSON.stringify({
                         filename: filename,
                         date: newDate,

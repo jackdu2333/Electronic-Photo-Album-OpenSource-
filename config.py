@@ -104,6 +104,18 @@ class Config:
         self.LOG_MAX_SIZE_MB = self._get_int('LOG_MAX_SIZE_MB', 10, min_val=1, max_val=100)
         self.LOG_BACKUP_COUNT = self._get_int('LOG_BACKUP_COUNT', 5, min_val=1, max_val=30)
 
+        # 数据库稳定性配置
+        self.SQLITE_BUSY_TIMEOUT_MS = self._get_int('SQLITE_BUSY_TIMEOUT_MS', 10000, min_val=1000, max_val=60000)
+        self.SQLITE_SYNCHRONOUS = os.environ.get('SQLITE_SYNCHRONOUS', 'NORMAL').strip().upper() or 'NORMAL'
+        if self.SQLITE_SYNCHRONOUS not in {'OFF', 'NORMAL', 'FULL', 'EXTRA'}:
+            self.SQLITE_SYNCHRONOUS = 'NORMAL'
+
+        # 自修复任务配置
+        self.INDEX_REBUILD_INTERVAL_SECONDS = self._get_int(
+            'INDEX_REBUILD_INTERVAL_SECONDS', 1800, min_val=60, max_val=86400
+        )
+        self.ENABLE_BACKGROUND_INDEX_REBUILD = self._get_bool('ENABLE_BACKGROUND_INDEX_REBUILD', True)
+
         # 上传文件夹
         self.UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'static/photos')
 
@@ -156,7 +168,8 @@ class Config:
         if not value:
             return users
 
-        for pair in value.split(','):
+        normalized = value.replace('，', ',').replace('：', ':')
+        for pair in normalized.split(','):
             if ':' in pair:
                 u, p = pair.split(':', 1)
                 users[u.strip()] = p.strip()
@@ -168,7 +181,8 @@ class Config:
         if not value:
             return weights
 
-        for pair in value.split(','):
+        normalized = value.replace('，', ',').replace('：', ':')
+        for pair in normalized.split(','):
             if ':' in pair:
                 k, v = pair.split(':', 1)
                 try:

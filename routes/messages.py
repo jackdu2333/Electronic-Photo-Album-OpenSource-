@@ -6,34 +6,47 @@ import os
 import json
 import time
 import logging
+import threading
+import uuid
 from datetime import datetime
 from flask import Blueprint, jsonify, request, session
 
 from auth import EnhancedAuth
+from config import config
+from services.database import MessageDAO
 
 logger = logging.getLogger(__name__)
 
 messages_bp = Blueprint('messages', __name__, url_prefix='/api')
 
-# 留言文件路径（从 config 读取）
-MESSAGES_FILE = 'messages.json'
+# 留言文件路径（从 config 读取，支持环境变量覆盖）
+MESSAGES_FILE = config.MESSAGES_FILE
+_migration_lock = threading.Lock()
+_messages_migrated = False
 
 
-def load_messages():
-    """加载留言"""
-    if not os.path.exists(MESSAGES_FILE):
-        return []
-    try:
-        with open(MESSAGES_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return []
+def migrate_legacy_messages_if_needed():
+    """把旧 JSON 留言迁移到 SQLite，避免并发写丢消息"""
+    global _messages_migrated
+    if _messages_migrated:
+        return
 
+    with _migration_lock:
+        if _messages_migrated:
+            return
 
-def save_messages(messages):
-    """保存留言"""
-    with open(MESSAGES_FILE, 'w', encoding='utf-8') as f:
-        json.dump(messages, f, ensure_ascii=False, indent=2)
+        if MessageDAO.get_count() == 0 and os.path.exists(MESSAGES_FILE):
+            try:
+                with open(MESSAGES_FILE, 'r', encoding='utf-8') as f:
+                    legacy_messages = json.load(f)
+                if isinstance(legacy_messages, list):
+                    inserted = MessageDAO.insert_many(legacy_messages)
+                    if inserted:
+                        logger.info(f"Migrated {inserted} legacy messages from JSON to SQLite")
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning(f"Skip legacy message migration: {e}")
+
+        _messages_migrated = True
 
 
 @messages_bp.route('/messages', methods=['GET'])
@@ -48,8 +61,9 @@ def get_messages():
         JSON: [{id, content, sender, timestamp}, ...]
     """
     limit = request.args.get('limit', default=50, type=int)
-    messages = load_messages()
-    resp = jsonify(messages[-limit:])
+    migrate_legacy_messages_if_needed()
+    messages = MessageDAO.get_recent(limit=limit)
+    resp = jsonify(messages)
     resp.headers['Cache-Control'] = 'no-store'
     return resp
 
@@ -76,19 +90,13 @@ def send_message():
              (request.authorization.username if request.authorization else 'Guest')
 
     msg = {
-        'id': str(int(time.time() * 1000)),
+        'id': uuid.uuid4().hex,
         'content': content,
         'sender': sender,
         'timestamp': datetime.now().strftime('%m-%d %H:%M')
     }
 
-    messages = load_messages()
-    messages.append(msg)
-
-    # Keep last 200 Messages to prevent file from growing largely
-    if len(messages) > 200:
-        messages = messages[-200:]
-
-    save_messages(messages)
+    migrate_legacy_messages_if_needed()
+    MessageDAO.insert_message(msg, keep_last=200)
 
     return jsonify(msg)

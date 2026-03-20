@@ -113,8 +113,18 @@ class TestRecommendationAlgorithm:
         # 高权重照片应该更频繁出现
         if results:
             weight_2_count = sum(1 for r in results if 'photo1' in r)
-            # photo1 权重最高 (2.0)，应该占多数
-            assert weight_2_count >= len(results) * 0.2  # 至少 20%
+            low_weight_count = sum(1 for r in results if 'photo5' in r)
+            assert weight_2_count >= low_weight_count
+
+    def test_force_show_state_is_persistent(self, app_with_photos):
+        from services.recommendation import set_force_show, get_force_show_state
+        import time
+
+        set_force_show('photo1.jpg', time.time() + 60)
+        force_url, expiry = get_force_show_state()
+
+        assert force_url == 'photo1.jpg'
+        assert expiry > time.time()
 
 
 class TestWeightedScoring:

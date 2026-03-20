@@ -4,7 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>数字相框 - Digital Photo Frame</title>
+    <script>
+        (function () {
+            const savedStyle = localStorage.getItem('photoFrameHomeStyle') || 'style-2';
+            document.documentElement.setAttribute('data-home-style', savedStyle);
+        })();
+    </script>
     <!-- Config from backend -->
     <script>
         window.BABY_CONFIG = {
@@ -22,13 +29,27 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #000;
+            background:
+                radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.05), transparent 22%),
+                radial-gradient(circle at 82% 16%, rgba(66, 94, 145, 0.10), transparent 26%),
+                #030405;
             color: #fff;
             width: 100vw;
             height: 100vh;
             overflow: hidden;
             display: flex;
             /* Flex container for split layout */
+        }
+
+        .info-panel,
+        .photo-panel,
+        #slideshow-container,
+        #controls,
+        .weather-widget,
+        .slide-date,
+        #chat-container,
+        .message-bubble {
+            transition: all 0.45s ease;
         }
 
         /* --- Layout --- */
@@ -47,6 +68,28 @@
             /* Reduced gap to save space */
             position: relative;
             /* Ensure absolute children position relative to this */
+            background:
+                linear-gradient(180deg, rgba(4, 5, 8, 0.96), rgba(4, 5, 8, 0.78) 58%, rgba(4, 5, 8, 0.58));
+            box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
+        }
+
+        .info-top {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .info-bottom {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-height: 0;
+            flex: 1;
+            justify-content: flex-end;
+            margin-top: 28px;
+            position: relative;
         }
 
         .photo-panel {
@@ -63,27 +106,35 @@
         /* --- Info Components (iOS Style) --- */
 
         .greeting {
-            font-size: 24px;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.82);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
             margin-bottom: -10px;
         }
 
         .time {
-            font-size: 120px;
+            font-size: 116px;
             font-weight: 300;
             color: #fff;
-            line-height: 1.0;
-            letter-spacing: -2px;
+            line-height: 0.94;
+            letter-spacing: -4px;
+            text-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
         }
 
         .date {
-            font-size: 28px;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.7);
-            letter-spacing: 1px;
-            margin-top: 5px;
+            font-size: 24px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.74);
+            letter-spacing: 0.04em;
+            margin-top: 8px;
             white-space: nowrap;
+        }
+
+        #weather-widget {
+            display: flex;
+            align-items: center;
         }
 
         .weather-widget {
@@ -92,8 +143,13 @@
             gap: 15px;
             margin-top: 20px;
             /* Reduced margin */
+            padding: 16px 18px;
             padding-left: 20px;
-            border-left: 4px solid #3498db;
+            border-left: 4px solid #55b6ff;
+            background: rgba(255, 255, 255, 0.045);
+            border-radius: 0 18px 18px 0;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
         }
 
         .weather-icon {
@@ -115,20 +171,20 @@
 
         .weather-desc {
             font-size: 18px;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.72);
             font-weight: 400;
         }
 
         /* --- Chat Interface --- */
         #chat-container {
-            /* flex: 1; Removed */
-            height: 180px;
+            flex: 1;
+            min-height: 120px;
+            max-height: 240px;
             /* Limit height roughly to 3 messages */
             width: 100%;
-            margin-top: auto;
-            /* Push to bottom */
-            margin-bottom: 60px;
-            overflow-y: scroll;
+            margin-top: 0;
+            margin-bottom: 64px;
+            overflow-y: auto;
             scrollbar-width: none;
             -ms-overflow-style: none;
             /* IE/Edge */
@@ -138,6 +194,8 @@
             flex-direction: column;
             gap: 10px;
             position: relative;
+            padding-right: 12px;
+            overscroll-behavior: contain;
             /* Fade out the top a bit */
             mask-image: linear-gradient(to bottom, transparent, black 20%);
             -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%);
@@ -152,8 +210,6 @@
             flex-direction: column;
             gap: 10px;
             padding-bottom: 10px;
-            /* Removed justify-content: flex-end to fix scrolling issues */
-            /* min-height: 100%; Removed to allow natural flow */
         }
 
         .message-row {
@@ -170,12 +226,13 @@
         }
 
         .message-bubble {
-            padding: 10px 14px;
-            border-radius: 18px;
-            font-size: 16px;
-            line-height: 1.4;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.55;
             word-wrap: break-word;
             position: relative;
+            backdrop-filter: blur(12px);
         }
 
         /* My Message (Right) */
@@ -186,10 +243,11 @@
         }
 
         .my-message .message-bubble {
-            background-color: rgba(10, 132, 255, 0.8);
+            background-color: rgba(10, 132, 255, 0.82);
             /* iOS Blue */
             color: white;
             border-bottom-right-radius: 12px;
+            box-shadow: 0 12px 28px rgba(10, 132, 255, 0.16);
         }
 
         /* Their Message (Left) */
@@ -199,10 +257,11 @@
         }
 
         .their-message .message-bubble {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.16);
             /* iOS Gray */
             color: white;
             border-bottom-left-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         #chat-input-area {
@@ -229,9 +288,9 @@
 
         #chat-input {
             flex: 1;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.18);
             /* Slightly lighter */
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.24);
             border-radius: 20px;
             padding: 12px 15px;
             /* Taller input */
@@ -273,9 +332,11 @@
             height: 100%;
             position: relative;
             background-color: #000;
-            border-radius: 20px;
+            border-radius: 28px;
             overflow: hidden;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            box-shadow:
+                0 24px 90px rgba(0, 0, 0, 0.34),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
         }
 
         .slide-group {
@@ -299,7 +360,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: blur(20px) brightness(70%);
+            filter: blur(20px) brightness(60%) saturate(0.92);
             z-index: 1;
         }
 
@@ -313,7 +374,7 @@
             height: 100%;
             object-fit: contain;
             z-index: 2;
-            filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+            filter: drop-shadow(0 24px 46px rgba(0, 0, 0, 0.34));
         }
 
         .slide-date {
@@ -321,20 +382,22 @@
             top: 40px;
             right: 40px;
             z-index: 10;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.96);
             font-size: 18px;
             font-weight: 500;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-            background: rgba(0, 0, 0, 0.3);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+            background: rgba(8, 12, 18, 0.52);
             padding: 8px 16px;
             border-radius: 20px;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             font-family: 'Inter', sans-serif;
             text-align: right;
             line-height: 1.4;
             opacity: 0;
             animation: fadeIn 1s ease-out 0.5s forwards;
             pointer-events: none;
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
         }
 
         @keyframes fadeIn {
@@ -375,8 +438,8 @@
         }
 
         #controls button {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.24);
             color: white;
             font-size: 24px;
             padding: 0;
@@ -389,12 +452,351 @@
             align-items: center;
             transition: all 0.3s ease;
             outline: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
         }
 
         #controls button:hover {
             background: rgba(255, 255, 255, 0.8);
             color: #333;
             transform: scale(1.1);
+        }
+
+        /* --- Hidden Home Style Switcher --- */
+        #home-style-hotspot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 90px;
+            height: 90px;
+            z-index: 420;
+            background: transparent;
+        }
+
+        #home-style-switcher {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 430;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px;
+            width: 220px;
+            border-radius: 18px;
+            background: rgba(10, 14, 20, 0.82);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.30);
+            opacity: 0;
+            transform: translateY(-10px) scale(0.98);
+            pointer-events: none;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        #home-style-switcher.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .style-switcher-title {
+            font-size: 12px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 2px;
+        }
+
+        .style-switcher-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.72);
+            line-height: 1.5;
+            margin-bottom: 4px;
+        }
+
+        .style-option {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.88);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .style-option:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: none;
+        }
+
+        .style-option.active {
+            background: rgba(10, 132, 255, 0.30);
+            border-color: rgba(10, 132, 255, 0.48);
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .style-option span {
+            font-size: 12px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.62);
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        .style-option.active span {
+            color: rgba(255, 255, 255, 0.86);
+        }
+
+        /* --- Home Style 2: Immersive --- */
+        html[data-home-style="style-2"] body {
+            background:
+                radial-gradient(circle at top right, rgba(82, 119, 186, 0.24), transparent 30%),
+                radial-gradient(circle at bottom left, rgba(255, 189, 120, 0.12), transparent 28%),
+                #06080c;
+        }
+
+        html[data-home-style="style-2"] .photo-panel {
+            width: 100%;
+            padding: 18px;
+        }
+
+        html[data-home-style="style-2"] .info-panel {
+            position: fixed;
+            left: 24px;
+            top: 24px;
+            bottom: auto;
+            height: calc(100vh - 48px);
+            width: 380px;
+            z-index: 120;
+            padding: 30px;
+            border-radius: 32px;
+            background:
+                linear-gradient(180deg, rgba(10, 13, 20, 0.88), rgba(10, 13, 20, 0.48)),
+                radial-gradient(circle at top right, rgba(121, 154, 214, 0.16), transparent 36%);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 28px 90px rgba(0, 0, 0, 0.40);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            justify-content: flex-start;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        html[data-home-style="style-2"] .greeting {
+            font-size: 18px;
+            margin-bottom: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        html[data-home-style="style-2"] .time {
+            font-size: 96px;
+            letter-spacing: -3px;
+        }
+
+        html[data-home-style="style-2"] .date {
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.74);
+        }
+
+        html[data-home-style="style-2"] .weather-widget {
+            margin-top: 14px;
+            padding: 16px 18px;
+            width: calc(100% - 36px);
+            border-left: none;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.09);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        html[data-home-style="style-2"] #chat-container {
+            height: auto;
+            max-height: 190px;
+            margin-top: 0;
+            margin-bottom: 0;
+            padding-right: 4px;
+            mask-image: none;
+            -webkit-mask-image: none;
+        }
+
+        html[data-home-style="style-2"] .message-row {
+            max-width: 100%;
+        }
+
+        html[data-home-style="style-2"] .message-bubble {
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.13);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        html[data-home-style="style-2"] .my-message .message-bubble {
+            background: rgba(10, 132, 255, 0.72);
+        }
+
+        html[data-home-style="style-2"] #chat-input-area {
+            position: static;
+            width: 100%;
+            padding: 0;
+            opacity: 1;
+            margin-top: 12px;
+        }
+
+        html[data-home-style="style-2"] #slideshow-container {
+            border-radius: 34px;
+            background:
+                radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 26%),
+                linear-gradient(160deg, rgba(11, 14, 20, 0.96), rgba(4, 6, 10, 0.92));
+            box-shadow:
+                0 44px 120px rgba(0, 0, 0, 0.30),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        html[data-home-style="style-2"] .slide-bg {
+            filter: blur(28px) brightness(48%) saturate(0.96);
+            transform: scale(1.08);
+        }
+
+        html[data-home-style="style-2"] .slide {
+            padding: 44px 38px 44px 112px;
+            box-sizing: border-box;
+            object-fit: contain;
+            object-position: 60% center;
+            filter: drop-shadow(0 32px 64px rgba(0, 0, 0, 0.36));
+        }
+
+        html[data-home-style="style-2"] .slide-date {
+            top: 24px;
+            right: 24px;
+            background: rgba(9, 14, 22, 0.66);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        html[data-home-style="style-2"] #controls {
+            bottom: 24px;
+            right: 24px;
+            opacity: 1;
+        }
+
+        html[data-home-style="style-2"] #controls button {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(12px);
+        }
+
+        html[data-home-style="style-2"] #controls button:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        /* --- Home Style 3: Gallery --- */
+        html[data-home-style="style-3"] body {
+            background:
+                linear-gradient(180deg, #f0ece5 0%, #e7e0d4 44%, #ddd3c4 100%);
+            color: #161616;
+        }
+
+        html[data-home-style="style-3"] .info-panel {
+            width: 28%;
+            min-width: 320px;
+            padding-left: 42px;
+            padding-top: 9vh;
+            color: #161616;
+            background:
+                linear-gradient(180deg, rgba(245, 239, 229, 0.88), rgba(235, 226, 211, 0.60));
+            box-shadow: inset -1px 0 0 rgba(58, 47, 37, 0.06);
+        }
+
+        html[data-home-style="style-3"] .greeting,
+        html[data-home-style="style-3"] .date,
+        html[data-home-style="style-3"] .weather-desc,
+        html[data-home-style="style-3"] .sender-name {
+            color: rgba(22, 22, 22, 0.58);
+        }
+
+        html[data-home-style="style-3"] .time,
+        html[data-home-style="style-3"] .weather-temp {
+            color: #161616;
+        }
+
+        html[data-home-style="style-3"] .photo-panel {
+            width: 72%;
+            padding: 42px 42px 42px 10px;
+        }
+
+        html[data-home-style="style-3"] #slideshow-container {
+            border-radius: 38px;
+            background: #f8f3ea;
+            box-shadow:
+                0 34px 90px rgba(63, 47, 26, 0.14),
+                inset 0 0 0 1px rgba(48, 36, 20, 0.06);
+        }
+
+        html[data-home-style="style-3"] .slide-bg {
+            filter: blur(30px) brightness(98%) saturate(0.72);
+            opacity: 0.82;
+            transform: scale(1.05);
+        }
+
+        html[data-home-style="style-3"] .slide {
+            padding: 46px;
+            box-sizing: border-box;
+            object-fit: contain;
+            object-position: center center;
+            filter: drop-shadow(0 22px 46px rgba(43, 31, 12, 0.18));
+        }
+
+        html[data-home-style="style-3"] .slide-date {
+            top: auto;
+            bottom: 28px;
+            right: 28px;
+            color: rgba(20, 15, 10, 0.92);
+            background: rgba(255, 249, 241, 0.84);
+            text-shadow: none;
+            border-radius: 16px;
+            border: 1px solid rgba(58, 47, 37, 0.10);
+        }
+
+        html[data-home-style="style-3"] .weather-widget {
+            border-left-color: #88643d;
+        }
+
+        html[data-home-style="style-3"] .their-message .message-bubble {
+            background-color: rgba(36, 27, 16, 0.08);
+            color: #161616;
+        }
+
+        html[data-home-style="style-3"] .my-message .message-bubble {
+            background-color: rgba(138, 100, 61, 0.92);
+            color: #fff;
+        }
+
+        html[data-home-style="style-3"] #chat-input {
+            background: rgba(255, 255, 255, 0.72);
+            color: #161616;
+            border-color: rgba(22, 22, 22, 0.12);
+        }
+
+        html[data-home-style="style-3"] #chat-input::placeholder {
+            color: rgba(22, 22, 22, 0.42);
+        }
+
+        html[data-home-style="style-3"] #controls button {
+            background: rgba(255, 249, 241, 0.64);
+            color: #3a2f25;
+            border-color: rgba(58, 47, 37, 0.14);
+        }
+
+        html[data-home-style="style-3"] #controls button:hover {
+            background: rgba(255, 249, 241, 0.92);
+            color: #161616;
         }
 
         /* --- V2.2 Mobile: Portrait Mode --- */
@@ -405,14 +807,17 @@
                 overflow-y: auto;
                 height: auto;
                 min-height: 100vh;
+                background:
+                    radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 24%),
+                    #050608;
             }
 
             .photo-panel {
                 width: 100%;
-                height: 55vw;
-                /* Proportional to width */
-                min-height: 240px;
-                padding: 10px;
+                height: 52vh;
+                min-height: 280px;
+                max-height: 58vh;
+                padding: 12px 12px 6px;
                 order: 1;
                 /* TOP */
             }
@@ -420,33 +825,91 @@
             .info-panel {
                 width: 100%;
                 height: auto;
-                padding: 20px 24px 80px 24px;
-                padding-top: 20px;
+                min-height: calc(48vh - 18px);
+                padding: 18px 20px 84px;
                 order: 2;
                 /* BOTTOM */
                 justify-content: flex-start;
+                gap: 18px;
+                background:
+                    linear-gradient(180deg, rgba(7, 9, 14, 0.96), rgba(7, 9, 14, 0.86));
+                box-shadow: none;
             }
 
             .time {
-                font-size: 72px;
+                font-size: 68px;
+                letter-spacing: -2px;
             }
 
             .greeting {
-                font-size: 18px;
-            }
-
-            .date {
                 font-size: 16px;
             }
 
+            .date {
+                font-size: 15px;
+                white-space: normal;
+            }
+
             #chat-container {
+                min-height: 96px;
                 height: 120px;
+                max-height: 140px;
+                margin-bottom: 56px;
+                padding-right: 6px;
             }
 
             #controls {
                 opacity: 1;
                 bottom: 12px;
                 right: 12px;
+            }
+
+            #slideshow-container {
+                border-radius: 22px;
+            }
+
+            .slide-date {
+                top: 16px;
+                right: 16px;
+                font-size: 14px;
+                padding: 7px 12px;
+            }
+
+            .weather-widget {
+                margin-top: 8px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .weather-temp {
+                font-size: 28px;
+            }
+
+            .weather-desc {
+                font-size: 16px;
+            }
+
+            .info-top {
+                gap: 8px;
+            }
+
+            .info-bottom {
+                margin-top: 10px;
+            }
+
+            #chat-input-area {
+                padding: 12px 16px 14px 20px;
+            }
+
+            #chat-input {
+                padding: 11px 14px;
+                font-size: 15px;
+            }
+
+            .message-bubble {
+                font-size: 14px;
+                line-height: 1.45;
+                padding: 10px 14px;
             }
         }
 
@@ -460,26 +923,84 @@
             }
 
             .info-panel {
-                width: 35%;
+                width: 34%;
                 height: 100%;
-                padding-top: 15vh;
-                padding-left: 30px;
+                min-width: 280px;
+                padding-top: 10vh;
+                padding-left: 28px;
+                padding-right: 18px;
                 order: 1;
             }
 
             .photo-panel {
-                width: 65%;
+                width: 66%;
                 height: 100%;
-                padding: 15px;
+                padding: 14px;
                 order: 2;
             }
 
             .time {
-                font-size: 80px;
+                font-size: 74px;
+                letter-spacing: -2px;
             }
 
             .date {
-                font-size: 22px;
+                font-size: 18px;
+            }
+
+            .greeting {
+                font-size: 16px;
+            }
+
+            .weather-widget {
+                margin-top: 14px;
+                padding: 12px 14px 12px 16px;
+            }
+
+            .weather-temp {
+                font-size: 28px;
+            }
+
+            .weather-desc {
+                font-size: 15px;
+            }
+
+            #chat-container {
+                min-height: 92px;
+                max-height: 150px;
+                margin-bottom: 68px;
+                padding-right: 6px;
+            }
+
+            #chat-input-area {
+                padding: 8px 10px 10px 28px;
+                gap: 8px;
+            }
+
+            .message-bubble {
+                font-size: 14px;
+                line-height: 1.45;
+                padding: 10px 14px;
+            }
+
+            #chat-input {
+                padding: 9px 12px;
+                font-size: 14px;
+            }
+
+            #chat-send-btn {
+                font-size: 20px;
+            }
+
+            #slideshow-container {
+                border-radius: 22px;
+            }
+
+            .slide-date {
+                top: 18px;
+                right: 18px;
+                font-size: 15px;
+                padding: 8px 13px;
             }
         }
 
@@ -493,6 +1014,17 @@
         }
 
         @media screen and (max-width: 1024px) {
+            #home-style-hotspot {
+                width: 70px;
+                height: 70px;
+            }
+
+            #home-style-switcher {
+                top: 12px;
+                left: 12px;
+                width: min(220px, calc(100vw - 24px));
+            }
+
             #admin-toggle-btn {
                 display: flex;
                 position: fixed;
@@ -561,11 +1093,193 @@
                 background: rgba(255, 255, 255, 0.25);
             }
         }
+
+        @media screen and (max-width: 1024px) {
+            html[data-home-style="style-2"] body,
+            html[data-home-style="style-3"] body {
+                flex-direction: column;
+                overflow-y: auto;
+                min-height: 100vh;
+                height: auto;
+            }
+
+            html[data-home-style="style-2"] .photo-panel,
+            html[data-home-style="style-3"] .photo-panel {
+                width: 100%;
+                height: 52vh;
+                min-height: 280px;
+                max-height: 58vh;
+                padding: 12px 12px 6px;
+                order: 1;
+            }
+
+            html[data-home-style="style-2"] .info-panel,
+            html[data-home-style="style-3"] .info-panel {
+                position: relative;
+                left: auto;
+                top: auto;
+                bottom: auto;
+                width: 100%;
+                min-width: 0;
+                height: auto;
+                min-height: calc(48vh - 18px);
+                padding: 18px 20px 84px;
+                order: 2;
+                border-radius: 0;
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                backdrop-filter: none;
+            }
+
+            html[data-home-style="style-2"] #chat-input-area {
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                padding: 12px 16px 14px 20px;
+                opacity: 1;
+                margin-top: 0;
+            }
+
+            html[data-home-style="style-2"] .time,
+            html[data-home-style="style-3"] .time {
+                font-size: 68px;
+            }
+
+            html[data-home-style="style-2"] .date,
+            html[data-home-style="style-3"] .date {
+                font-size: 15px;
+            }
+
+            html[data-home-style="style-2"] #chat-container,
+            html[data-home-style="style-3"] #chat-container {
+                min-height: 96px;
+                height: 120px;
+                max-height: 140px;
+                margin-bottom: 0;
+            }
+
+            html[data-home-style="style-3"] .slide {
+                padding: 12px;
+            }
+
+            html[data-home-style="style-2"] .slide {
+                padding: 14px;
+                object-position: center center;
+            }
+
+            html[data-home-style="style-2"] .slide-date,
+            html[data-home-style="style-3"] .slide-date {
+                top: 16px;
+                right: 16px;
+                bottom: auto;
+                font-size: 14px;
+                padding: 7px 12px;
+            }
+        }
+
+        @media screen and (max-width: 1024px) and (orientation: landscape) {
+            html[data-home-style="style-2"] body,
+            html[data-home-style="style-3"] body {
+                flex-direction: row;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            html[data-home-style="style-2"] .info-panel,
+            html[data-home-style="style-3"] .info-panel {
+                position: relative;
+                left: auto;
+                top: auto;
+                bottom: auto;
+                width: 34%;
+                min-width: 280px;
+                height: 100%;
+                min-height: 0;
+                padding-top: 10vh;
+                padding-left: 28px;
+                padding-right: 18px;
+                padding-bottom: 72px;
+                order: 1;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+                overflow: visible;
+            }
+
+            html[data-home-style="style-2"] .photo-panel,
+            html[data-home-style="style-3"] .photo-panel {
+                width: 66%;
+                height: 100%;
+                min-height: 0;
+                max-height: none;
+                padding: 14px;
+                order: 2;
+            }
+
+            html[data-home-style="style-2"] .time,
+            html[data-home-style="style-3"] .time {
+                font-size: 74px;
+            }
+
+            html[data-home-style="style-2"] .date,
+            html[data-home-style="style-3"] .date {
+                font-size: 18px;
+            }
+
+            html[data-home-style="style-2"] #chat-container,
+            html[data-home-style="style-3"] #chat-container {
+                min-height: 92px;
+                max-height: 150px;
+                margin-bottom: 68px;
+            }
+
+            html[data-home-style="style-2"] #chat-input-area,
+            html[data-home-style="style-3"] #chat-input-area {
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                padding: 8px 10px 10px 28px;
+                gap: 8px;
+                opacity: 1;
+            }
+
+            html[data-home-style="style-2"] #chat-input,
+            html[data-home-style="style-3"] #chat-input {
+                padding: 9px 12px;
+                font-size: 14px;
+            }
+
+            html[data-home-style="style-2"] #chat-send-btn,
+            html[data-home-style="style-3"] #chat-send-btn {
+                font-size: 20px;
+            }
+        }
     </style>
 </head>
 
 
 <body>
+    <div id="home-style-hotspot" aria-hidden="true"></div>
+    <div id="home-style-switcher" aria-label="首页样式切换">
+        <div class="style-switcher-title">Display Mode</div>
+        <div class="style-switcher-subtitle">首页左上角唤出，随时切换相框呈现方式。</div>
+        <button class="style-option" data-style="style-1">
+            样式一
+            <span>当前经典分栏布局，信息区与照片区并列展示。</span>
+        </button>
+        <button class="style-option" data-style="style-2">
+            样式二
+            <span>沉浸全屏相框，照片更强势，信息以悬浮面板出现。</span>
+        </button>
+        <button class="style-option" data-style="style-3">
+            样式三
+            <span>画廊展签风，更柔和、更像展厅里的作品陈列。</span>
+        </button>
+    </div>
+
     <!-- Left Panel: Info -->
     <div class="info-panel">
         <!-- V2.2 Gear Toggle Button (mobile only) -->
@@ -576,28 +1290,32 @@
             <a href="/admin/manage" class="admin-btn">🖼️ 相册整理</a>
         </div>
 
-        <div class="greeting" id="greeting">Hello</div>
-        <div class="time" id="clock-time">--:--</div>
-        <div class="date" id="clock-date">----年--月--日 星期-</div>
+        <div class="info-top">
+            <div class="greeting" id="greeting">Hello</div>
+            <div class="time" id="clock-time">--:--</div>
+            <div class="date" id="clock-date">----年--月--日 星期-</div>
 
-        <div class="weather-widget">
-            <div class="weather-icon" id="weather-icon">☁️</div>
-            <div class="weather-info">
-                <span class="weather-temp" id="weather-temp">--°C</span>
-                <span class="weather-desc" id="weather-desc">Loading...</span>
+            <div class="weather-widget" id="weather-widget">
+                <div class="weather-icon" id="weather-icon">☁️</div>
+                <div class="weather-info">
+                    <span class="weather-temp" id="weather-temp">--°C</span>
+                    <span class="weather-desc" id="weather-desc">Loading...</span>
+                </div>
             </div>
         </div>
 
-        <!-- Chat Interface -->
-        <div id="chat-container">
-            <div id="chat-messages">
-                <!-- Messages will be injected here -->
+        <div class="info-bottom">
+            <!-- Chat Interface -->
+            <div id="chat-container">
+                <div id="chat-messages">
+                    <!-- Messages will be injected here -->
+                </div>
             </div>
-        </div>
 
-        <div id="chat-input-area">
-            <input type="text" id="chat-input" placeholder="留个言..." autocomplete="off">
-            <button id="chat-send-btn">➤</button>
+            <div id="chat-input-area">
+                <input type="text" id="chat-input" placeholder="留个言..." autocomplete="off">
+                <button id="chat-send-btn">➤</button>
+            </div>
         </div>
     </div>
 
@@ -629,6 +1347,71 @@
             document.addEventListener('click', function () {
                 adminEntry.classList.remove('visible');
                 toggleBtn.classList.remove('open');
+            });
+        })();
+
+        (function () {
+            const hotspot = document.getElementById('home-style-hotspot');
+            const switcher = document.getElementById('home-style-switcher');
+            const optionButtons = Array.from(document.querySelectorAll('.style-option'));
+            const root = document.documentElement;
+            let hideTimer = null;
+
+            if (!hotspot || !switcher || optionButtons.length === 0) return;
+
+            function currentStyle() {
+                return root.getAttribute('data-home-style') || 'style-1';
+            }
+
+            function syncActiveState() {
+                const activeStyle = currentStyle();
+                optionButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.style === activeStyle);
+                });
+            }
+
+            function showSwitcher() {
+                clearTimeout(hideTimer);
+                switcher.classList.add('visible');
+            }
+
+            function hideSwitcher(delay = 220) {
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(() => {
+                    switcher.classList.remove('visible');
+                }, delay);
+            }
+
+            function applyStyle(style) {
+                root.setAttribute('data-home-style', style);
+                localStorage.setItem('photoFrameHomeStyle', style);
+                syncActiveState();
+            }
+
+            syncActiveState();
+
+            hotspot.addEventListener('mouseenter', showSwitcher);
+            switcher.addEventListener('mouseenter', showSwitcher);
+            hotspot.addEventListener('mouseleave', () => hideSwitcher());
+            switcher.addEventListener('mouseleave', () => hideSwitcher());
+
+            hotspot.addEventListener('click', function (e) {
+                e.stopPropagation();
+                switcher.classList.toggle('visible');
+            });
+
+            optionButtons.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    applyStyle(btn.dataset.style);
+                    hideSwitcher(120);
+                });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!switcher.contains(e.target) && !hotspot.contains(e.target)) {
+                    switcher.classList.remove('visible');
+                }
             });
         })();
     </script>

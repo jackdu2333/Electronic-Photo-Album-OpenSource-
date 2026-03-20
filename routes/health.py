@@ -2,14 +2,14 @@
 健康检查路由模块
 提供 Kubernetes 兼容的健康检查端点
 """
-import sqlite3
 import os
+import shutil
 import logging
 from datetime import datetime
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, current_app
 
 from services.database import get_db_connection, DB_FILE
-from services.photo_index import get_photo_index
+from services.photo_index import get_photo_index, PhotoIndexService
 
 logger = logging.getLogger(__name__)
 
@@ -22,44 +22,62 @@ def health_check():
     健康检查端点 - 用于监控和负载均衡
 
     检查项目：
-    - 数据库连接
-    - 存储空间
+    - 数据库连接（实际执行查询）
+    - 存储空间（目录存在 + 磁盘剩余）
+    - 照片索引（内存中照片数量）
     """
     health = {
         'status': 'healthy',
         'version': '2.0.0',
         'timestamp': datetime.now().isoformat(),
-        'checks': {
-            'database': 'ok',
-            'storage': 'ok'
-        }
+        'checks': {}
     }
 
-    # 检查数据库连接
+    # ── 1. 数据库连接 ──────────────────────────────────────────
     try:
         conn = get_db_connection(timeout=5)
-        c = conn.cursor()
-        c.execute('SELECT COUNT(*) FROM photos')
-        count = c.fetchone()[0]
-        conn.close()
-        health['checks']['database'] = f'ok ({count} photos)'
+        try:
+            c = conn.cursor()
+            c.execute('SELECT COUNT(*) FROM photos')
+            count = c.fetchone()[0]
+            health['checks']['database'] = f'ok ({count} photos)'
+        finally:
+            conn.close()
     except Exception as e:
         health['status'] = 'unhealthy'
         health['checks']['database'] = f'error: {str(e)}'
+        logger.error(f'Health check DB error: {e}')
 
-    # 检查存储
+    # ── 2. 存储目录 + 磁盘剩余空间 ─────────────────────────────
     try:
-        from flask import current_app
         upload_folder = current_app.config.get('UPLOAD_FOLDER', 'static/photos')
         if not os.path.exists(upload_folder):
-            health['checks']['storage'] = f'warning: {upload_folder} not found'
+            health['status'] = 'unhealthy'
+            health['checks']['storage'] = f'error: {upload_folder} not found'
         else:
-            files = os.listdir(upload_folder)
-            health['checks']['storage'] = f'ok ({len(files)} files)'
+            files = [f for f in os.listdir(upload_folder)
+                     if os.path.isfile(os.path.join(upload_folder, f))]
+            disk = shutil.disk_usage(upload_folder)
+            free_gb = disk.free / (1024 ** 3)
+            storage_status = f'ok ({len(files)} files, {free_gb:.1f} GB free)'
+            # 磁盘剩余不足 500 MB 时降级为 warning
+            if free_gb < 0.5:
+                health['status'] = 'degraded'
+                storage_status = f'warning: low disk ({free_gb:.2f} GB free)'
+            health['checks']['storage'] = storage_status
     except Exception as e:
         health['checks']['storage'] = f'error: {str(e)}'
+        logger.error(f'Health check storage error: {e}')
 
-    status_code = 200 if health['status'] == 'healthy' else 503
+    # ── 3. 内存照片索引 ─────────────────────────────────────────
+    try:
+        index_count = PhotoIndexService.get_count()
+        health['checks']['photo_index'] = f'ok ({index_count} photos in memory)'
+    except Exception as e:
+        health['checks']['photo_index'] = f'error: {str(e)}'
+        logger.error(f'Health check index error: {e}')
+
+    status_code = 503 if health['status'] == 'unhealthy' else 200
     return jsonify(health), status_code
 
 
@@ -82,9 +100,11 @@ def readiness_check():
     """
     try:
         conn = get_db_connection(timeout=5)
-        c = conn.cursor()
-        c.execute('SELECT 1')
-        conn.close()
+        try:
+            c = conn.cursor()
+            c.execute('SELECT 1')
+        finally:
+            conn.close()
         return jsonify({'status': 'ready'}), 200
     except Exception as e:
         return jsonify({'status': 'not ready', 'error': str(e)}), 503

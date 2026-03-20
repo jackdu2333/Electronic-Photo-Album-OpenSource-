@@ -29,17 +29,11 @@ class TestConfig:
 
             # 强制重新导入配置模块
             import importlib
-            import config
-            importlib.reload(config)
-
-            # 应该抛出异常
-            try:
-                cfg = config.Config()
-                # 如果没有抛异常，说明配置成功（不应该）
-                assert False, "Expected ConfigError"
-            except config.ConfigError as e:
-                # 预期行为
-                assert 'SECRET_KEY' in str(e)
+            import pytest
+            with pytest.raises(Exception) as exc_info:
+                import config
+                importlib.reload(config)
+            assert 'SECRET_KEY' in str(exc_info.value)
         finally:
             # 恢复原始值
             if original:
@@ -121,7 +115,9 @@ class TestConfig:
         config = Config()
 
         assert config._get_int('NON_EXISTENT', 100) == 100
-        assert config._get_int('MAX_UPLOAD_SIZE_MB', 50) == config.MAX_UPLOAD_SIZE_MB
+        os.environ['MAX_UPLOAD_SIZE_MB'] = '50'
+        assert config._get_int('MAX_UPLOAD_SIZE_MB', 999) == 50
+        os.environ.pop('MAX_UPLOAD_SIZE_MB', None)
 
     def test_float_config(self):
         """浮点配置解析"""
@@ -130,7 +126,9 @@ class TestConfig:
         config = Config()
 
         assert config._get_float('NON_EXISTENT', 1.5) == 1.5
-        assert config._get_float('WEATHER_LAT', 0.0) == config.WEATHER_LAT
+        os.environ['WEATHER_LAT'] = '12.34'
+        assert config._get_float('WEATHER_LAT', 0.0) == 12.34
+        os.environ.pop('WEATHER_LAT', None)
 
 
 class TestPasswordUtils:

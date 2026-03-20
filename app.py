@@ -10,6 +10,7 @@ from logging.handlers import RotatingFileHandler
 from datetime import datetime
 
 from flask import Flask
+from werkzeug.exceptions import HTTPException
 
 from config import config
 from auth import auth, hash_password
@@ -85,12 +86,13 @@ def create_app(config_obj=None):
     # --- 日志配置 ---
     setup_logging(app)
 
-    # --- 初始化扩展 ---
-    init_extensions(app)
-
     # --- 初始化认证 ---
     auth.init_app(app)
     auth.set_users(config.ADMIN_USERS, hash_passwords=True)
+
+    # --- 初始化扩展 ---
+    # 先注册认证，再注册 CSRF，这样未认证写请求优先返回 401/302，而不是先触发 CSRF 400
+    init_extensions(app)
 
     # --- 确保上传目录存在 ---
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -128,6 +130,12 @@ def create_app(config_obj=None):
             tag_weights=config.TAG_WEIGHTS
         )
 
+        PhotoIndexService.start_background_rebuilder(
+            upload_folder=app.config['UPLOAD_FOLDER'],
+            tag_weights=config.TAG_WEIGHTS,
+            app_logger=app.logger
+        )
+
         app.logger.info(f"Startup complete. Indexed {PhotoIndexService.get_count()} photos.")
 
     # --- 错误处理器 ---
@@ -154,6 +162,20 @@ def create_app(config_obj=None):
         return render_template('index.html', error='500 - 服务器内部错误',
                               username='Guest', baby_name=config.BABY_NAME,
                               baby_birthday=config.BABY_BIRTHDAY), 500
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error):
+        from flask import request, render_template, jsonify
+        if request.path.startswith('/api/'):
+            return jsonify({'error': error.description}), error.code
+
+        return render_template(
+            'index.html',
+            error=f'{error.code} - {error.description}',
+            username='Guest',
+            baby_name=config.BABY_NAME,
+            baby_birthday=config.BABY_BIRTHDAY
+        ), error.code
 
     @app.errorhandler(Exception)
     def handle_exception(error):
@@ -186,6 +208,6 @@ app = create_app()
 
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    port = int(os.environ.get('PORT', os.environ.get('FLASK_RUN_PORT', '5001')))
+    port = int(os.environ.get('PORT', os.environ.get('FLASK_RUN_PORT', '5000')))
     app.logger.info(f"Starting in {'DEBUG' if debug_mode else 'PRODUCTION'} mode on port {port}")
     app.run(host='0.0.0.0', port=port, debug=debug_mode)

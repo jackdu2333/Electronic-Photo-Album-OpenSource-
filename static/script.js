@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    function getCsrfHeaders(extraHeaders = {}) {
+        return csrfToken ? { ...extraHeaders, 'X-CSRFToken': csrfToken } : extraHeaders;
+    }
 
     // ==========================================
     // SHARED UTILITIES
@@ -247,15 +252,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const birthday = BABY_CONFIG.birthday;
             if (!birthday) return null;
 
-            const parts = birthday.split('-');
-            const birthYear = parseInt(parts[0], 10);
-            const birthMonth = parseInt(parts[1], 10);
-            const birthDay = parseInt(parts[2], 10);
+            const birthParts = birthday.split('-');
+            const birthYear = parseInt(birthParts[0], 10);
+            const birthMonth = parseInt(birthParts[1], 10);
+            const birthDay = parseInt(birthParts[2], 10);
 
-            parts = dateStr.split('-');
-            const photoYear = parseInt(parts[0], 10);
-            const photoMonth = parseInt(parts[1], 10);
-            const photoDay = parseInt(parts[2], 10);
+            const photoParts = dateStr.split('-');
+            const photoYear = parseInt(photoParts[0], 10);
+            const photoMonth = parseInt(photoParts[1], 10);
+            const photoDay = parseInt(photoParts[2], 10);
+
+            if ([birthYear, birthMonth, birthDay, photoYear, photoMonth, photoDay].some(Number.isNaN)) {
+                return null;
+            }
 
             let ageYears = photoYear - birthYear;
             let ageMonths = photoMonth - birthMonth;
@@ -427,13 +436,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function renderMessages(messages) {
-            // Simple approach: clear and rebuild or just append?
-            // For smoothness, complete rebuild is easier for small lists.
-            // But to avoid jitter, let's only rebuild if it changed.
-            // Here we'll just rebuild for simplicity as requested "smooth scrolling" is CSS based.
-
-            // Check if there are new messages to scroll
-            const isAtBottom = chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
+            // 只有当用户本来就在底部附近时，刷新后才自动吸附到底部；
+            // 否则保留当前位置，避免用户向上翻历史留言时被强制拉回底部。
+            const isNearBottom =
+                chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
 
             messagesContainer.innerHTML = '';
 
@@ -455,10 +461,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastMessageId = msg.id;
             });
 
-            // Scroll to bottom
-            // if (isAtBottom) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            // }
+            if (isNearBottom || messages.length <= 3) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
         }
 
         function sendMessage() {
@@ -468,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch('/api/send', {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({ content: content })
             })
                 .then(res => {
@@ -621,6 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/upload', true);
+            if (csrfToken) xhr.setRequestHeader('X-CSRFToken', csrfToken);
 
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable) {
@@ -677,6 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', '/upload?force=true', true);
+                if (csrfToken) xhr.setRequestHeader('X-CSRFToken', csrfToken);
 
                 xhr.upload.onprogress = (e) => {
                     if (e.lengthComputable) {

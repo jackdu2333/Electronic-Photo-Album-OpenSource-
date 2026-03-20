@@ -4,50 +4,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - {{ config.BABY_NAME if config else '电子相框' }}</title>
+    <title>登录电子相框 - {{ config.BABY_NAME if config else '电子相框' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
+        :root {
+            --bg-top: #f8fafc;
+            --bg-mid: #eef2f7;
+            --bg-bottom: #dbe4ef;
+            --panel: rgba(255, 255, 255, 0.66);
+            --panel-border: rgba(255, 255, 255, 0.74);
+            --text-primary: #111827;
+            --text-secondary: #5f6c7d;
+            --accent: #121821;
+            --accent-soft: rgba(18, 24, 33, 0.06);
+            --danger-bg: rgba(182, 41, 59, 0.08);
+            --danger-border: rgba(182, 41, 59, 0.18);
+            --danger-text: #92273b;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 18px;
+            background:
+                radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.96), transparent 24%),
+                radial-gradient(circle at 82% 22%, rgba(177, 194, 214, 0.38), transparent 23%),
+                radial-gradient(circle at 50% 100%, rgba(142, 164, 190, 0.22), transparent 34%),
+                linear-gradient(180deg, var(--bg-top), var(--bg-mid) 52%, var(--bg-bottom));
+            color: var(--text-primary);
+            font-family: "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: auto;
+            border-radius: 999px;
+            filter: blur(6px);
+            pointer-events: none;
+        }
+        body::before {
+            width: 420px;
+            height: 420px;
+            left: -110px;
+            top: -120px;
+            background: rgba(255, 255, 255, 0.42);
+        }
+        body::after {
+            width: 360px;
+            height: 360px;
+            right: -60px;
+            bottom: -100px;
+            background: rgba(100, 123, 151, 0.12);
+        }
+        .login-shell {
+            width: min(100%, 1080px);
+            display: grid;
+            grid-template-columns: 1.14fr 0.86fr;
+            gap: 24px;
+            align-items: stretch;
+        }
+        .brand-panel,
         .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 40px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            box-shadow:
+                0 30px 90px rgba(34, 47, 66, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.82);
+            border-radius: 36px;
+        }
+        .brand-panel {
+            position: relative;
+            padding: 56px 50px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 640px;
+        }
+        .brand-panel::before {
+            content: "";
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            right: -80px;
+            top: -60px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.02) 72%);
+        }
+        .brand-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.62);
+            color: #465263;
+            font-size: 12px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            width: fit-content;
+            font-weight: 600;
+        }
+        .brand-title {
+            margin: 30px 0 18px;
+            font-family: "PingFang SC", "SF Pro Display", "Helvetica Neue", sans-serif;
+            font-size: clamp(42px, 5.2vw, 74px);
+            line-height: 0.98;
+            letter-spacing: -0.05em;
+            font-weight: 600;
+            max-width: 560px;
+        }
+        .brand-copy {
+            max-width: 520px;
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 18px;
+            line-height: 1.9;
+        }
+        .brand-footer {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            padding-top: 28px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .brand-stat {
+            padding: 18px 18px 16px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.42);
+            border: 1px solid rgba(255, 255, 255, 0.52);
+        }
+        .brand-stat strong {
+            display: block;
+            color: var(--text-primary);
+            font-size: 20px;
+            margin-bottom: 4px;
+            letter-spacing: -0.03em;
+        }
+        .login-container {
+            position: relative;
+            padding: 46px 38px 34px;
+            max-width: 460px;
+            width: 100%;
+            margin-left: auto;
+            min-height: 640px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .login-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 13px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: #404b59;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
         }
         .login-container h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333;
+            margin: 22px 0 10px;
+            color: var(--text-primary);
+            font-size: 42px;
+            line-height: 1.15;
+            letter-spacing: -0.045em;
+        }
+        .login-subtitle {
+            margin: 0 0 30px;
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.9;
         }
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
+            margin-bottom: 9px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
         }
         .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 16px 18px;
+            border: 1px solid rgba(129, 146, 167, 0.18);
+            border-radius: 18px;
             font-size: 16px;
-            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
         .form-group input:focus {
             outline: none;
-            border-color: #007bff;
+            border-color: rgba(75, 92, 113, 0.34);
+            box-shadow: 0 0 0 4px rgba(136, 149, 166, 0.12);
+            transform: translateY(-1px);
+        }
+        .form-group input::placeholder {
+            color: #8d9aad;
         }
         .flash {
-            padding: 12px;
-            background: #fee;
-            border: 1px solid #fcc;
-            border-radius: 5px;
-            color: #c00;
-            margin-bottom: 20px;
+            padding: 14px 16px;
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+            border-radius: 16px;
+            color: var(--danger-text);
+            margin-bottom: 22px;
+            font-size: 14px;
         }
         .success {
             background: #efe;
@@ -56,61 +234,191 @@
         }
         button {
             width: 100%;
-            padding: 14px;
-            background: #007bff;
+            padding: 16px;
+            margin-top: 6px;
+            background: linear-gradient(180deg, #202735, #0e141b);
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 16px;
+            border-radius: 999px;
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            box-shadow: 0 20px 32px rgba(14, 20, 27, 0.18);
         }
         button:hover {
-            background: #0056b3;
+            transform: translateY(-1px);
+            filter: brightness(1.02);
         }
         button:disabled {
-            background: #ccc;
+            background: #9fb0c3;
             cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
         }
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-            text-decoration: none;
+        .login-note {
+            margin-top: 26px;
+            padding: 16px 18px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.44);
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.8;
         }
-        .back-link:hover {
-            color: #007bff;
+        .login-note strong {
+            color: var(--text-primary);
+        }
+        @media (max-width: 980px) {
+            body {
+                align-items: flex-start;
+                overflow-y: auto;
+            }
+            .login-shell {
+                grid-template-columns: 1fr;
+                gap: 18px;
+                width: min(100%, 620px);
+            }
+            .brand-panel {
+                min-height: auto;
+                padding: 36px 28px;
+                order: 2;
+            }
+            .login-container {
+                min-height: auto;
+                margin: 0 auto;
+                max-width: none;
+                width: 100%;
+                order: 1;
+            }
+        }
+        @media (max-width: 640px) {
+            body {
+                padding: 14px;
+            }
+            .login-shell {
+                gap: 14px;
+            }
+            .brand-panel {
+                padding: 26px 22px;
+                border-radius: 28px;
+            }
+            .brand-kicker {
+                font-size: 11px;
+                letter-spacing: 0.14em;
+            }
+            .brand-title {
+                margin: 18px 0 12px;
+                font-size: 44px;
+                line-height: 1.02;
+                max-width: 100%;
+            }
+            .brand-copy {
+                font-size: 15px;
+                line-height: 1.7;
+            }
+            .brand-footer {
+                display: none;
+            }
+            .login-container {
+                padding: 24px 20px 22px;
+                border-radius: 28px;
+            }
+            .login-container h2 {
+                font-size: 30px;
+                margin-top: 18px;
+            }
+            .login-subtitle {
+                margin-bottom: 22px;
+                font-size: 14px;
+                line-height: 1.75;
+            }
+            .form-group {
+                margin-bottom: 16px;
+            }
+            .form-group input {
+                padding: 15px 16px;
+                border-radius: 16px;
+                font-size: 16px;
+            }
+            button {
+                padding: 15px;
+                font-size: 16px;
+            }
+            .login-note {
+                margin-top: 20px;
+                padding: 14px 16px;
+                font-size: 13px;
+                line-height: 1.7;
+            }
+        }
+        @media (max-width: 420px) {
+            .brand-title {
+                font-size: 38px;
+            }
+            .brand-copy {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="login-container">
-        <h2>📷 电子相框管理后台</h2>
-
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div class="flash">{{ messages[0] }}</div>
-        {% endif %}
-        {% endwith %}
-
-        <form id="loginForm" onsubmit="handleLogin(event)">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="form-group">
-                <label for="username">用户名</label>
-                <input type="text" id="username" name="username" required autocomplete="username" placeholder="请输入用户名">
+    <div class="login-shell">
+        <section class="brand-panel">
+            <div>
+                <div class="brand-kicker">Photo Frame Portal</div>
+                <h1 class="brand-title">把生活里最重要的画面，留在视线中央。</h1>
+                <p class="brand-copy">
+                    一个更安静、更高级的家庭相框入口。
+                </p>
             </div>
-            <div class="form-group">
-                <label for="password">密码</label>
-                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="请输入密码">
+            <div class="brand-footer">
+                <div class="brand-stat">
+                    <strong>Immersive</strong>
+                    像展览一样展示家庭记忆
+                </div>
+                <div class="brand-stat">
+                    <strong>Quiet</strong>
+                    管理逻辑退后，画面始终在前
+                </div>
+                <div class="brand-stat">
+                    <strong>Always On</strong>
+                    为客厅与电视长时间运行而设计
+                </div>
             </div>
-            <button type="submit" id="submitBtn">登录</button>
-        </form>
+        </section>
 
-        <p style="margin-top: 30px; color: #999; font-size: 14px; text-align: center;">
-            💡 首次使用？请联系管理员获取账号密码
-        </p>
+        <div class="login-container">
+            <div class="login-badge">安全登录</div>
+            <h2>进入电子相框</h2>
+            <p class="login-subtitle">
+                使用管理员账号登录，先进入相框首页浏览当前展示内容。后台管理入口会保留在首页中，随时可继续整理照片。
+            </p>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="flash">{{ messages[0] }}</div>
+            {% endif %}
+            {% endwith %}
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="请输入密码">
+                </div>
+                <button type="submit" id="submitBtn">进入相框</button>
+            </form>
+
+            <div class="login-note">
+                <strong>提示：</strong> 首次使用请联系管理员获取账号密码。登录成功后会先进入相框首页，右上角或移动端入口可继续进入后台。
+            </div>
+        </div>
     </div>
 
     <script>
