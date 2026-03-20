@@ -4,7 +4,41 @@
 
 ---
 
-## 方式一：Docker 部署（推荐）
+## 部署方式对比
+
+| 方式 | 适用场景 | 难度 | 推荐度 |
+|------|----------|------|--------|
+| Docker 部署 | 容器化环境、CI/CD | ⭐⭐ | ⭐⭐⭐⭐ |
+| **宝塔面板部署** | **阿里云/腾讯云云服务器** | **⭐⭐** | **⭐⭐⭐⭐⭐** |
+| 本地运行 | 开发测试、本地调试 | ⭐ | ⭐⭐⭐ |
+| Railway 云平台 | 快速原型、临时演示 | ⭐⭐⭐ | ⭐⭐ |
+| Render 云平台 | 个人项目、免费额度 | ⭐⭐⭐ | ⭐⭐ |
+
+---
+
+## 方式一：宝塔面板部署（家庭用户推荐）
+
+适用于阿里云、腾讯云等云服务器用户。
+
+**优势**：
+- ✅ 可视化界面管理
+- ✅ 自动 SSL 证书配置
+- ✅ Nginx 反向代理一键设置
+- ✅ 进程托管稳定
+
+**步骤概览**：
+1. 安装 Python 3.11
+2. 克隆项目
+3. 创建虚拟环境
+4. 配置环境变量
+5. 宝塔 Python 项目管理器添加项目
+6. Nginx 反向代理配置
+
+**详细步骤请参考**: [宝塔面板部署指南](Baota-deployment.md)
+
+---
+
+## 方式二：Docker 部署（推荐）
 
 ### 前置要求
 - Docker 20.10+
@@ -168,7 +202,7 @@ Railway 会自动构建和部署，完成后会提供公网 URL
 
 ---
 
-## 反向代理配置（可选）
+## 反向代理配置
 
 ### Nginx 配置示例
 
@@ -183,6 +217,12 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 静态资源不经过认证层（重要！）
+    location ~* ^/static/photos/ {
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host $host;
     }
 }
 ```

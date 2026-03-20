@@ -53,6 +53,114 @@ document.addEventListener('DOMContentLoaded', () => {
         initChat();
     }
 
+    function clampChannel(value, min = 0, max = 255) {
+        return Math.max(min, Math.min(max, Math.round(value)));
+    }
+
+    function mixColor(base, target, weight) {
+        return [
+            clampChannel(base[0] * (1 - weight) + target[0] * weight),
+            clampChannel(base[1] * (1 - weight) + target[1] * weight),
+            clampChannel(base[2] * (1 - weight) + target[2] * weight)
+        ];
+    }
+
+    function colorToCss(color) {
+        return color.map(channel => clampChannel(channel)).join(', ');
+    }
+
+    function applyAmbientPanelTheme(sourceImage) {
+        const root = document.documentElement;
+        const activeStyle = root.getAttribute('data-home-style');
+        if (!['style-2', 'style-4', 'style-5', 'style-6'].includes(activeStyle) || !sourceImage || !sourceImage.naturalWidth) {
+            return;
+        }
+
+        try {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            if (!context) return;
+
+            const sampleWidth = 40;
+            const sampleHeight = 40;
+            canvas.width = sampleWidth;
+            canvas.height = sampleHeight;
+            context.drawImage(sourceImage, 0, 0, sampleWidth, sampleHeight);
+
+            const { data } = context.getImageData(0, 0, sampleWidth, sampleHeight);
+            let totalWeight = 0;
+            let avgR = 0;
+            let avgG = 0;
+            let avgB = 0;
+            let brightestScore = -1;
+            let darkestScore = 1000;
+            let brightColor = [82, 119, 186];
+            let darkColor = [26, 34, 46];
+
+            for (let i = 0; i < data.length; i += 4) {
+                const alpha = data[i + 3] / 255;
+                if (alpha < 0.35) continue;
+
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const luma = (r * 0.299) + (g * 0.587) + (b * 0.114);
+                const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+                const weight = alpha * (0.8 + saturation / 255);
+
+                avgR += r * weight;
+                avgG += g * weight;
+                avgB += b * weight;
+                totalWeight += weight;
+
+                if (luma > brightestScore) {
+                    brightestScore = luma;
+                    brightColor = [r, g, b];
+                }
+                if (luma < darkestScore) {
+                    darkestScore = luma;
+                    darkColor = [r, g, b];
+                }
+            }
+
+            if (!totalWeight) return;
+
+            const averageColor = [
+                avgR / totalWeight,
+                avgG / totalWeight,
+                avgB / totalWeight
+            ];
+
+            const primary = mixColor(averageColor, [255, 255, 255], 0.12);
+            const secondary = mixColor(brightColor, [120, 164, 220], 0.22);
+            const tertiary = mixColor(darkColor, [12, 18, 28], 0.36);
+
+            root.style.setProperty('--style2-panel-color-a', colorToCss(primary));
+            root.style.setProperty('--style2-panel-color-b', colorToCss(secondary));
+            root.style.setProperty('--style2-panel-color-c', colorToCss(tertiary));
+
+            const glassA = mixColor(averageColor, [255, 214, 165], 0.16);
+            const glassB = mixColor(brightColor, [255, 238, 192], 0.18);
+            const glassC = mixColor(darkColor, [70, 110, 140], 0.28);
+
+            root.style.setProperty('--style4-card-color-a', colorToCss(glassA));
+            root.style.setProperty('--style4-card-color-b', colorToCss(glassB));
+            root.style.setProperty('--style4-card-color-c', colorToCss(glassC));
+
+            const edgeAccent = mixColor(brightColor, [120, 190, 225], 0.26);
+            root.style.setProperty('--style5-accent', colorToCss(edgeAccent));
+
+            const posterA = mixColor(averageColor, [245, 241, 236], 0.72);
+            const posterB = mixColor(averageColor, [231, 234, 237], 0.58);
+            const posterC = mixColor(brightColor, [201, 209, 218], 0.44);
+            root.style.setProperty('--style6-surface-a', colorToCss(posterA));
+            root.style.setProperty('--style6-surface-b', colorToCss(posterB));
+            root.style.setProperty('--style6-surface-c', colorToCss(posterC));
+        } catch (error) {
+            console.warn('Ambient panel theme extraction failed:', error);
+        }
+    }
+
     function initSlideshow() {
         const container = document.getElementById('slideshow-container');
         const prevBtn = document.getElementById('prev-btn');
@@ -129,7 +237,23 @@ document.addEventListener('DOMContentLoaded', () => {
             // Foreground (Contain)
             const fg = document.createElement('img');
             fg.className = 'slide';
+            fg.onload = () => {
+                const isPortrait = fg.naturalHeight > fg.naturalWidth;
+                fg.classList.toggle('is-portrait', isPortrait);
+                fg.classList.toggle('is-landscape', !isPortrait);
+                group.classList.toggle('is-portrait', isPortrait);
+                group.classList.toggle('is-landscape', !isPortrait);
+                applyAmbientPanelTheme(fg);
+            };
             fg.src = url;
+            if (fg.complete && fg.naturalWidth > 0) {
+                const isPortrait = fg.naturalHeight > fg.naturalWidth;
+                fg.classList.toggle('is-portrait', isPortrait);
+                fg.classList.toggle('is-landscape', !isPortrait);
+                group.classList.toggle('is-portrait', isPortrait);
+                group.classList.toggle('is-landscape', !isPortrait);
+                applyAmbientPanelTheme(fg);
+            }
 
             // Date Overlay
             if (date) {

@@ -5,6 +5,7 @@
 import os
 import json
 import logging
+import ssl
 import urllib.request
 from datetime import datetime
 from flask import Blueprint, jsonify, request
@@ -172,7 +173,8 @@ def weather_config():
     try:
         # 调用 Open-Meteo API 获取天气
         url = f'https://api.open-meteo.com/v1/forecast?latitude={config.WEATHER_LAT}&longitude={config.WEATHER_LON}&current=temperature_2m,weather_code&timezone=auto'
-        with urllib.request.urlopen(url, timeout=5) as response:
+        request_context = ssl._create_unverified_context()
+        with urllib.request.urlopen(url, timeout=5, context=request_context) as response:
             data = json.loads(response.read().decode())
 
         result = {

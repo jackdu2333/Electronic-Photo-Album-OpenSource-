@@ -115,16 +115,16 @@
         }
 
         .time {
-            font-size: 116px;
+            font-size: clamp(48px, 10vw, 200px); /* 更平滑的响应式缩放：降低最小值，提高 vw 权重，增加最大值 */
             font-weight: 300;
             color: #fff;
             line-height: 0.94;
-            letter-spacing: -4px;
+            letter-spacing: -0.04em;
             text-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
         }
 
         .date {
-            font-size: 24px;
+            font-size: clamp(14px, 2.2vw, 36px); /* 更平滑的响应式缩放 */
             font-weight: 500;
             color: rgba(255, 255, 255, 0.74);
             letter-spacing: 0.04em;
@@ -561,32 +561,70 @@
                 radial-gradient(circle at top right, rgba(82, 119, 186, 0.24), transparent 30%),
                 radial-gradient(circle at bottom left, rgba(255, 189, 120, 0.12), transparent 28%),
                 #06080c;
+            --style2-frame-gap: 18px;
+            --style2-panel-width: clamp(420px, 29vw, 500px);
+            --style2-panel-offset: calc(var(--style2-panel-width) + (var(--style2-frame-gap) * 2) + 8px);
+            --style2-chat-height: clamp(210px, 27vh, 320px);
+            --style2-chat-bottom-gap: 74px;
+            --style2-panel-color-a: 26, 34, 46;
+            --style2-panel-color-b: 82, 119, 186;
+            --style2-panel-color-c: 255, 189, 120;
         }
 
         html[data-home-style="style-2"] .photo-panel {
             width: 100%;
-            padding: 18px;
+            padding: var(--style2-frame-gap) var(--style2-frame-gap) var(--style2-frame-gap) var(--style2-panel-offset);
         }
 
         html[data-home-style="style-2"] .info-panel {
             position: fixed;
-            left: 24px;
-            top: 24px;
+            left: var(--style2-frame-gap);
+            top: var(--style2-frame-gap);
             bottom: auto;
-            height: calc(100vh - 48px);
-            width: 380px;
+            height: calc(100vh - (var(--style2-frame-gap) * 2));
+            width: var(--style2-panel-width);
             z-index: 120;
-            padding: 30px;
-            border-radius: 32px;
+            padding: 34px 34px 30px;
+            border-radius: 34px;
             background:
-                linear-gradient(180deg, rgba(10, 13, 20, 0.88), rgba(10, 13, 20, 0.48)),
-                radial-gradient(circle at top right, rgba(121, 154, 214, 0.16), transparent 36%);
+                linear-gradient(180deg, rgba(8, 11, 18, 0.36), rgba(8, 11, 18, 0.18));
             backdrop-filter: blur(18px);
             box-shadow: 0 28px 90px rgba(0, 0, 0, 0.40);
             border: 1px solid rgba(255, 255, 255, 0.10);
             justify-content: flex-start;
             overflow: hidden;
             box-sizing: border-box;
+        }
+
+        html[data-home-style="style-2"] .info-panel::before,
+        html[data-home-style="style-2"] .info-panel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        html[data-home-style="style-2"] .info-panel::before {
+            background:
+                radial-gradient(circle at 18% 16%, rgba(var(--style2-panel-color-a), 0.58), transparent 42%),
+                radial-gradient(circle at 84% 22%, rgba(var(--style2-panel-color-b), 0.34), transparent 38%),
+                radial-gradient(circle at 28% 88%, rgba(var(--style2-panel-color-c), 0.24), transparent 34%),
+                linear-gradient(180deg, rgba(8, 12, 18, 0.72), rgba(8, 12, 18, 0.36));
+            filter: blur(18px) saturate(1.12);
+            transform: scale(1.06);
+            opacity: 0.98;
+        }
+
+        html[data-home-style="style-2"] .info-panel::after {
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 28%),
+                linear-gradient(180deg, rgba(7, 9, 14, 0.10), rgba(7, 9, 14, 0.18));
+        }
+
+        html[data-home-style="style-2"] .info-top,
+        html[data-home-style="style-2"] .info-bottom {
+            position: relative;
+            z-index: 1;
         }
 
         html[data-home-style="style-2"] .greeting {
@@ -598,30 +636,33 @@
         }
 
         html[data-home-style="style-2"] .time {
-            font-size: 96px;
-            letter-spacing: -3px;
+            font-size: clamp(56px, 9vw, 180px); /* 更平滑的响应式缩放 */
+            letter-spacing: -0.03em;
         }
 
         html[data-home-style="style-2"] .date {
-            font-size: 17px;
+            font-size: clamp(13px, 2vw, 28px); /* 更平滑的响应式缩放 */
             color: rgba(255, 255, 255, 0.74);
         }
 
         html[data-home-style="style-2"] .weather-widget {
-            margin-top: 14px;
-            padding: 16px 18px;
-            width: calc(100% - 36px);
+            margin-top: 18px;
+            padding: 18px 20px;
+            width: 100%;
             border-left: none;
-            border-radius: 20px;
+            border-radius: 22px;
             background: rgba(255, 255, 255, 0.09);
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
         }
 
         html[data-home-style="style-2"] #chat-container {
             height: auto;
-            max-height: 190px;
+            min-height: calc(var(--style2-chat-height) - 36px);
+            height: var(--style2-chat-height);
+            max-height: var(--style2-chat-height);
             margin-top: 0;
-            margin-bottom: 0;
+            margin-bottom: var(--style2-chat-bottom-gap);
             padding-right: 4px;
             mask-image: none;
             -webkit-mask-image: none;
@@ -642,11 +683,23 @@
         }
 
         html[data-home-style="style-2"] #chat-input-area {
-            position: static;
+            position: absolute;
+            left: 0;
+            bottom: 0;
             width: 100%;
-            padding: 0;
+            padding: 14px 24px 18px 34px;
+            opacity: 0;
+            margin-top: 0;
+        }
+
+        html[data-home-style="style-2"] #chat-input-area:hover,
+        html[data-home-style="style-2"] #chat-input-area:focus-within {
             opacity: 1;
-            margin-top: 12px;
+        }
+
+        html[data-home-style="style-2"] #chat-input {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.18);
         }
 
         html[data-home-style="style-2"] #slideshow-container {
@@ -707,6 +760,7 @@
             width: 28%;
             min-width: 320px;
             padding-left: 42px;
+            padding-right: 32px;
             padding-top: 9vh;
             color: #161616;
             background:
@@ -754,8 +808,8 @@
         }
 
         html[data-home-style="style-3"] .slide-date {
-            top: auto;
-            bottom: 28px;
+            top: 28px;
+            bottom: auto;
             right: 28px;
             color: rgba(20, 15, 10, 0.92);
             background: rgba(255, 249, 241, 0.84);
@@ -799,9 +853,867 @@
             color: #161616;
         }
 
+        /* --- Home Style 4: Floating Glass --- */
+        html[data-home-style="style-4"] body {
+            background:
+                radial-gradient(circle at top, rgba(255, 232, 208, 0.18), transparent 28%),
+                linear-gradient(180deg, rgba(8, 10, 15, 0.26), rgba(6, 8, 12, 0.72)),
+                #06080c;
+            --style4-card-width: clamp(340px, 24vw, 420px);  /* Slightly increased max-width */
+            --style4-safe-gap: clamp(28px, 3vw, 54px);
+            --style4-card-bottom: clamp(28px, 4vh, 60px);
+            --style4-card-color-a: 102, 84, 42;
+            --style4-card-color-b: 238, 204, 128;
+            --style4-card-color-c: 44, 86, 112;
+        }
+
+        html[data-home-style="style-4"] .photo-panel {
+            width: 100%;
+            padding: 0;
+        }
+
+        html[data-home-style="style-4"] .info-panel {
+            position: fixed;
+            z-index: 20;
+            left: var(--style4-safe-gap);
+            top: var(--style4-safe-gap);
+            bottom: auto;
+            width: var(--style4-card-width);
+            height: auto;
+            min-height: 0;
+            padding: 32px 34px 28px;  /* Increased padding for breathing room */
+            gap: 18px;
+            border-radius: 32px;
+            background: rgba(12, 15, 22, 0.42);
+            backdrop-filter: blur(30px) saturate(1.14);
+            -webkit-backdrop-filter: blur(30px) saturate(1.14);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow:
+                0 20px 56px rgba(0, 0, 0, 0.24),
+                inset 0 1px 0 rgba(255, 255, 255, 0.10);
+            justify-content: flex-start;
+            overflow: hidden;
+        }
+
+        html[data-home-style="style-4"] .info-panel::before,
+        html[data-home-style="style-4"] .info-panel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        html[data-home-style="style-4"] .info-panel::before {
+            background:
+                radial-gradient(circle at 16% 18%, rgba(var(--style4-card-color-a), 0.36), transparent 42%),
+                radial-gradient(circle at 82% 20%, rgba(var(--style4-card-color-b), 0.18), transparent 34%),
+                radial-gradient(circle at 30% 84%, rgba(var(--style4-card-color-c), 0.22), transparent 36%),
+                linear-gradient(180deg, rgba(16, 18, 24, 0.42), rgba(16, 18, 24, 0.22));
+            filter: blur(20px);
+            transform: scale(1.08);
+        }
+
+        html[data-home-style="style-4"] .info-panel::after {
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 20%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+        }
+
+        html[data-home-style="style-4"] .info-top,
+        html[data-home-style="style-4"] .info-bottom {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+
+        html[data-home-style="style-4"] .info-top {
+            gap: 8px;
+        }
+
+        html[data-home-style="style-4"] .info-bottom {
+            margin-top: 0;
+            flex: 0 0 auto;
+        }
+
+        html[data-home-style="style-4"] .greeting {
+            font-size: 12px;
+            margin-bottom: 0;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.64);
+        }
+
+        html[data-home-style="style-4"] .time {
+            font-size: clamp(42px, 7vw, 120px); /* 更平滑的响应式缩放 */
+            line-height: 0.92;
+            letter-spacing: -0.04em;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.97);
+        }
+
+        html[data-home-style="style-4"] .date {
+            font-size: clamp(11px, 1.6vw, 22px); /* 更平滑的响应式缩放 */
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.56);
+        }
+
+        html[data-home-style="style-4"] .weather-widget {
+            margin-top: 20px;
+            padding: 16px 20px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            gap: 16px;
+            align-items: center;
+            border-radius: 20px;
+            box-sizing: border-box; /* Ensure padding doesn't overflow */
+        }
+
+        html[data-home-style="style-4"] .weather-icon {
+            font-size: 19px;
+            opacity: 0.82;
+        }
+
+        html[data-home-style="style-4"] .weather-temp {
+            font-size: 28px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        html[data-home-style="style-4"] .weather-desc {
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.42);
+        }
+
+        html[data-home-style="style-4"] #chat-container {
+            min-height: 60px;
+            height: auto;
+            max-height: 120px;
+            margin: 0;
+            padding-top: 18px;
+            margin-bottom: 60px;
+            padding-right: 0;
+            overflow: hidden;
+            mask-image: none;
+            -webkit-mask-image: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        html[data-home-style="style-4"] .message-row:not(:last-child) {
+            display: none;
+        }
+
+        html[data-home-style="style-4"] .message-row {
+            max-width: 100%;
+        }
+
+        html[data-home-style="style-4"] .sender-name {
+            font-size: 10px;
+            margin-bottom: 4px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.42);
+        }
+
+        html[data-home-style="style-4"] .message-bubble {
+            padding: 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            font-size: 13px;
+            line-height: 1.55;
+            color: rgba(255, 255, 255, 0.74);
+            box-shadow: none;
+        }
+
+        html[data-home-style="style-4"] .my-message,
+        html[data-home-style="style-4"] .their-message {
+            align-self: stretch;
+            align-items: flex-start;
+        }
+
+        html[data-home-style="style-4"] .my-message .message-bubble,
+        html[data-home-style="style-4"] .their-message .message-bubble {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        html[data-home-style="style-4"] #chat-input-area {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            padding: 14px 22px 18px 28px;
+            opacity: 0;
+            margin-top: 0;
+            transition: opacity 0.28s ease;
+        }
+
+        html[data-home-style="style-4"] .info-panel:hover #chat-input-area,
+        html[data-home-style="style-4"] #chat-input-area:hover,
+        html[data-home-style="style-4"] #chat-input-area:focus-within {
+            opacity: 1;
+        }
+
+        html[data-home-style="style-4"] #chat-input {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            color: rgba(255, 255, 255, 0.94);
+        }
+
+        html[data-home-style="style-4"] #chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.42);
+        }
+
+        html[data-home-style="style-4"] #chat-send-btn {
+            color: rgba(255, 255, 255, 0.68);
+        }
+
+        html[data-home-style="style-4"] #slideshow-container {
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        html[data-home-style="style-4"] .slide-bg {
+            filter: blur(10px) brightness(78%) saturate(0.94);
+            transform: scale(1.04);
+            opacity: 0.72;
+        }
+
+        html[data-home-style="style-4"] .slide {
+            padding: calc(var(--style4-safe-gap) + 8px) calc(var(--style4-safe-gap) + 26px) calc(var(--style4-card-bottom) + 60px) calc(var(--style4-safe-gap) + 150px);
+            object-fit: contain;
+            object-position: 58% center;
+            filter: drop-shadow(0 16px 34px rgba(0, 0, 0, 0.16));
+        }
+
+        html[data-home-style="style-4"] .slide.is-landscape {
+            padding: calc(var(--style4-safe-gap) + 20px);
+            object-position: center 40%;
+        }
+
+        html[data-home-style="style-4"] .slide.is-portrait {
+            padding: calc(var(--style4-safe-gap) + 20px) calc(var(--style4-safe-gap) + 20px) calc(var(--style4-safe-gap) + 20px) calc(var(--style4-card-width) + var(--style4-safe-gap) * 2);
+            object-position: center center;
+        }
+
+        html[data-home-style="style-4"] .slide-date {
+            top: auto;
+            bottom: calc(var(--style4-safe-gap) + 72px);
+            right: var(--style4-safe-gap);
+            background: rgba(10, 12, 18, 0.34);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            backdrop-filter: blur(18px);
+            box-shadow: none;
+            border-radius: 999px;
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.84);
+        }
+
+        html[data-home-style="style-4"] #controls {
+            bottom: var(--style4-safe-gap);
+            right: var(--style4-safe-gap);
+            opacity: 1;
+        }
+
+        html[data-home-style="style-4"] #controls button {
+            width: 42px;
+            height: 42px;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(18px);
+        }
+
+        html[data-home-style="style-4"] #controls button:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+        }
+
+        /* --- Home Style 5: Cinematic Edge --- */
+        html[data-home-style="style-5"] body {
+            background:
+                radial-gradient(circle at center, rgba(255, 196, 120, 0.12), transparent 34%),
+                linear-gradient(180deg, rgba(5, 7, 10, 0.10), rgba(5, 7, 10, 0.68)),
+                #040507;
+            --style5-edge-gap: clamp(28px, 3vw, 56px);
+            --style5-accent: 127, 183, 214;
+        }
+
+        html[data-home-style="style-5"] .photo-panel {
+            width: 100%;
+            padding: 0;
+        }
+
+        html[data-home-style="style-5"] .info-panel {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            display: block;
+            pointer-events: none;
+            z-index: 120;
+        }
+
+        html[data-home-style="style-5"] .info-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(180deg, rgba(0, 0, 0, 0.26), transparent 24%, transparent 66%, rgba(0, 0, 0, 0.32)),
+                radial-gradient(circle at bottom center, rgba(var(--style5-accent), 0.10), transparent 36%);
+        }
+
+        html[data-home-style="style-5"] .info-top,
+        html[data-home-style="style-5"] .info-bottom {
+            position: absolute;
+            z-index: 1;
+            width: auto;
+        }
+
+        html[data-home-style="style-5"] .info-top {
+            top: var(--style5-edge-gap);
+            left: var(--style5-edge-gap);
+            gap: 4px;
+        }
+
+        html[data-home-style="style-5"] .info-bottom {
+            left: var(--style5-edge-gap);
+            bottom: calc(var(--style5-edge-gap) + 60px); /* Increased to avoid chat-input area overlap */
+            max-width: min(440px, 42vw);
+            margin: 0;
+            pointer-events: auto;
+        }
+
+        html[data-home-style="style-5"] .greeting {
+            display: none;
+        }
+
+        html[data-home-style="style-5"] .time {
+            order: 2;
+            font-size: clamp(42px, 7vw, 130px); /* 更平滑的响应式缩放 */
+            line-height: 1.1;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(var(--style5-accent), 0.95);
+            font-weight: 300;
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.16);
+        }
+
+        html[data-home-style="style-5"] .date {
+            order: 1;
+            font-size: clamp(13px, 2vw, 26px); /* 更平滑的响应式缩放 */
+            letter-spacing: 0.26em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.72);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+        }
+
+        html[data-home-style="style-5"] .weather-widget {
+            position: fixed;
+            right: var(--style5-edge-gap);
+            top: var(--style5-edge-gap); /* Moved to top-right to avoid controls and slide-date */
+            bottom: auto;
+            width: auto;
+            margin: 0;
+            padding: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            z-index: 121;
+            flex-direction: row;
+            gap: 10px;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        html[data-home-style="style-5"] .weather-icon {
+            font-size: 17px;
+            color: rgba(var(--style5-accent), 0.88);
+        }
+
+        html[data-home-style="style-5"] .weather-info {
+            align-items: flex-end;
+        }
+
+        html[data-home-style="style-5"] .weather-temp {
+            font-size: clamp(34px, 4.2vw, 52px);
+            font-weight: 200;
+            line-height: 0.92;
+            color: rgba(255, 255, 255, 0.96);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+        }
+
+        html[data-home-style="style-5"] .weather-desc {
+            font-size: 10px;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.34);
+        }
+
+        html[data-home-style="style-5"] #chat-container {
+            min-height: 0;
+            height: auto;
+            max-height: 120px;
+            margin: 0;
+            padding: 14px 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(8, 10, 16, 0.16);
+            border-radius: 20px;
+            backdrop-filter: blur(18px);
+            mask-image: none;
+            -webkit-mask-image: none;
+        }
+
+        html[data-home-style="style-5"] .message-row:not(:last-child) {
+            display: none;
+        }
+
+        html[data-home-style="style-5"] .sender-name {
+            font-size: 10px;
+            margin-bottom: 6px;
+            letter-spacing: 0.26em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.44);
+        }
+
+        html[data-home-style="style-5"] .message-bubble {
+            padding: 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 13px;
+            font-style: italic;
+            line-height: 1.55;
+            box-shadow: none;
+        }
+
+        html[data-home-style="style-5"] .my-message,
+        html[data-home-style="style-5"] .their-message {
+            align-self: stretch;
+            align-items: flex-start;
+        }
+
+        html[data-home-style="style-5"] .my-message .message-bubble,
+        html[data-home-style="style-5"] .their-message .message-bubble {
+            color: rgba(255, 255, 255, 0.46);
+            background: transparent;
+        }
+
+        html[data-home-style="style-5"] #chat-input-area {
+            position: fixed;
+            left: var(--style5-edge-gap);
+            bottom: calc(var(--style5-edge-gap) + 2px);
+            width: min(420px, 42vw);
+            padding: 0;
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        html[data-home-style="style-5"] #chat-input-area:hover,
+        html[data-home-style="style-5"] #chat-input-area:focus-within {
+            opacity: 1;
+        }
+
+        html[data-home-style="style-5"] #chat-input {
+            background: rgba(8, 10, 16, 0.24);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.92);
+            border-radius: 999px;
+            backdrop-filter: blur(16px);
+        }
+
+        html[data-home-style="style-5"] #chat-send-btn {
+            color: rgba(var(--style5-accent), 0.92);
+        }
+
+        html[data-home-style="style-5"] #slideshow-container {
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        html[data-home-style="style-5"] .slide-bg {
+            filter: blur(12px) brightness(58%) saturate(0.92);
+            transform: scale(1.03);
+            opacity: 0.5;
+        }
+
+        html[data-home-style="style-5"] .slide {
+            padding: calc(var(--style5-edge-gap) + 22px) calc(var(--style5-edge-gap) + 22px) calc(var(--style5-edge-gap) + 22px) calc(var(--style5-edge-gap) + 22px);
+            object-fit: contain;
+            object-position: center center;
+            filter: none;
+        }
+
+        html[data-home-style="style-5"] .slide-date {
+            top: auto;
+            right: var(--style5-edge-gap);
+            bottom: calc(var(--style5-edge-gap) + 116px);
+            transform: none;
+            padding: 8px 14px;
+            background: rgba(8, 10, 16, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: none;
+            backdrop-filter: blur(14px);
+            text-shadow: none;
+            font-size: 10px;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.58);
+            border-radius: 999px;
+        }
+
+        html[data-home-style="style-5"] #controls {
+            bottom: var(--style5-edge-gap);
+            right: var(--style5-edge-gap);
+            opacity: 1;
+            gap: 12px;
+        }
+
+        html[data-home-style="style-5"] #controls button {
+            width: 52px;
+            height: 52px;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(18px);
+        }
+
+        /* --- Home Style 6: Editorial Poster --- */
+        html[data-home-style="style-6"] body {
+            background:
+                linear-gradient(180deg, rgba(244, 241, 236, 0.98), rgba(231, 234, 237, 0.98)),
+                #eef1f4;
+            color: #243038;
+            --style6-side-width: clamp(320px, 25vw, 440px);
+            --style6-frame-gap: clamp(28px, 3.2vw, 56px);
+            --style6-surface-a: 244, 241, 236;
+            --style6-surface-b: 223, 229, 235;
+            --style6-surface-c: 201, 209, 218;
+        }
+
+        html[data-home-style="style-6"] .info-panel {
+            width: var(--style6-side-width);
+            min-width: 320px;
+            padding: calc(var(--style6-frame-gap) + 4px) 28px calc(var(--style6-frame-gap) - 4px) calc(var(--style6-frame-gap) + 4px);
+            background:
+                linear-gradient(180deg, rgba(var(--style6-surface-a), 0.96), rgba(var(--style6-surface-b), 0.78));
+            box-shadow: none;
+            color: #243038;
+            overflow: hidden;
+        }
+
+        html[data-home-style="style-6"] .info-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12)),
+                radial-gradient(circle at 82% 22%, rgba(var(--style6-surface-c), 0.22), transparent 34%);
+        }
+
+        html[data-home-style="style-6"] .info-top,
+        html[data-home-style="style-6"] .info-bottom {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+
+        html[data-home-style="style-6"] .greeting {
+            font-size: 12px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(43, 52, 56, 0.42);
+        }
+
+        html[data-home-style="style-6"] .time {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(64px, 9vw, 150px); /* 更平滑的响应式缩放 */
+            line-height: 0.92;
+            letter-spacing: -0.06em;
+            font-weight: 300;
+            color: #243038;
+        }
+
+        html[data-home-style="style-6"] .date {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(18px, 2.6vw, 42px); /* 更平滑的响应式缩放 */
+            line-height: 1.14;
+            letter-spacing: -0.02em;
+            color: rgba(36, 48, 56, 0.92);
+            white-space: normal;
+            max-width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        html[data-home-style="style-6"] .date-line {
+            display: block;
+        }
+
+        html[data-home-style="style-6"] .weather-widget {
+            margin-top: 24px;
+            width: auto;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        html[data-home-style="style-6"] .weather-icon,
+        html[data-home-style="style-6"] .weather-temp {
+            color: #4f5f69;
+        }
+
+        html[data-home-style="style-6"] .weather-desc,
+        html[data-home-style="style-6"] .sender-name {
+            color: rgba(43, 52, 56, 0.48);
+        }
+
+        html[data-home-style="style-6"] .info-bottom {
+            margin-top: 18px;
+        }
+
+        html[data-home-style="style-6"] #chat-container {
+            min-height: 168px;
+            max-height: 240px;
+            margin-bottom: 70px;
+            padding: 18px 18px 12px;
+            border-top: none;
+            mask-image: none;
+            -webkit-mask-image: none;
+            background: rgba(255, 255, 255, 0.52);
+            border-radius: 28px;
+            border: 1px solid rgba(36, 48, 56, 0.06);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26);
+        }
+
+        html[data-home-style="style-6"] .message-row:nth-last-child(n + 4) {
+            display: none;
+        }
+
+        html[data-home-style="style-6"] .message-row {
+            max-width: 100%;
+        }
+
+        html[data-home-style="style-6"] .message-bubble {
+            padding: 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            color: rgba(36, 48, 56, 0.74);
+            font-size: 15px;
+            line-height: 1.5;
+            box-shadow: none;
+        }
+
+        html[data-home-style="style-6"] .my-message .message-bubble {
+            color: rgba(36, 48, 56, 0.94);
+        }
+
+        html[data-home-style="style-6"] #chat-input-area {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            padding: 10px 12px 0 0;
+            opacity: 0;
+        }
+
+        html[data-home-style="style-6"] #chat-input-area:hover,
+        html[data-home-style="style-6"] #chat-input-area:focus-within {
+            opacity: 1;
+        }
+
+        html[data-home-style="style-6"] #chat-input {
+            background: rgba(255, 255, 255, 0.76);
+            border-color: rgba(36, 48, 56, 0.10);
+            color: #243038;
+            border-radius: 22px;
+        }
+
+        html[data-home-style="style-6"] #chat-input::placeholder {
+            color: rgba(36, 48, 56, 0.34);
+        }
+
+        html[data-home-style="style-6"] #chat-send-btn {
+            color: #50626d;
+        }
+
+        html[data-home-style="style-6"] .photo-panel {
+            width: calc(100% - var(--style6-side-width));
+            padding: var(--style6-frame-gap) var(--style6-frame-gap) var(--style6-frame-gap) 16px;
+        }
+
+        html[data-home-style="style-6"] #slideshow-container {
+            border-radius: 38px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(249, 248, 246, 0.96));
+            box-shadow:
+                0 28px 80px rgba(74, 86, 96, 0.10),
+                inset 0 0 0 1px rgba(50, 60, 68, 0.04);
+        }
+
+        html[data-home-style="style-6"] .slide-bg {
+            filter: blur(24px) brightness(98%) saturate(0.84);
+            opacity: 0.26;
+            transform: scale(1.04);
+        }
+
+        html[data-home-style="style-6"] .slide {
+            padding: clamp(22px, 2.4vw, 40px);
+            object-fit: contain;
+            object-position: center center;
+            filter: drop-shadow(0 18px 42px rgba(43, 52, 56, 0.10));
+        }
+
+        html[data-home-style="style-6"] .slide-date {
+            top: auto;
+            bottom: 22px;
+            right: 24px;
+            color: rgba(36, 48, 56, 0.82);
+            background: rgba(255, 255, 255, 0.86);
+            text-shadow: none;
+            border: 1px solid rgba(36, 48, 56, 0.08);
+            border-radius: 999px;
+            box-shadow: 0 10px 28px rgba(74, 86, 96, 0.08);
+            font-size: 12px;
+            letter-spacing: 0.08em;
+        }
+
+        html[data-home-style="style-6"] #controls button {
+            background: rgba(255, 255, 255, 0.78);
+            color: #34424c;
+            border-color: rgba(52, 66, 76, 0.10);
+        }
+
+        html[data-home-style="style-6"] #controls button:hover {
+            background: rgba(255, 255, 255, 0.96);
+            color: #192127;
+        }
+
+        @media screen and (min-width: 1920px) {
+            html[data-home-style="style-2"] body {
+                --style2-frame-gap: 22px;
+                --style2-panel-width: clamp(450px, 27vw, 560px);
+                --style2-panel-offset: calc(var(--style2-panel-width) + (var(--style2-frame-gap) * 2) + 8px);
+                --style2-chat-height: clamp(240px, 28vh, 380px);
+                --style2-chat-bottom-gap: 82px;
+            }
+
+            html[data-home-style="style-2"] .slide {
+                padding: 52px 48px 52px 128px;
+            }
+
+            html[data-home-style="style-6"] .time {
+                font-size: clamp(116px, 9vw, 176px);
+            }
+        }
+
+        @media screen and (min-width: 2560px) {
+            html[data-home-style="style-2"] body {
+                --style2-frame-gap: 24px;
+                --style2-panel-width: clamp(520px, 24vw, 640px);
+                --style2-panel-offset: calc(var(--style2-panel-width) + (var(--style2-frame-gap) * 2) + 12px);
+                --style2-chat-height: clamp(300px, 30vh, 500px);
+                --style2-chat-bottom-gap: 92px;
+            }
+
+            html[data-home-style="style-2"] .info-panel {
+                padding: 42px 40px 34px;
+            }
+
+            /* font-size handled by clamp */
+
+            html[data-home-style="style-2"] .slide {
+                padding: 64px 56px 64px 144px;
+            }
+
+            html[data-home-style="style-5"] body {
+                --style5-edge-gap: clamp(38px, 3.2vw, 72px);
+            }
+
+            html[data-home-style="style-5"] .weather-temp {
+                font-size: clamp(52px, 5.2vw, 84px);
+            }
+
+            html[data-home-style="style-6"] body {
+                --style6-side-width: clamp(420px, 30vw, 620px);
+                --style6-frame-gap: clamp(56px, 4vw, 72px);
+            }
+            
+            html[data-home-style="style-6"] .time {
+                font-size: clamp(176px, 12vw, 240px);
+            }
+        }
+
+        /* Support for 2800x1840 and other ultra-high res tablets/displays */
+        @media screen and (min-width: 2700px) {
+            html[data-home-style="style-2"] body {
+                --style2-frame-gap: 32px;
+                --style2-panel-width: clamp(640px, 26vw, 800px);
+                --style2-chat-height: clamp(380px, 32vh, 600px);
+            }
+
+            /* font-size handled by clamp */
+
+            html[data-home-style="style-4"] body {
+                --style4-card-width: clamp(420px, 26vw, 600px);
+                --style4-safe-gap: clamp(54px, 4vw, 80px);
+            }
+
+            html[data-home-style="style-4"] .weather-temp {
+                font-size: 42px;
+            }
+
+            html[data-home-style="style-4"] .weather-icon {
+                font-size: 32px;
+            }
+
+            html[data-home-style="style-5"] body {
+                --style5-edge-gap: clamp(72px, 4.5vw, 100px);
+            }
+
+            html[data-home-style="style-5"] .weather-temp {
+                font-size: clamp(84px, 6vw, 110px);
+            }
+
+            html[data-home-style="style-6"] body {
+                --style6-side-width: clamp(620px, 32vw, 800px);
+                --style6-frame-gap: clamp(72px, 4.5vw, 96px);
+            }
+
+            html[data-home-style="style-6"] .time {
+                font-size: clamp(240px, 14vw, 300px);
+            }
+        }
+
+        @media screen and (min-width: 2600px) and (min-height: 1700px) {
+            html[data-home-style="style-2"] body {
+                --style2-panel-width: clamp(560px, 23vw, 680px);
+                --style2-chat-height: clamp(340px, 31vh, 560px);
+            }
+        }
+
         /* --- V2.2 Mobile: Portrait Mode --- */
         /* Photo TOP, Info BOTTOM */
-        @media screen and (max-width: 1024px) and (orientation: portrait) {
+        @media screen and (max-width: 900px) and (orientation: portrait) {
             body {
                 flex-direction: column;
                 overflow-y: auto;
@@ -837,8 +1749,8 @@
             }
 
             .time {
-                font-size: 68px;
-                letter-spacing: -2px;
+                letter-spacing: -0.02em;
+                font-size: clamp(42px, 12vw, 64px); /* 移动端更平滑的缩放 */
             }
 
             .greeting {
@@ -846,8 +1758,8 @@
             }
 
             .date {
-                font-size: 15px;
                 white-space: normal;
+                font-size: clamp(13px, 3vw, 18px); /* 移动端更平滑的缩放 */
             }
 
             #chat-container {
@@ -915,7 +1827,7 @@
 
         /* --- V2.2 Mobile: Landscape Mode --- */
         /* Same as desktop: Info LEFT, Photo RIGHT */
-        @media screen and (max-width: 1024px) and (orientation: landscape) {
+        @media screen and (max-width: 900px) and (orientation: landscape) {
             body {
                 flex-direction: row;
                 height: 100vh;
@@ -940,12 +1852,8 @@
             }
 
             .time {
-                font-size: 74px;
-                letter-spacing: -2px;
-            }
-
-            .date {
-                font-size: 18px;
+                letter-spacing: -0.02em;
+                font-size: clamp(36px, 8vw, 56px); /* 横屏模式更平滑的缩放 */
             }
 
             .greeting {
@@ -1013,7 +1921,7 @@
             display: none;
         }
 
-        @media screen and (max-width: 1024px) {
+        @media screen and (max-width: 900px) {
             #home-style-hotspot {
                 width: 70px;
                 height: 70px;
@@ -1094,9 +2002,11 @@
             }
         }
 
-        @media screen and (max-width: 1024px) {
+        @media screen and (max-width: 900px) {
             html[data-home-style="style-2"] body,
-            html[data-home-style="style-3"] body {
+            html[data-home-style="style-3"] body,
+            html[data-home-style="style-4"] body,
+            html[data-home-style="style-6"] body {
                 flex-direction: column;
                 overflow-y: auto;
                 min-height: 100vh;
@@ -1104,7 +2014,9 @@
             }
 
             html[data-home-style="style-2"] .photo-panel,
-            html[data-home-style="style-3"] .photo-panel {
+            html[data-home-style="style-3"] .photo-panel,
+            html[data-home-style="style-4"] .photo-panel,
+            html[data-home-style="style-6"] .photo-panel {
                 width: 100%;
                 height: 52vh;
                 min-height: 280px;
@@ -1114,7 +2026,9 @@
             }
 
             html[data-home-style="style-2"] .info-panel,
-            html[data-home-style="style-3"] .info-panel {
+            html[data-home-style="style-3"] .info-panel,
+            html[data-home-style="style-4"] .info-panel,
+            html[data-home-style="style-6"] .info-panel {
                 position: relative;
                 left: auto;
                 top: auto;
@@ -1132,28 +2046,24 @@
                 backdrop-filter: none;
             }
 
-            html[data-home-style="style-2"] #chat-input-area {
-                position: absolute;
-                left: 0;
-                bottom: 0;
-                width: 100%;
-                padding: 12px 16px 14px 20px;
-                opacity: 1;
-                margin-top: 0;
-            }
-
             html[data-home-style="style-2"] .time,
-            html[data-home-style="style-3"] .time {
-                font-size: 68px;
+            html[data-home-style="style-3"] .time,
+            html[data-home-style="style-4"] .time,
+            html[data-home-style="style-6"] .time {
+                font-size: clamp(52px, 10vw, 84px); /* 小屏设备更平滑的缩放 */
             }
 
             html[data-home-style="style-2"] .date,
-            html[data-home-style="style-3"] .date {
-                font-size: 15px;
+            html[data-home-style="style-3"] .date,
+            html[data-home-style="style-4"] .date,
+            html[data-home-style="style-6"] .date {
+                font-size: clamp(13px, 2.8vw, 18px); /* 小屏设备更平滑的缩放 */
             }
 
             html[data-home-style="style-2"] #chat-container,
-            html[data-home-style="style-3"] #chat-container {
+            html[data-home-style="style-3"] #chat-container,
+            html[data-home-style="style-4"] #chat-container,
+            html[data-home-style="style-6"] #chat-container {
                 min-height: 96px;
                 height: 120px;
                 max-height: 140px;
@@ -1170,25 +2080,53 @@
             }
 
             html[data-home-style="style-2"] .slide-date,
-            html[data-home-style="style-3"] .slide-date {
+            html[data-home-style="style-3"] .slide-date,
+            html[data-home-style="style-4"] .slide-date,
+            html[data-home-style="style-6"] .slide-date {
                 top: 16px;
                 right: 16px;
                 bottom: auto;
                 font-size: 14px;
                 padding: 7px 12px;
             }
+
+            html[data-home-style="style-5"] body {
+                --style5-edge-gap: 18px;
+            }
+
+            html[data-home-style="style-5"] .time {
+                font-size: clamp(36px, 8vw, 56px); /* 小屏设备更平滑的缩放 */
+            }
+
+            html[data-home-style="style-5"] .weather-temp {
+                font-size: clamp(32px, 7vw, 48px); /* 小屏设备更平滑的缩放 */
+            }
+
+            html[data-home-style="style-5"] .info-bottom,
+            html[data-home-style="style-5"] #chat-input-area {
+                max-width: min(72vw, 320px);
+            }
+
+            html[data-home-style="style-4"] .slide,
+            html[data-home-style="style-5"] .slide {
+                padding: 20px;
+            }
         }
 
-        @media screen and (max-width: 1024px) and (orientation: landscape) {
+        @media screen and (max-width: 900px) and (orientation: landscape) {
             html[data-home-style="style-2"] body,
-            html[data-home-style="style-3"] body {
+            html[data-home-style="style-3"] body,
+            html[data-home-style="style-4"] body,
+            html[data-home-style="style-6"] body {
                 flex-direction: row;
                 height: 100vh;
                 overflow: hidden;
             }
 
             html[data-home-style="style-2"] .info-panel,
-            html[data-home-style="style-3"] .info-panel {
+            html[data-home-style="style-3"] .info-panel,
+            html[data-home-style="style-4"] .info-panel,
+            html[data-home-style="style-6"] .info-panel {
                 position: relative;
                 left: auto;
                 top: auto;
@@ -1209,7 +2147,9 @@
             }
 
             html[data-home-style="style-2"] .photo-panel,
-            html[data-home-style="style-3"] .photo-panel {
+            html[data-home-style="style-3"] .photo-panel,
+            html[data-home-style="style-4"] .photo-panel,
+            html[data-home-style="style-6"] .photo-panel {
                 width: 66%;
                 height: 100%;
                 min-height: 0;
@@ -1219,24 +2159,32 @@
             }
 
             html[data-home-style="style-2"] .time,
-            html[data-home-style="style-3"] .time {
-                font-size: 74px;
+            html[data-home-style="style-3"] .time,
+            html[data-home-style="style-4"] .time,
+            html[data-home-style="style-6"] .time {
+                font-size: clamp(56px, 9vw, 92px); /* 横屏模式更平滑的缩放 */
             }
 
             html[data-home-style="style-2"] .date,
-            html[data-home-style="style-3"] .date {
-                font-size: 18px;
+            html[data-home-style="style-3"] .date,
+            html[data-home-style="style-4"] .date,
+            html[data-home-style="style-6"] .date {
+                font-size: clamp(14px, 2.4vw, 20px); /* 横屏模式更平滑的缩放 */
             }
 
             html[data-home-style="style-2"] #chat-container,
-            html[data-home-style="style-3"] #chat-container {
+            html[data-home-style="style-3"] #chat-container,
+            html[data-home-style="style-4"] #chat-container,
+            html[data-home-style="style-6"] #chat-container {
                 min-height: 92px;
                 max-height: 150px;
                 margin-bottom: 68px;
             }
 
             html[data-home-style="style-2"] #chat-input-area,
-            html[data-home-style="style-3"] #chat-input-area {
+            html[data-home-style="style-3"] #chat-input-area,
+            html[data-home-style="style-4"] #chat-input-area,
+            html[data-home-style="style-6"] #chat-input-area {
                 position: absolute;
                 left: 0;
                 bottom: 0;
@@ -1247,14 +2195,66 @@
             }
 
             html[data-home-style="style-2"] #chat-input,
-            html[data-home-style="style-3"] #chat-input {
+            html[data-home-style="style-3"] #chat-input,
+            html[data-home-style="style-4"] #chat-input,
+            html[data-home-style="style-6"] #chat-input {
                 padding: 9px 12px;
                 font-size: 14px;
             }
 
             html[data-home-style="style-2"] #chat-send-btn,
-            html[data-home-style="style-3"] #chat-send-btn {
+            html[data-home-style="style-3"] #chat-send-btn,
+            html[data-home-style="style-4"] #chat-send-btn,
+            html[data-home-style="style-6"] #chat-send-btn {
                 font-size: 20px;
+            }
+
+            html[data-home-style="style-5"] body {
+                --style5-edge-gap: 16px;
+            }
+
+            html[data-home-style="style-5"] .slide-date {
+                right: 8px;
+                font-size: 8px;
+                bottom: 74px;
+            }
+
+            html[data-home-style="style-5"] #controls button {
+                width: 46px;
+                height: 46px;
+            }
+        }
+        /* ============================================================
+           深海打捞彩蛋 — 岁月沉淀视觉效果
+           ============================================================ */
+        .salvage-filter {
+            filter: sepia(30%) contrast(110%) saturate(90%);
+            transition: filter 2s ease-in-out;
+        }
+
+        .salvage-text {
+            position: absolute;
+            bottom: clamp(100px, 12vh, 180px); /* Move higher up to avoid controls and date */
+            right: 5%;
+            color: rgba(255, 255, 255, 0.88);
+            font-size: clamp(13px, 1.8vw, 20px);
+            font-weight: 400;
+            letter-spacing: 0.15em;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            animation: salvage-float-in 2s ease-out 1s forwards;
+        }
+
+        @keyframes salvage-float-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
     </style>
@@ -1277,6 +2277,18 @@
         <button class="style-option" data-style="style-3">
             样式三
             <span>画廊展签风，更柔和、更像展厅里的作品陈列。</span>
+        </button>
+        <button class="style-option" data-style="style-4">
+            样式四
+            <span>悬浮玻璃卡风格，信息区像漂浮在照片上的一块轻薄玻璃。</span>
+        </button>
+        <button class="style-option" data-style="style-5">
+            样式五
+            <span>边缘信息极简电影风，几乎把画面完整交还给照片本身。</span>
+        </button>
+        <button class="style-option" data-style="style-6">
+            样式六
+            <span>浅色编辑海报风，像展签与海报结合的杂志化版式。</span>
         </button>
     </div>
 
@@ -1420,7 +2432,7 @@
     <script>
         const CURRENT_USER = "{{ username }}";
     </script>
-    <script src="{{ url_for('static', filename='script.js') }}?v=1.4"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=1.8"></script>
 
     <!-- V1.3 Info Logic -->
     <script>
@@ -1470,8 +2482,18 @@
             const day = String(now.getDate()).padStart(2, '0');
             const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
             const weekday = weekdays[now.getDay()];
+            const dateEl = document.getElementById('clock-date');
+            const rawDateText = `${year}年${month}月${day}日 ${weekday}`;
 
-            document.getElementById('clock-date').textContent = `${year}年${month}月${day}日 ${weekday}`;
+            if (document.documentElement.getAttribute('data-home-style') === 'style-6') {
+                dateEl.innerHTML = `
+                    <span class="date-line">${year}年${month}月</span>
+                    <span class="date-line">${day}日</span>
+                    <span class="date-line">${weekday}</span>
+                `;
+            } else {
+                dateEl.textContent = rawDateText;
+            }
 
             // Update greeting every minute as well
             updateGreeting();
