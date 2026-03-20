@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>平板 UI 优化效果对比 - 2800×1800</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 60px 40px;
+            font-family: 'Inter', sans-serif;
+        }
+        .title {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 50px;
+        }
+        .title h1 { font-size: 32px; font-weight: 600; margin-bottom: 12px; }
+        .title p { color: rgba(255,255,255,0.6); font-size: 15px; }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .card-header {
+            padding: 20px 28px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .card-header.original {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-header.optimized {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .card-body {
+            padding: 40px 28px 50px;
+            min-height: 520px;
+        }
+        
+        /* 模拟屏幕区域 */
+        .screen-preview {
+            width: 100%;
+            height: 420px;
+            position: relative;
+            background: linear-gradient(180deg, rgba(4,5,8,0.96), rgba(4,5,8,0.78) 58%, rgba(4,5,8,0.58));
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        /* 背景幻灯片模拟 */
+        .slide-bg {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 65%;
+            height: 100%;
+            background: radial-gradient(circle at 60% 50%, rgba(66,94,145,0.15), transparent 40%),
+                        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08), transparent 30%),
+                        #030405;
+        }
+        
+        .slide-content {
+            position: absolute;
+            right: 8%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48%;
+            height: 75%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+        
+        /* 信息面板 */
+        .info-panel {
+            position: relative;
+            width: 35%;
+            height: 100%;
+            padding-left: 45px;
+            z-index: 10;
+        }
+        
+        .original .info-panel {
+            padding-top: 15vh;  /* 原始：较大 padding */
+        }
+        
+        .optimized .info-panel {
+            padding-top: 10vh;  /* 优化：减少 padding */
+        }
+        
+        .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.82);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        /* 原始版本字体小 */
+        .original .time {
+            font-size: 90px;  /* 2800px 下 9vw ≈ 252px，但被 clamp 限制 */
+            font-weight: 300;
+            color: #fff;
+            line-height: 0.94;
+            letter-spacing: -0.03em;
+            text-shadow: 0 10px 40px rgba(0,0,0,0.18);
+        }
+        
+        .original .date {
+            font-size: 36px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.74);
+            letter-spacing: 0.04em;
+            margin-top: 8px;
+        }
+        
+        /* 优化版本字体大 */
+        .optimized .time {
+            font-size: 280px;  /* 2800px 下 12vw ≈ 336px */
+            font-weight: 300;
+            color: #fff;
+            line-height: 0.9;
+            letter-spacing: -0.03em;
+            text-shadow: 0 12px 60px rgba(0,0,0,0.28);
+        }
+        
+        .optimized .date {
+            font-size: 80px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.74);
+            letter-spacing: 0.04em;
+            margin-top: 12px;
+        }
+        
+        .optimized .greeting {
+            font-size: 20px;
+        }
+        
+        /* 天气组件 */
+        .weather-widget {
+            position: absolute;
+            bottom: 50px;
+            left: 45px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 20px;
+            background: rgba(255,255,255,0.09);
+            border-radius: 22px;
+        }
+        
+        .weather-icon { font-size: 40px; }
+        .weather-temp { font-size: 32px; font-weight: 600; }
+        .weather-desc { font-size: 18px; color: rgba(255,255,255,0.72); }
+        
+        .optimized .weather-icon { font-size: 44px; }
+        .optimized .weather-temp { font-size: 36px; }
+        .optimized .weather-desc { font-size: 20px; }
+        
+        /* 标注 */
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        .badge.bad { background: rgba(255,59,48,0.9); color: #fff; }
+        .badge.good { background: rgba(52,199,89,0.9); color: #fff; }
+        
+        /* 修改列表 */
+        .changes {
+            max-width: 1600px;
+            margin: 50px auto 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 28px 32px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .changes h3 { color: #fff; font-size: 20px; margin-bottom: 20px; }
+        .changes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .change-item {
+            background: rgba(255,255,255,0.05);
+            padding: 14px 18px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.85);
+            font-size: 14px;
+        }
+        .change-item strong { color: #f093fb; }
+        .change-item code {
+            background: rgba(0,0,0,0.3);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: 'Monaco', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">
+        <h1>📱 平板屏幕 UI 优化效果对比</h1>
+        <p>目标分辨率：2800 × 1800 | 优化重点：时间日期显示完整性</p>
+    </div>
+    
+    <div class="comparison">
+        <!-- 原始版本 -->
+        <div class="card">
+            <div class="card-header original">❌ 原始版本（存在问题）</div>
+            <div class="card-body original">
+                <div class="screen-preview">
+                    <div class="slide-bg"></div>
+                    <div class="slide-content"></div>
+                    <div class="info-panel">
+                        <div class="greeting">Good Morning</div>
+                        <div class="time">17:14</div>
+                        <div class="date">2026 年 3 月 20 日</div>
+                        <div class="weather-widget">
+                            <div class="weather-icon">⛅</div>
+                            <div>
+                                <div class="weather-temp">24°C</div>
+                                <div class="weather-desc">上海 · 多云</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="badge bad">问题：字体偏小 · 层级不足 · 易被遮挡</div>
+            </div>
+        </div>
+        
+        <!-- 优化版本 -->
+        <div class="card">
+            <div class="card-header optimized">✅ 优化版本（推荐）</div>
+            <div class="card-body optimized">
+                <div class="screen-preview">
+                    <div class="slide-bg"></div>
+                    <div class="slide-content"></div>
+                    <div class="info-panel">
+                        <div class="greeting">Good Morning</div>
+                        <div class="time">17:14</div>
+                        <div class="date">2026 年 3 月 20 日</div>
+                        <div class="weather-widget">
+                            <div class="weather-icon">⛅</div>
+                            <div>
+                                <div class="weather-temp">24°C</div>
+                                <div class="weather-desc">上海 · 多云</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="badge good">优化：字体加大 · 层级提升 · 阴影增强</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 修改说明 -->
+    <div class="changes">
+        <h3>🔧 优化修改详情</h3>
+        <div class="changes-grid">
+            <div class="change-item">
+                <strong>z-index</strong><br>
+                info-panel 从 <code>auto</code> → <code>10</code>（提升层级防遮挡）
+            </div>
+            <div class="change-item">
+                <strong>padding-top</strong><br>
+                从 <code>15vh</code> → <code>12vh/10vh</code>（内容上移）
+            </div>
+            <div class="change-item">
+                <strong>时间字体</strong><br>
+                <code>clamp(56px, 9vw, 180px)</code> → <code>clamp(80px, 12vw, 320px)</code>
+            </div>
+            <div class="change-item">
+                <strong>日期字体</strong><br>
+                <code>clamp(13px, 2vw, 28px)</code> → <code>clamp(18px, 3.2vw, 52px)</code>
+            </div>
+            <div class="change-item">
+                <strong>文字阴影</strong><br>
+                从 <code>0 10px 40px</code> → <code>0 12px 60px</code>（增强对比度）
+            </div>
+            <div class="change-item">
+                <strong>天气组件</strong><br>
+                图标和字体同步放大 <code>10-15%</code>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
