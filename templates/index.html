@@ -766,6 +766,44 @@
             background:
                 linear-gradient(180deg, rgba(245, 239, 229, 0.88), rgba(235, 226, 211, 0.60));
             box-shadow: inset -1px 0 0 rgba(58, 47, 37, 0.06);
+            position: relative;
+            z-index: 10;  /* 提升层级，避免被背景遮挡 */
+        }
+
+        /* ========== Style-3 平板屏幕优化 (2800×1800 及以上) ========== */
+        @media (min-width: 2560px) and (min-height: 1600px) {
+            html[data-home-style="style-3"] .info-panel {
+                padding-top: 7vh;  /* 减少 padding 让内容更靠上 */
+            }
+
+            html[data-home-style="style-3"] .time {
+                font-size: clamp(42px, 6vw, 68px) !important;  /* 缩小字体范围 */
+            }
+
+            html[data-home-style="style-3"] .date {
+                font-size: clamp(11px, 1.6vw, 16px) !important;  /* 缩小字体范围 */
+            }
+
+            html[data-home-style="style-3"] .greeting {
+                font-size: 15px;  /* 问候语同步缩小 */
+            }
+
+            html[data-home-style="style-3"] .weather-widget {
+                padding: 14px 16px;
+                margin-top: 16px;
+            }
+
+            html[data-home-style="style-3"] .weather-icon {
+                font-size: 32px;
+            }
+
+            html[data-home-style="style-3"] .weather-temp {
+                font-size: 26px;
+            }
+
+            html[data-home-style="style-3"] .weather-desc {
+                font-size: 15px;
+            }
         }
 
         html[data-home-style="style-3"] .greeting,
