@@ -58,7 +58,7 @@
             height: 100%;
             padding: 0;
             padding-left: 60px;
-            padding-top: 15vh;
+            padding-top: 12vh;  /* 优化：减少 padding 让内容更靠上 */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -67,6 +67,7 @@
             gap: 15px;
             /* Reduced gap to save space */
             position: relative;
+            z-index: 10;  /* 优化：提升层级，避免被背景遮挡 */
             /* Ensure absolute children position relative to this */
             background:
                 linear-gradient(180deg, rgba(4, 5, 8, 0.96), rgba(4, 5, 8, 0.78) 58%, rgba(4, 5, 8, 0.58));
@@ -120,7 +121,7 @@
             color: #fff;
             line-height: 0.94;
             letter-spacing: -0.04em;
-            text-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+            text-shadow: 0 12px 60px rgba(0, 0, 0, 0.28);  /* 优化：增强阴影提高对比度 */
         }
 
         .date {
@@ -130,6 +131,44 @@
             letter-spacing: 0.04em;
             margin-top: 8px;
             white-space: nowrap;
+        }
+
+        /* ========== 平板屏幕优化 (2800×1800 及以上) ========== */
+        @media (min-width: 2560px) and (min-height: 1600px) {
+            .info-panel {
+                padding-top: 10vh;  /* 大屏幕上进一步减少 padding */
+            }
+
+            .time {
+                font-size: clamp(80px, 12vw, 320px);  /* 针对大屏优化字体范围 */
+                line-height: 0.9;
+            }
+
+            .date {
+                font-size: clamp(18px, 3.2vw, 52px);  /* 同步放大日期字体 */
+                margin-top: 10px;
+            }
+
+            .greeting {
+                font-size: 20px;  /* 问候语同步放大 */
+            }
+
+            .weather-widget {
+                padding: 20px 24px;
+                margin-top: 22px;
+            }
+
+            .weather-icon {
+                font-size: 44px;
+            }
+
+            .weather-temp {
+                font-size: 36px;
+            }
+
+            .weather-desc {
+                font-size: 20px;
+            }
         }
 
         #weather-widget {
@@ -638,11 +677,27 @@
         html[data-home-style="style-2"] .time {
             font-size: clamp(56px, 9vw, 180px); /* 更平滑的响应式缩放 */
             letter-spacing: -0.03em;
+            text-shadow: 0 12px 60px rgba(0, 0, 0, 0.28);  /* 优化：增强阴影 */
         }
 
         html[data-home-style="style-2"] .date {
             font-size: clamp(13px, 2vw, 28px); /* 更平滑的响应式缩放 */
             color: rgba(255, 255, 255, 0.74);
+        }
+
+        /* Style-2 平板屏幕优化 */
+        @media (min-width: 2560px) and (min-height: 1600px) {
+            html[data-home-style="style-2"] .time {
+                font-size: clamp(80px, 12vw, 320px);
+            }
+
+            html[data-home-style="style-2"] .date {
+                font-size: clamp(18px, 3.2vw, 52px);
+            }
+
+            html[data-home-style="style-2"] .greeting {
+                font-size: 20px;
+            }
         }
 
         html[data-home-style="style-2"] .weather-widget {
