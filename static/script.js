@@ -44,13 +44,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     const isMainPage = !!document.getElementById('slideshow-container');
     const isAdminPage = !!document.getElementById('drop-zone');
+    const currentHomeStyle = document.documentElement.getAttribute('data-home-style') || 'style-1';
 
     // ==========================================
     // MAIN PAGE LOGIC (Slideshow & Chat)
     // ==========================================
     if (isMainPage) {
         initSlideshow();
-        initChat();
+        // style-4 为极简信息卡，不启用留言轮询与发送逻辑
+        if (currentHomeStyle !== 'style-4') {
+            initChat();
+        }
     }
 
     function clampChannel(value, min = 0, max = 255) {
@@ -930,3 +934,50 @@ document.addEventListener('DOMContentLoaded', () => {
         loadGallery();
     }
 });
+
+
+// ========== 样式 4: 照片比例检测 ==========
+function updateSlideClass(img) {
+    if (!img || !img.naturalWidth) return;
+    
+    const ratio = img.naturalWidth / img.naturalHeight;
+    img.classList.remove('is-landscape', 'is-portrait', 'is-square');
+    
+    if (ratio > 1.2) {
+        img.classList.add('is-landscape');
+    } else if (ratio < 0.8) {
+        img.classList.add('is-portrait');
+    } else {
+        img.classList.add('is-square');
+    }
+}
+
+// 在照片加载时调用
+function initSlideClassObserver() {
+    const slideshow = document.getElementById('slideshow-container');
+    if (!slideshow) return;
+    
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.type === 'childList') {
+                const img = slideshow.querySelector('img.slide');
+                if (img && img.src) {
+                    updateSlideClass(img);
+                }
+            }
+        });
+    });
+    
+    observer.observe(slideshow, { childList: true, subtree: true });
+    
+    // 初始调用
+    setTimeout(() => {
+        const img = slideshow.querySelector('img.slide');
+        if (img) updateSlideClass(img);
+    }, 500);
+}
+
+// 页面加载时初始化
+if (document.getElementById('slideshow-container')) {
+    document.addEventListener('DOMContentLoaded', initSlideClassObserver);
+}

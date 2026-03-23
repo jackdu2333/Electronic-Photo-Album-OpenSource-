@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字相册 - 样式 7：日式禅意</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@200;300;400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Noto Sans JP', 'SimSun', sans-serif;
+            background: #F5F3EF;
+            /* 纸张纹理效果 */
+            background-image: 
+                radial-gradient(rgba(139, 115, 85, 0.03) 1px, transparent 1px),
+                radial-gradient(rgba(139, 115, 85, 0.02) 1px, transparent 1px);
+            background-size: 20px 20px, 40px 40px;
+            background-position: 0 0, 10px 10px;
+            overflow: hidden;
+        }
+
+        .hero-cluster {
+            position: absolute;
+            right: 11%;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: clamp(16px, 2vw, 34px);
+        }
+
+        /* 右侧圆形相框 */
+        .photo-frame {
+            position: relative;
+            width: clamp(420px, 40vw, 760px);
+            aspect-ratio: 1;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 
+                0 30px 80px rgba(139, 115, 85, 0.2),
+                inset 0 0 0 12px #FFFFFF,
+                inset 0 0 0 14px #E8E4DC;
+            border: 1px solid rgba(139, 115, 85, 0.15);
+        }
+
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: sepia(0.15) contrast(0.95);
+            transition: filter 0.45s ease;
+        }
+
+        .memory-salvage-tag {
+            position: absolute;
+            left: 50%;
+            bottom: 7%;
+            transform: translateX(-50%);
+            padding: 9px 18px;
+            border-radius: 999px;
+            background: rgba(196, 69, 54, 0.88);
+            color: #fff;
+            font-size: 12px;
+            letter-spacing: 0.24em;
+            box-shadow: 0 10px 24px rgba(196, 69, 54, 0.24);
+            white-space: nowrap;
+            backdrop-filter: blur(6px);
+        }
+
+        body.has-salvaged-photo .photo-frame::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.04), rgba(76, 50, 28, 0.20) 74%);
+            pointer-events: none;
+        }
+
+        body.has-salvaged-photo .photo-frame img {
+            filter: sepia(0.28) contrast(0.92) brightness(0.94);
+        }
+
+        /* 左侧信息区域 */
+        .info-panel {
+            position: absolute;
+            left: 8%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 25%;
+        }
+
+        .time {
+            font-size: clamp(56px, 4vw, 110px);
+            font-weight: 200;
+            color: #5C5C5C;
+            letter-spacing: 0.2em;
+            margin-bottom: 32px;
+        }
+
+        .divider {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, #8B7355, transparent);
+            margin: 40px 0;
+            opacity: 0.6;
+        }
+
+        .date {
+            font-size: 15px;
+            color: #8B7355;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            position: absolute;
+            right: -50px;
+            top: 0;
+            height: 200px;
+        }
+
+        .weather {
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: clamp(18px, 1.3vw, 30px);
+            color: #8B7355;
+        }
+
+        .weather-icon {
+            font-size: clamp(28px, 2vw, 44px);
+        }
+
+        /* 红色印章 */
+        .seal {
+            position: absolute;
+            bottom: 80px;
+            left: 8%;
+            width: 70px;
+            height: 70px;
+            background: #C44536;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.85;
+            box-shadow: 0 4px 12px rgba(196, 69, 54, 0.3);
+        }
+
+        body.has-salvaged-photo .seal {
+            box-shadow: 0 8px 24px rgba(196, 69, 54, 0.38);
+        }
+
+        .seal-text {
+            color: white;
+            font-size: 28px;
+            font-weight: 300;
+            writing-mode: vertical-rl;
+            letter-spacing: 0.2em;
+            font-family: 'Noto Sans JP', 'SimSun', sans-serif;
+        }
+
+        .zen-tag {
+            width: clamp(82px, 6.8vw, 112px);
+            height: clamp(360px, 58vh, 620px);
+            padding: 14px 10px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(139, 115, 85, 0.18);
+            box-shadow: 0 16px 42px rgba(139, 115, 85, 0.16);
+            display: grid;
+            grid-template-rows: minmax(82px, auto) 1px minmax(0, 1fr) 1px minmax(120px, auto);
+            justify-items: center;
+            align-items: center;
+            row-gap: 10px;
+        }
+
+        .zen-greeting {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: clamp(15px, 1.05vw, 19px);
+            color: #7B654C;
+            letter-spacing: 0.08em;
+            white-space: nowrap;
+            max-height: 100%;
+            overflow: hidden;
+        }
+
+        .zen-quote {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: clamp(16px, 1.2vw, 22px);
+            line-height: 1.45;
+            color: #5F4C39;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+            max-height: 100%;
+            overflow: hidden;
+        }
+
+        .zen-meta {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 6px;
+            width: auto;
+        }
+
+        .zen-meta-item {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 12px;
+            color: rgba(92, 92, 92, 0.78);
+            letter-spacing: 0.04em;
+            line-height: 1.35;
+            white-space: nowrap;
+            max-height: 132px;
+            overflow: hidden;
+        }
+
+        .zen-separator {
+            width: 100%;
+            height: 1px;
+            flex: 0 0 1px;
+            background: linear-gradient(to right, transparent, rgba(139, 115, 85, 0.44), transparent);
+        }
+
+        @media (max-width: 1500px) {
+            .hero-cluster {
+                right: 8%;
+            }
+
+            .photo-frame {
+                width: clamp(360px, 42vw, 680px);
+            }
+
+            .info-panel {
+                left: 6%;
+                width: 30%;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .hero-cluster {
+                right: 5%;
+                gap: 14px;
+            }
+
+            .photo-frame {
+                width: clamp(300px, 44vw, 560px);
+            }
+
+            .info-panel {
+                left: 4%;
+                width: 34%;
+            }
+
+            .zen-tag {
+                width: clamp(76px, 8vw, 98px);
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: 99999; display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+        <a href="/" style="color: #fff; text-decoration: none; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px;">首页</a>
+        <a href="/?theme=style7" style="color: #fff; text-decoration: none; padding: 4px 8px;">7</a>
+        <a href="/?theme=style8" style="color: #fff; text-decoration: none; padding: 4px 8px;">8</a>
+        <a href="/?theme=style9" style="color: #fff; text-decoration: none; padding: 4px 8px;">9</a>
+        <a href="/?theme=style10" style="color: #fff; text-decoration: none; padding: 4px 8px;">10</a>
+        <a href="/?theme=style11" style="color: #fff; text-decoration: none; padding: 4px 8px;">11</a>
+        <a href="/?theme=style12" style="color: #fff; text-decoration: none; padding: 4px 8px;">12</a>
+        <a href="/?theme=style13" style="color: #fff; text-decoration: none; padding: 4px 8px;">13</a>
+        <a href="/?theme=style14" style="color: #fff; text-decoration: none; padding: 4px 8px;">14</a>
+        <a href="/?theme=style15" style="color: #fff; text-decoration: none; padding: 4px 8px;">15</a>
+        <a href="/?theme=style16" style="color: #fff; text-decoration: none; padding: 4px 8px;">16</a>
+    </div>
+    <div class="hero-cluster">
+        <!-- 圆形相框 -->
+        <div class="photo-frame">
+            <img id="main-photo" alt="照片" loading="eager">
+            <div class="memory-salvage-tag" data-salvage-target hidden>记忆打捞</div>
+        </div>
+
+        <!-- 右侧竖向题签 -->
+        <aside class="zen-tag" aria-label="题签信息">
+            <div class="zen-greeting" id="zen-greeting">午后安好</div>
+            <div class="zen-separator"></div>
+            <div class="zen-quote" id="zen-quote">风来听风，雨来听雨。</div>
+            <div class="zen-separator"></div>
+            <div class="zen-meta">
+                <div class="zen-meta-item" id="photo-date-tag" data-photo-date-target>拍摄日期未记录</div>
+                <div class="zen-meta-item" id="quote-source-tag">来源 每日一言</div>
+                <div class="zen-meta-item" id="latest-message-tag">留言 暂无</div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 信息区域 -->
+    <div class="info-panel">
+        <div class="time" id="current-time">--:--</div>
+        <div class="divider"></div>
+        <div class="date" id="current-date">----</div>
+        <div class="weather">
+            <span class="weather-icon">🌤️</span>
+            <span id="weather-temp">--°C</span>
+        </div>
+    </div>
+
+    <!-- 红色印章 -->
+    <div class="seal">
+        <div class="seal-text">記憶</div>
+    </div>
+
+    <script>
+        const PHOTO_REFRESH_MS = 5 * 60 * 1000;
+        const WEATHER_REFRESH_MS = 30 * 60 * 1000;
+        const MESSAGE_REFRESH_MS = 60 * 1000;
+        const QUOTE_REFRESH_MS = 6 * 60 * 60 * 1000;
+
+        function updateZenTagStatic() {
+            const now = new Date();
+            const hour = now.getHours();
+            let greeting = '夜静心安';
+            if (hour >= 5 && hour < 11) greeting = '晨光安好';
+            else if (hour >= 11 && hour < 14) greeting = '午间从容';
+            else if (hour >= 14 && hour < 18) greeting = '午后安好';
+            else if (hour >= 18 && hour < 23) greeting = '晚来清宁';
+
+            const greetingEl = document.getElementById('zen-greeting');
+            if (greetingEl) greetingEl.textContent = greeting;
+        }
+
+        function clipText(input, maxLen) {
+            const text = String(input || '').trim();
+            if (!text) return '';
+            return text.length > maxLen ? `${text.slice(0, maxLen)}…` : text;
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent =
+                `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            document.getElementById('current-date').textContent =
+                `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        async function fetchMainPhoto() {
+            try {
+                const response = await fetch('/api/get_photo', { credentials: 'same-origin' });
+                if (!response.ok) return;
+                const photo = await response.json();
+                if (!photo || !photo.url) return;
+
+                const img = document.getElementById('main-photo');
+                img.onerror = null;
+                img.src = `/static/photos/${photo.url}`;
+                img.alt = photo.url;
+                if (typeof window.__applyUnifiedPhotoMeta === 'function') {
+                    window.__applyUnifiedPhotoMeta(photo);
+                }
+                img.onerror = () => {
+                    setTimeout(fetchMainPhoto, 1200);
+                };
+            } catch (_) {}
+        }
+
+        async function fetchWeather() {
+            try {
+                const response = await fetch('/api/weather-config', { credentials: 'same-origin' });
+                if (!response.ok) return;
+                const data = await response.json();
+                if (data && data.enabled && data.current && Number.isFinite(data.current.temperature_2m)) {
+                    document.getElementById('weather-temp').textContent = `${Math.round(data.current.temperature_2m)}°C`;
+                }
+            } catch (_) {}
+        }
+
+        async function fetchDailyQuote() {
+            try {
+                const response = await fetch('/api/daily-quote', { credentials: 'same-origin' });
+                if (!response.ok) return;
+                const data = await response.json();
+                if (!data || !data.text) return;
+
+                const quoteEl = document.getElementById('zen-quote');
+                const quoteSourceTag = document.getElementById('quote-source-tag');
+                if (quoteEl) {
+                    quoteEl.textContent = clipText(data.text, 14);
+                }
+                if (quoteSourceTag) {
+                    const source = clipText(data.source || data.provider || '每日一言', 10);
+                    quoteSourceTag.textContent = `来源 ${source}`;
+                }
+            } catch (_) {}
+        }
+
+        async function fetchLatestMessage() {
+            try {
+                const response = await fetch('/api/messages?limit=10', { credentials: 'same-origin' });
+                if (!response.ok) return;
+                const list = await response.json();
+                if (!Array.isArray(list) || list.length === 0) return;
+
+                const latest = list[list.length - 1];
+                const content = clipText(latest && latest.content, 10);
+                if (!content) return;
+
+                const latestMessageTag = document.getElementById('latest-message-tag');
+                if (latestMessageTag) {
+                    latestMessageTag.textContent = `留言 ${content}`;
+                }
+            } catch (_) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            updateZenTagStatic();
+            setInterval(updateDateTime, 1000);
+            fetchMainPhoto();
+            fetchWeather();
+            fetchDailyQuote();
+            fetchLatestMessage();
+            setInterval(fetchMainPhoto, PHOTO_REFRESH_MS);
+            setInterval(fetchWeather, WEATHER_REFRESH_MS);
+            setInterval(fetchDailyQuote, QUOTE_REFRESH_MS);
+            setInterval(fetchLatestMessage, MESSAGE_REFRESH_MS);
+            setInterval(updateZenTagStatic, 60 * 1000);
+
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    fetchMainPhoto();
+                    fetchWeather();
+                    fetchDailyQuote();
+                    fetchLatestMessage();
+                    updateZenTagStatic();
+                }
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='unified-style-menu.js') }}?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>悬浮画框</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 2000px;
+            padding: clamp(14px, 1.8vw, 38px);
+        }
+
+        .photo-frame {
+            position: relative;
+            width: min(88vw, calc(88vh * 1.6));
+            height: min(88vh, calc(88vw / 1.6));
+            aspect-ratio: 16/10;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #f8f8f8, #e0e0e0);
+            box-shadow: 
+                0 2px 4px rgba(0,0,0,0.1),
+                0 8px 16px rgba(0,0,0,0.1),
+                0 16px 32px rgba(0,0,0,0.15),
+                0 32px 64px rgba(0,0,0,0.2),
+                0 0 0 1px rgba(255,255,255,0.1) inset;
+            transform-style: preserve-3d;
+            animation: float 6s ease-in-out infinite;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .floating-meta-chip,
+        .floating-salvage-chip {
+            position: absolute;
+            z-index: 3;
+            backdrop-filter: blur(12px);
+        }
+
+        .floating-meta-chip {
+            left: 24px;
+            bottom: 22px;
+            padding: 12px 18px;
+            border-radius: 999px;
+            background: rgba(17, 22, 40, 0.58);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: rgba(244, 247, 255, 0.92);
+            font-size: clamp(13px, 0.9vw, 16px);
+            letter-spacing: 0.06em;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+        }
+
+        .floating-salvage-chip {
+            top: 24px;
+            right: 24px;
+            padding: 10px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: rgba(255, 255, 255, 0.94);
+            font-size: clamp(12px, 0.82vw, 14px);
+            letter-spacing: 0.14em;
+        }
+
+        .photo-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 20px solid transparent;
+            border-image: linear-gradient(145deg, rgba(255,255,255,0.8), rgba(200,200,200,0.4)) 1;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .photo-frame::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: transparent;
+            box-shadow: 
+                0 40px 70px rgba(0,0,0,0.3),
+                0 10px 20px rgba(0,0,0,0.2);
+            z-index: -1;
+            border-radius: 12px;
+            transform: translateZ(-50px);
+        }
+
+        .photo-frame:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 
+                0 4px 8px rgba(0,0,0,0.1),
+                0 16px 32px rgba(0,0,0,0.15),
+                0 32px 64px rgba(0,0,0,0.2),
+                0 64px 128px rgba(0,0,0,0.25),
+                0 0 0 1px rgba(255,255,255,0.2) inset;
+        }
+
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.6s ease;
+        }
+
+        body.has-salvaged-photo .photo-frame img {
+            filter: sepia(0.18) contrast(1.02) brightness(0.95);
+        }
+
+        body.has-salvaged-photo .photo-frame {
+            box-shadow:
+                0 2px 4px rgba(0,0,0,0.1),
+                0 8px 16px rgba(0,0,0,0.1),
+                0 16px 32px rgba(0,0,0,0.15),
+                0 32px 64px rgba(0,0,0,0.22),
+                0 0 0 1px rgba(255,255,255,0.12) inset,
+                0 0 32px rgba(215, 225, 255, 0.14);
+        }
+
+        .photo-frame:hover img {
+            transform: scale(1.05);
+        }
+
+        .inner-shadow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            box-shadow: 
+                inset 0 0 30px rgba(0,0,0,0.3),
+                inset 0 0 60px rgba(0,0,0,0.1);
+            pointer-events: none;
+            z-index: 1;
+            border-radius: 8px;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotateX(0) rotateY(0);
+            }
+            25% {
+                transform: translateY(-8px) rotateX(1deg) rotateY(-1deg);
+            }
+            50% {
+                transform: translateY(-15px) rotateX(2deg) rotateY(1deg);
+            }
+            75% {
+                transform: translateY(-8px) rotateX(1deg) rotateY(-1deg);
+            }
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 2560px) {
+            .container {
+                padding: clamp(12px, 1.5vw, 30px);
+            }
+            .photo-frame {
+                width: min(90vw, calc(90vh * 1.6));
+                height: min(90vh, calc(90vw / 1.6));
+            }
+        }
+
+        @media (max-width: 1920px) {
+            .container {
+                padding: clamp(10px, 1.2vw, 24px);
+            }
+            .photo-frame {
+                width: min(92vw, calc(92vh * 1.6));
+                height: min(92vh, calc(92vw / 1.6));
+            }
+            .photo-frame::before {
+                border-width: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: 99999; display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+        <a href="/" style="color: #fff; text-decoration: none; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px;">首页</a>
+        <a href="/?theme=style7" style="color: #fff; text-decoration: none; padding: 4px 8px;">7</a>
+        <a href="/?theme=style8" style="color: #fff; text-decoration: none; padding: 4px 8px;">8</a>
+        <a href="/?theme=style9" style="color: #fff; text-decoration: none; padding: 4px 8px;">9</a>
+        <a href="/?theme=style10" style="color: #fff; text-decoration: none; padding: 4px 8px;">10</a>
+        <a href="/?theme=style11" style="color: #fff; text-decoration: none; padding: 4px 8px;">11</a>
+        <a href="/?theme=style12" style="color: #fff; text-decoration: none; padding: 4px 8px;">12</a>
+        <a href="/?theme=style13" style="color: #fff; text-decoration: none; padding: 4px 8px;">13</a>
+        <a href="/?theme=style14" style="color: #fff; text-decoration: none; padding: 4px 8px;">14</a>
+        <a href="/?theme=style15" style="color: #fff; text-decoration: none; padding: 4px 8px;">15</a>
+        <a href="/?theme=style16" style="color: #fff; text-decoration: none; padding: 4px 8px;">16</a>
+    </div>
+    <div class="container">
+        <div class="photo-frame">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="风景照片" loading="lazy">
+            <div class="inner-shadow"></div>
+            <div class="floating-meta-chip" data-photo-date-target>拍摄日期未记录</div>
+            <div class="floating-salvage-chip" data-salvage-target hidden>记忆打捞</div>
+        </div>
+    </div>
+
+    <script>
+        const PHOTO_REFRESH_MS = 5 * 60 * 1000;
+
+        async function fetchMainPhoto() {
+            try {
+                const response = await fetch('/api/get_photo', { credentials: 'same-origin' });
+                if (!response.ok) return;
+                const photo = await response.json();
+                if (!photo || !photo.url) return;
+                const img = document.querySelector('.photo-frame img');
+                img.onerror = null;
+                img.src = `/static/photos/${photo.url}`;
+                img.alt = photo.url;
+                img.loading = 'eager';
+                if (typeof window.__applyUnifiedPhotoMeta === 'function') {
+                    window.__applyUnifiedPhotoMeta(photo);
+                }
+                img.onerror = () => {
+                    setTimeout(fetchMainPhoto, 1200);
+                };
+            } catch (_) {}
+        }
+
+        // 添加随机延迟，使浮动动画不同步
+        document.addEventListener('DOMContentLoaded', function() {
+            const frame = document.querySelector('.photo-frame');
+            const randomDelay = Math.random() * 2;
+            frame.style.animationDelay = `${randomDelay}s`;
+
+            fetchMainPhoto();
+            setInterval(fetchMainPhoto, PHOTO_REFRESH_MS);
+            
+            // 添加鼠标移动视差效果
+            frame.addEventListener('mousemove', (e) => {
+                const rect = frame.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (y - centerY) / 20;
+                const rotateY = (centerX - x) / 20;
+                
+                frame.style.transform = `translateY(-15px) scale(1.02) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            
+            frame.addEventListener('mouseleave', () => {
+                frame.style.transform = '';
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    fetchMainPhoto();
+                }
+            });
+        });
+</script>
+<script src="{{ url_for('static', filename='unified-style-menu.js') }}?v=2"></script>
+</body>
+</html>

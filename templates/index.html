@@ -8,8 +8,16 @@
     <title>数字相框 - Digital Photo Frame</title>
     <script>
         (function () {
+            const forcedStyle = '{{ forced_home_style | default("", true) }}';
             const savedStyle = localStorage.getItem('photoFrameHomeStyle') || 'style-2';
-            document.documentElement.setAttribute('data-home-style', savedStyle);
+            const normalizedSavedStyle = savedStyle === 'style-5' ? 'style-4' : savedStyle;
+            const initialStyle = forcedStyle || normalizedSavedStyle;
+            document.documentElement.setAttribute('data-home-style', initialStyle);
+            if (forcedStyle) {
+                localStorage.setItem('photoFrameHomeStyle', forcedStyle);
+            } else if (savedStyle === 'style-5') {
+                localStorage.setItem('photoFrameHomeStyle', 'style-4');
+            }
         })();
     </script>
     <!-- Config from backend -->
@@ -897,9 +905,10 @@
                 radial-gradient(circle at top, rgba(255, 232, 208, 0.18), transparent 28%),
                 linear-gradient(180deg, rgba(8, 10, 15, 0.26), rgba(6, 8, 12, 0.72)),
                 #06080c;
-            --style4-card-width: clamp(340px, 24vw, 420px);  /* Slightly increased max-width */
+            --style4-card-width: clamp(300px, 21vw, 360px);
             --style4-safe-gap: clamp(28px, 3vw, 54px);
             --style4-card-bottom: clamp(28px, 4vh, 60px);
+            --style4-overlay-clearance: calc(var(--style4-card-width) + var(--style4-safe-gap) + 26px);
             --style4-card-color-a: 102, 84, 42;
             --style4-card-color-b: 238, 204, 128;
             --style4-card-color-c: 44, 86, 112;
@@ -907,6 +916,7 @@
 
         html[data-home-style="style-4"] .photo-panel {
             width: 100%;
+            margin-left: 0;
             padding: 0;
         }
 
@@ -919,8 +929,8 @@
             width: var(--style4-card-width);
             height: auto;
             min-height: 0;
-            padding: 32px 34px 28px;  /* Increased padding for breathing room */
-            gap: 18px;
+            padding: 26px 28px 24px;
+            gap: 12px;
             border-radius: 32px;
             background: rgba(12, 15, 22, 0.42);
             backdrop-filter: blur(30px) saturate(1.14);
@@ -965,12 +975,7 @@
         }
 
         html[data-home-style="style-4"] .info-top {
-            gap: 8px;
-        }
-
-        html[data-home-style="style-4"] .info-bottom {
-            margin-top: 0;
-            flex: 0 0 auto;
+            gap: 10px;
         }
 
         html[data-home-style="style-4"] .greeting {
@@ -997,15 +1002,15 @@
         }
 
         html[data-home-style="style-4"] .weather-widget {
-            margin-top: 20px;
-            padding: 16px 20px;
+            margin-top: 16px;
+            padding: 14px 16px;
             width: 100%;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-            gap: 16px;
+            gap: 12px;
             align-items: center;
-            border-radius: 20px;
+            border-radius: 16px;
             box-sizing: border-box; /* Ensure padding doesn't overflow */
         }
 
@@ -1015,16 +1020,23 @@
         }
 
         html[data-home-style="style-4"] .weather-temp {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 300;
             color: rgba(255, 255, 255, 0.92);
         }
 
         html[data-home-style="style-4"] .weather-desc {
-            font-size: 11px;
-            letter-spacing: 0.16em;
+            font-size: 10px;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
             color: rgba(255, 255, 255, 0.42);
+        }
+
+        /* Style 4 极简信息卡：去掉留言区，仅保留问候/时间/天气 */
+        html[data-home-style="style-4"] .info-bottom,
+        html[data-home-style="style-4"] #chat-container,
+        html[data-home-style="style-4"] #chat-input-area {
+            display: none !important;
         }
 
         html[data-home-style="style-4"] #chat-container {
@@ -1125,19 +1137,20 @@
         }
 
         html[data-home-style="style-4"] .slide {
-            padding: calc(var(--style4-safe-gap) + 8px) calc(var(--style4-safe-gap) + 26px) calc(var(--style4-card-bottom) + 60px) calc(var(--style4-safe-gap) + 150px);
+            box-sizing: border-box;
+            padding: calc(var(--style4-safe-gap) + 12px) calc(var(--style4-safe-gap) + 24px) calc(var(--style4-card-bottom) + 60px) calc(var(--style4-safe-gap) + 24px);
             object-fit: contain;
-            object-position: 58% center;
+            object-position: center center;
             filter: drop-shadow(0 16px 34px rgba(0, 0, 0, 0.16));
         }
 
         html[data-home-style="style-4"] .slide.is-landscape {
-            padding: calc(var(--style4-safe-gap) + 20px);
-            object-position: center 40%;
+            padding: calc(var(--style4-safe-gap) + 16px) calc(var(--style4-safe-gap) + 120px) calc(var(--style4-card-bottom) + 56px) var(--style4-overlay-clearance);
+            object-position: 53% center;
         }
 
         html[data-home-style="style-4"] .slide.is-portrait {
-            padding: calc(var(--style4-safe-gap) + 20px) calc(var(--style4-safe-gap) + 20px) calc(var(--style4-safe-gap) + 20px) calc(var(--style4-card-width) + var(--style4-safe-gap) * 2);
+            padding: calc(var(--style4-safe-gap) + 18px) calc(var(--style4-safe-gap) + 20px) calc(var(--style4-card-bottom) + 56px) calc(var(--style4-safe-gap) + 20px);
             object-position: center center;
         }
 
@@ -1159,7 +1172,7 @@
         html[data-home-style="style-4"] #controls {
             bottom: var(--style4-safe-gap);
             right: var(--style4-safe-gap);
-            opacity: 1;
+            opacity: 0.9;  /* 修复：默认 0.9，更明显 */
         }
 
         html[data-home-style="style-4"] #controls button {
@@ -1175,7 +1188,7 @@
             color: #fff;
         }
 
-        /* --- Home Style 5: Cinematic Edge --- */
+        /* --- Home Style 5: Cinematic Edge (重构版) --- */
         html[data-home-style="style-5"] body {
             background:
                 radial-gradient(circle at center, rgba(255, 196, 120, 0.12), transparent 34%),
@@ -1183,6 +1196,74 @@
                 #040507;
             --style5-edge-gap: clamp(28px, 3vw, 56px);
             --style5-accent: 127, 183, 214;
+        }
+        
+        /* ========== 照片智能布局 ========== */
+        html[data-home-style="style-5"] .photo-panel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        html[data-home-style="style-5"] #slideshow-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        html[data-home-style="style-5"] .slide-bg {
+            filter: blur(6px) brightness(85%) saturate(1.0);  /* 修复：减轻模糊 */
+            transform: scale(1.02);
+            opacity: 0.75;
+        }
+
+        html[data-home-style="style-5"] .slide {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            padding: calc(var(--style5-edge-gap) + 22px);
+            object-fit: contain;
+            object-position: center 45%;  /* 默认：稍向上，避让底部文字 */
+            filter: drop-shadow(0 16px 34px rgba(0, 0, 0, 0.16));
+        }
+
+        /* 横图优化：主体在上方 */
+        html[data-home-style="style-5"] .slide.is-landscape {
+            object-position: center 40%;
+        }
+
+        /* 竖图优化：主体居中 */
+        html[data-home-style="style-5"] .slide.is-portrait {
+            object-position: center center;
+        }
+
+        /* 方图优化：主体居中 */
+        html[data-home-style="style-5"] .slide.is-square {
+            object-position: center center;
+        }
+
+        html[data-home-style="style-5"] .slide-date {
+            top: auto;
+            right: auto;
+            left: var(--style5-edge-gap);  /* 修复：移到左下角 */
+            bottom: calc(var(--style5-edge-gap) + 72px);
+            transform: none;
+            padding: 8px 16px;
+            background: rgba(8, 10, 16, 0.24);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: none;
+            backdrop-filter: blur(14px);
+            text-shadow: none;
+            font-size: 10px;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.68);
+            border-radius: 999px;
         }
 
         html[data-home-style="style-5"] .photo-panel {
@@ -1301,23 +1382,44 @@
             color: rgba(255, 255, 255, 0.34);
         }
 
+        /* ========== 留言区优化 ========== */
         html[data-home-style="style-5"] #chat-container {
-            min-height: 0;
+            min-height: 90px;
             height: auto;
-            max-height: 120px;
+            max-height: 180px;
             margin: 0;
             padding: 14px 16px;
-            overflow: hidden;
+            overflow-y: auto;  /* 修复：支持滚动 */
             border: 1px solid rgba(255, 255, 255, 0.08);
             background: rgba(8, 10, 16, 0.16);
             border-radius: 20px;
             backdrop-filter: blur(18px);
-            mask-image: none;
-            -webkit-mask-image: none;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
         }
 
-        html[data-home-style="style-5"] .message-row:not(:last-child) {
-            display: none;
+        html[data-home-style="style-5"] #chat-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        html[data-home-style="style-5"] #chat-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        html[data-home-style="style-5"] .message-row {
+            margin-bottom: 12px;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        html[data-home-style="style-5"] .message-row:last-child {
+            opacity: 1;
+            margin-bottom: 0;
+        }
+
+        html[data-home-style="style-5"] .message-row:hover {
+            opacity: 1;
         }
 
         html[data-home-style="style-5"] .sender-name {
@@ -1352,6 +1454,7 @@
             background: transparent;
         }
 
+        /* ========== 输入框改进 ========== */
         html[data-home-style="style-5"] #chat-input-area {
             position: fixed;
             left: var(--style5-edge-gap);
@@ -1360,11 +1463,41 @@
             padding: 0;
             opacity: 0;
             pointer-events: auto;
+            transition: opacity 0.28s ease;
         }
 
-        html[data-home-style="style-5"] #chat-input-area:hover,
-        html[data-home-style="style-5"] #chat-input-area:focus-within {
-            opacity: 1;
+        /* 桌面端 hover 显示 */
+        @media (min-width: 769px) {
+            html[data-home-style="style-5"] #chat-input-area:hover,
+            html[data-home-style="style-5"] #chat-input-area:focus-within {
+                opacity: 1;
+            }
+        }
+
+        /* 移动端始终显示触发按钮 */
+        @media (max-width: 768px) {
+            html[data-home-style="style-5"] #chat-input-area {
+                opacity: 1;
+            }
+            
+            html[data-home-style="style-5"] #chat-input {
+                display: none;
+            }
+            
+            html[data-home-style="style-5"] #chat-input-trigger {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                background: rgba(8, 10, 16, 0.24);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 50%;
+                color: rgba(var(--style5-accent), 0.92);
+                cursor: pointer;
+                font-size: 18px;
+                backdrop-filter: blur(16px);
+            }
         }
 
         html[data-home-style="style-5"] #chat-input {
@@ -1416,11 +1549,14 @@
             border-radius: 999px;
         }
 
+        /* ========== 控制按钮 ========== */
         html[data-home-style="style-5"] #controls {
+            position: fixed;
             bottom: var(--style5-edge-gap);
             right: var(--style5-edge-gap);
-            opacity: 1;
+            opacity: 0.9;  /* 修复：默认 0.9，更明显 */
             gap: 12px;
+            z-index: 122;
         }
 
         html[data-home-style="style-5"] #controls button {
@@ -1495,14 +1631,15 @@
             letter-spacing: -0.02em;
             color: rgba(36, 48, 56, 0.92);
             white-space: normal;
-            max-width: 220px;
+            max-width: none;
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 4px;
         }
 
         html[data-home-style="style-6"] .date-line {
             display: block;
+            white-space: nowrap;
         }
 
         html[data-home-style="style-6"] .weather-widget {
@@ -1528,26 +1665,45 @@
             margin-top: 18px;
         }
 
+        /* ========== 留言区优化 ========== */
         html[data-home-style="style-6"] #chat-container {
             min-height: 168px;
-            max-height: 240px;
+            max-height: 280px;  /* 修复：增加高度 */
             margin-bottom: 70px;
             padding: 18px 18px 12px;
             border-top: none;
-            mask-image: none;
-            -webkit-mask-image: none;
             background: rgba(255, 255, 255, 0.52);
             border-radius: 28px;
             border: 1px solid rgba(36, 48, 56, 0.06);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26);
+            overflow-y: auto;  /* 修复：支持滚动 */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(36, 48, 56, 0.2) transparent;
         }
 
-        html[data-home-style="style-6"] .message-row:nth-last-child(n + 4) {
-            display: none;
+        html[data-home-style="style-6"] #chat-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        html[data-home-style="style-6"] #chat-container::-webkit-scrollbar-thumb {
+            background: rgba(36, 48, 56, 0.2);
+            border-radius: 2px;
         }
 
         html[data-home-style="style-6"] .message-row {
             max-width: 100%;
+            margin-bottom: 12px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        html[data-home-style="style-6"] .message-row:last-child {
+            opacity: 1;
+            margin-bottom: 0;
+        }
+
+        html[data-home-style="style-6"] .message-row:hover {
+            opacity: 1;
         }
 
         html[data-home-style="style-6"] .message-bubble {
@@ -1565,18 +1721,55 @@
             color: rgba(36, 48, 56, 0.94);
         }
 
+        /* ========== 输入框改进 ========== */
         html[data-home-style="style-6"] #chat-input-area {
             position: absolute;
             left: 0;
             bottom: 0;
             width: 100%;
             padding: 10px 12px 0 0;
-            opacity: 0;
+            opacity: 0.92;
+            transition: opacity 0.28s ease;
+            pointer-events: auto;
         }
 
-        html[data-home-style="style-6"] #chat-input-area:hover,
-        html[data-home-style="style-6"] #chat-input-area:focus-within {
-            opacity: 1;
+        html[data-home-style="style-6"] #chat-input-trigger {
+            display: none;
+        }
+
+        /* 桌面端轻微增强可见度 */
+        @media (min-width: 769px) {
+            html[data-home-style="style-6"] .info-panel:hover #chat-input-area,
+            html[data-home-style="style-6"] #chat-input-area:hover,
+            html[data-home-style="style-6"] #chat-input-area:focus-within {
+                opacity: 1;
+            }
+        }
+
+        /* 移动端始终显示触发按钮 */
+        @media (max-width: 768px) {
+            html[data-home-style="style-6"] #chat-input-area {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            
+            html[data-home-style="style-6"] #chat-input {
+                display: none;
+            }
+            
+            html[data-home-style="style-6"] #chat-input-trigger {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                background: rgba(255, 255, 255, 0.76);
+                border: 1px solid rgba(36, 48, 56, 0.10);
+                border-radius: 50%;
+                color: #4f5f69;
+                cursor: pointer;
+                font-size: 18px;
+            }
         }
 
         html[data-home-style="style-6"] #chat-input {
@@ -1596,29 +1789,62 @@
 
         html[data-home-style="style-6"] .photo-panel {
             width: calc(100% - var(--style6-side-width));
-            padding: var(--style6-frame-gap) var(--style6-frame-gap) var(--style6-frame-gap) 16px;
+            padding: var(--style6-frame-gap);
+        }
+
+        /* ========== 照片智能布局 ========== */
+        html[data-home-style="style-6"] .photo-panel {
+            position: relative;
+            height: 100%;
+            overflow: hidden;
         }
 
         html[data-home-style="style-6"] #slideshow-container {
-            border-radius: 38px;
+            position: relative;
+            width: 100%;
+            height: 100%;
             background:
                 linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(249, 248, 246, 0.96));
             box-shadow:
                 0 28px 80px rgba(74, 86, 96, 0.10),
                 inset 0 0 0 1px rgba(50, 60, 68, 0.04);
+            border-radius: 24px;  /* 修复：圆角减小到 24px */
         }
 
         html[data-home-style="style-6"] .slide-bg {
-            filter: blur(24px) brightness(98%) saturate(0.84);
-            opacity: 0.26;
-            transform: scale(1.04);
+            filter: blur(8px) brightness(100%) saturate(1.0);  /* 修复：减轻模糊 */
+            opacity: 0.6;  /* 修复：提高不透明度 */
+            transform: scale(1.02);
         }
 
         html[data-home-style="style-6"] .slide {
-            padding: clamp(22px, 2.4vw, 40px);
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            padding: calc(var(--style6-frame-gap) + 40px)
+                     calc(var(--style6-frame-gap) + 40px)
+                     calc(var(--style6-frame-gap) + 40px)
+                     calc(var(--style6-frame-gap) + 40px);
             object-fit: contain;
             object-position: center center;
             filter: drop-shadow(0 18px 42px rgba(43, 52, 56, 0.10));
+        }
+
+        /* 横图优化 */
+        html[data-home-style="style-6"] .slide.is-landscape {
+            object-position: center center;
+        }
+
+        /* 竖图优化 */
+        html[data-home-style="style-6"] .slide.is-portrait {
+            object-position: center center;
+        }
+
+        /* 方图优化 */
+        html[data-home-style="style-6"] .slide.is-square {
+            object-position: center center;
         }
 
         html[data-home-style="style-6"] .slide-date {
@@ -1635,10 +1861,26 @@
             letter-spacing: 0.08em;
         }
 
+        /* ========== 控制按钮 ========== */
+        html[data-home-style="style-6"] #controls {
+            position: absolute;
+            bottom: calc(var(--style6-frame-gap) + 14px);
+            right: calc(var(--style6-frame-gap) + 14px);
+            gap: 12px;
+            z-index: 122;
+            opacity: 0.9;
+        }
+
         html[data-home-style="style-6"] #controls button {
+            width: 52px;
+            height: 52px;
             background: rgba(255, 255, 255, 0.78);
             color: #34424c;
             border-color: rgba(52, 66, 76, 0.10);
+            backdrop-filter: blur(18px);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
         html[data-home-style="style-6"] #controls button:hover {
@@ -1712,8 +1954,8 @@
             /* font-size handled by clamp */
 
             html[data-home-style="style-4"] body {
-                --style4-card-width: clamp(420px, 26vw, 600px);
-                --style4-safe-gap: clamp(54px, 4vw, 80px);
+                --style4-card-width: clamp(340px, 18vw, 440px);
+                --style4-safe-gap: clamp(38px, 2.8vw, 60px);
             }
 
             html[data-home-style="style-4"] .weather-temp {
@@ -2320,13 +2562,49 @@
             样式四
             <span>悬浮玻璃卡风格，信息区像漂浮在照片上的一块轻薄玻璃。</span>
         </button>
-        <button class="style-option" data-style="style-5">
-            样式五
-            <span>边缘信息极简电影风，几乎把画面完整交还给照片本身。</span>
-        </button>
         <button class="style-option" data-style="style-6">
             样式六
             <span>浅色编辑海报风，像展签与海报结合的杂志化版式。</span>
+        </button>
+        <button class="style-option" data-style="theme-style7">
+            样式七
+            <span>日式禅意（独立主题页）。</span>
+        </button>
+        <button class="style-option" data-style="theme-style8">
+            样式八
+            <span>赛博朋克（独立主题页）。</span>
+        </button>
+        <button class="style-option" data-style="theme-style9">
+            样式九
+            <span>和风木质（独立主题页）。</span>
+        </button>
+        <button class="style-option" data-style="theme-style10">
+            样式十
+            <span>北欧极简（独立主题页）。</span>
+        </button>
+        <button class="style-option" data-style="theme-style11">
+            样式十一
+            <span>复古胶片（独立主题页）。</span>
+        </button>
+        <button class="style-option" data-style="theme-style12">
+            样式十二
+            <span>悬浮画框（独立主题页）。</span>
+        </button>
+        <button class="style-option" data-style="theme-style13">
+            样式十三
+            <span>瀑布流（独立主题页）。</span>
+        </button>
+        <button class="style-option" data-style="theme-style14">
+            样式十四
+            <span>全景卷轴（独立主题页）。</span>
+        </button>
+        <button class="style-option" data-style="theme-style15">
+            样式十五
+            <span>拍立得墙（独立主题页）。</span>
+        </button>
+        <button class="style-option" data-style="theme-style16">
+            样式十六
+            <span>艺术画廊（独立主题页）。</span>
         </button>
     </div>
 
@@ -2363,6 +2641,7 @@
             </div>
 
             <div id="chat-input-area">
+                <div id="chat-input-trigger" title="留言">💬</div>
                 <input type="text" id="chat-input" placeholder="留个言..." autocomplete="off">
                 <button id="chat-send-btn">➤</button>
             </div>
@@ -2433,6 +2712,15 @@
             }
 
             function applyStyle(style) {
+                if (style.startsWith('theme-')) {
+                    const theme = style.replace('theme-', '');
+                    localStorage.setItem('selectedTheme', theme);
+                    window.location.href = `/?theme=${encodeURIComponent(theme)}`;
+                    return;
+                }
+                if (style === 'style-5') {
+                    style = 'style-4';
+                }
                 root.setAttribute('data-home-style', style);
                 localStorage.setItem('photoFrameHomeStyle', style);
                 syncActiveState();
@@ -2465,6 +2753,8 @@
             });
         })();
     </script>
+
+    <script src="{{ url_for('static', filename='unified-style-menu.js') }}?v=2"></script>
 
     <!-- Load existing slideshow logic (Cache busted for V1.3) -->
     <script>
@@ -2525,8 +2815,7 @@
 
             if (document.documentElement.getAttribute('data-home-style') === 'style-6') {
                 dateEl.innerHTML = `
-                    <span class="date-line">${year}年${month}月</span>
-                    <span class="date-line">${day}日</span>
+                    <span class="date-line">${year}年${month}月${day}日</span>
                     <span class="date-line">${weekday}</span>
                 `;
             } else {

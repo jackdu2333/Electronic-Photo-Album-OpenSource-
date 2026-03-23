@@ -100,7 +100,14 @@ class PhotoMetadataService:
         cls._metadata[url] = metadata
 
     @classmethod
-    def update(cls, url: str, date: Optional[str], tags: str):
+    def update(
+        cls,
+        url: str,
+        date: Optional[str],
+        tags: str,
+        note_title: Optional[str] = None,
+        note_body: Optional[str] = None
+    ):
         """
         更新照片元数据
 
@@ -108,12 +115,18 @@ class PhotoMetadataService:
             url: 照片相对路径
             date: 拍摄日期
             tags: 标签字符串
+            note_title: 便签标题（None 表示不更新）
+            note_body: 便签正文（None 表示不更新）
         """
         if url not in cls._metadata:
             cls._metadata[url] = {}
 
         cls._metadata[url]['date'] = date
         cls._metadata[url]['tags'] = tags
+        if note_title is not None:
+            cls._metadata[url]['note_title'] = str(note_title).strip()
+        if note_body is not None:
+            cls._metadata[url]['note_body'] = str(note_body).strip()
 
     @classmethod
     def extract_date(cls, file_path: str) -> Optional[str]:

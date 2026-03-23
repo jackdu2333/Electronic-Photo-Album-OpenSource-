@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>拍立得墙 - Style-15</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Dancing Script', cursive;
+        }
+        
+        .polaroid-wall {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 40px;
+            padding: 40px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .polaroid {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            perspective: 1000px;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        
+        .polaroid-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .polaroid:hover .polaroid-inner {
+            transform: translateY(-15px) rotateY(180deg);
+        }
+        
+        .polaroid-front, .polaroid-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .polaroid-front {
+            background: white;
+            padding: 15px 15px 50px 15px;
+            transform: rotateY(0deg);
+        }
+        
+        .polaroid-back {
+            background: linear-gradient(145deg, #fff8e1, #ffe082);
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .polaroid-front img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        
+        .polaroid-front .tape {
+            position: absolute;
+            width: 80px;
+            height: 30px;
+            background: rgba(255, 255, 200, 0.7);
+            border: 1px dashed rgba(200, 200, 150, 0.8);
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%) rotate(5deg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .polaroid-front .pin {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
+            border-radius: 50%;
+            top: -10px;
+            right: 20px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+        
+        .polaroid-front .pin::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+        }
+        
+        .polaroid-back h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #5d4037;
+        }
+        
+        .polaroid-back p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #6d4c41;
+        }
+        
+        .polaroid:nth-child(odd) {
+            transform: rotate(-3deg);
+        }
+        
+        .polaroid:nth-child(even) {
+            transform: rotate(2deg);
+        }
+        
+        .polaroid:nth-child(3n) {
+            transform: rotate(4deg);
+        }
+        
+        .polaroid:nth-child(4n) {
+            transform: rotate(-2deg);
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 3rem;
+            margin: 40px 0;
+            color: #5d4037;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .wall-toolbar {
+            max-width: 1600px;
+            margin: 0 auto 12px;
+            padding: 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            color: rgba(93, 64, 55, 0.86);
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .wall-toolbar strong {
+            color: #5d4037;
+        }
+
+        .wall-load-more-wrap {
+            display: flex;
+            justify-content: center;
+            padding: 8px 0 36px;
+        }
+
+        .wall-load-more {
+            border: none;
+            border-radius: 999px;
+            padding: 12px 24px;
+            background: rgba(93, 64, 55, 0.9);
+            color: #fffdf9;
+            cursor: pointer;
+            font-family: 'Open Sans', sans-serif;
+            box-shadow: 0 14px 26px rgba(93, 64, 55, 0.18);
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .wall-load-more:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .wall-load-more:disabled {
+            opacity: 0.52;
+            cursor: not-allowed;
+        }
+
+        .wall-anchor {
+            height: 1px;
+        }
+        
+        @media (min-width: 3200px) {
+            .polaroid-wall {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 60px;
+                padding: 60px;
+            }
+            
+            .polaroid {
+                height: 450px;
+            }
+            
+            .title {
+                font-size: 4rem;
+            }
+            
+            .polaroid-front .tape {
+                width: 100px;
+                height: 40px;
+            }
+            
+            .polaroid-front .pin {
+                width: 25px;
+                height: 25px;
+            }
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .editor-modal[hidden] {
+            display: none;
+        }
+
+        .editor-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 120000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .editor-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(20, 18, 24, 0.62);
+            backdrop-filter: blur(6px);
+        }
+
+        .editor-dialog {
+            position: relative;
+            width: min(1260px, 94vw);
+            height: min(80vh, 760px);
+            border-radius: 18px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 22px 80px rgba(0, 0, 0, 0.32);
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+        }
+
+        .editor-preview {
+            background: linear-gradient(160deg, #f8f8f8, #e9e9e9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 28px;
+        }
+
+        .editor-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+            background: #fff;
+        }
+
+        .editor-sidebar {
+            background: linear-gradient(180deg, #fff8e1, #fff3cd);
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid rgba(93, 64, 55, 0.15);
+            min-height: 0;
+        }
+
+        .editor-panel {
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 24px 22px 0;
+            padding-right: 18px;
+        }
+
+        .editor-title {
+            font-size: 1.8rem;
+            color: #5d4037;
+            margin-bottom: 2px;
+            line-height: 1.1;
+        }
+
+        .editor-subtitle {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 13px;
+            color: rgba(93, 64, 55, 0.7);
+            margin-bottom: 4px;
+        }
+
+        .editor-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .editor-field label {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            color: rgba(93, 64, 55, 0.85);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .editor-field input,
+        .editor-field textarea {
+            width: 100%;
+            border: 1px solid rgba(93, 64, 55, 0.28);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 14px;
+            color: #4e342e;
+            background: rgba(255, 255, 255, 0.8);
+            outline: none;
+        }
+
+        .editor-field input:focus,
+        .editor-field textarea:focus {
+            border-color: rgba(93, 64, 55, 0.55);
+            box-shadow: 0 0 0 3px rgba(93, 64, 55, 0.12);
+        }
+
+        .editor-field textarea {
+            resize: vertical;
+            min-height: 110px;
+            max-height: 220px;
+        }
+
+        .editor-footer {
+            flex-shrink: 0;
+            padding: 14px 22px 20px;
+            background: linear-gradient(180deg, rgba(255, 243, 205, 0), rgba(255, 243, 205, 0.92) 26%, rgba(255, 243, 205, 1) 100%);
+            border-top: 1px solid rgba(93, 64, 55, 0.08);
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .editor-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.2s ease;
+        }
+
+        .editor-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .editor-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .editor-btn-cancel {
+            background: rgba(93, 64, 55, 0.12);
+            color: #5d4037;
+        }
+
+        .editor-btn-save {
+            background: #5d4037;
+            color: #fff;
+        }
+
+        .editor-btn-save.is-saving {
+            opacity: 0.88;
+        }
+
+        .editor-status {
+            margin-top: 8px;
+            min-height: 18px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            color: rgba(93, 64, 55, 0.72);
+        }
+
+        .editor-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            background: rgba(18, 18, 18, 0.5);
+            color: #fff;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        @media (max-width: 980px) {
+            .editor-dialog {
+                grid-template-columns: 1fr;
+                height: min(92vh, 920px);
+            }
+
+            .editor-preview {
+                height: 42vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: 99999; display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+        <a href="/" style="color: #fff; text-decoration: none; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px;">首页</a>
+        <a href="/?theme=style7" style="color: #fff; text-decoration: none; padding: 4px 8px;">7</a>
+        <a href="/?theme=style8" style="color: #fff; text-decoration: none; padding: 4px 8px;">8</a>
+        <a href="/?theme=style9" style="color: #fff; text-decoration: none; padding: 4px 8px;">9</a>
+        <a href="/?theme=style10" style="color: #fff; text-decoration: none; padding: 4px 8px;">10</a>
+        <a href="/?theme=style11" style="color: #fff; text-decoration: none; padding: 4px 8px;">11</a>
+        <a href="/?theme=style12" style="color: #fff; text-decoration: none; padding: 4px 8px;">12</a>
+        <a href="/?theme=style13" style="color: #fff; text-decoration: none; padding: 4px 8px;">13</a>
+        <a href="/?theme=style14" style="color: #fff; text-decoration: none; padding: 4px 8px;">14</a>
+        <a href="/?theme=style15" style="color: #fff; text-decoration: none; padding: 4px 8px;">15</a>
+        <a href="/?theme=style16" style="color: #fff; text-decoration: none; padding: 4px 8px;">16</a>
+    </div>
+    <h1 class="title">回忆墙</h1>
+    <div class="wall-toolbar">
+        <span><strong id="wall-count">0 / 0</strong> 当前已铺开</span>
+        <span id="wall-tip">向下滚动可继续展开剩余拍立得</span>
+    </div>
+    
+    <div class="polaroid-wall" id="polaroid-wall">
+        <!-- 拍立得1 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片1" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>2023年夏天</h3>
+                    <p>海边度假的美好时光，阳光、沙滩和海浪的声音...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得2 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片2" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>生日派对</h3>
+                    <p>朋友们的惊喜派对，蛋糕和欢笑声充满了整个房间</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得3 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片3" loading="lazy" decoding="async">
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>登山之旅</h3>
+                    <p>登上山顶的成就感，俯瞰整个城市的壮丽景色</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得4 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片4" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>咖啡馆午后</h3>
+                    <p>悠闲的下午，一杯咖啡，一本书，享受独处的宁静</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得5 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片5" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>音乐节</h3>
+                    <p>与成千上万人一起感受音乐的震撼，难忘的夜晚</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得6 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片6" loading="lazy" decoding="async">
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>家庭聚餐</h3>
+                    <p>三代同堂的温馨时刻，美食和亲情的完美结合</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得7 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片7" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>艺术展览</h3>
+                    <p>沉浸在艺术的世界里，感受创意的无限可能</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得8 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片8" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>滑雪冒险</h3>
+                    <p>第一次滑雪的紧张与兴奋，摔倒又站起来的勇气</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得9 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片9" loading="lazy" decoding="async">
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>读书会</h3>
+                    <p>与书友分享阅读心得，思想的碰撞与交流</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得10 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片10" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>日落时分</h3>
+                    <p>最美的日落，天空被染成橙红色，宁静而美丽</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得11 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片11" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>烹饪实验</h3>
+                    <p>尝试新菜谱的乐趣，虽然有点失败但过程很享受</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得12 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片12" loading="lazy" decoding="async">
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>星空观测</h3>
+                    <p>远离城市灯光，仰望璀璨星空，感受宇宙的浩瀚</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得13 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片13" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>手工制作</h3>
+                    <p>亲手制作礼物的满足感，每一针每一线都充满心意</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得14 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片14" loading="lazy" decoding="async">
+                    <div class="tape"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>晨跑时光</h3>
+                    <p>清晨的公园，新鲜的空气，开始充满活力的一天</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 拍立得15 -->
+        <div class="polaroid">
+            <div class="polaroid-inner">
+                <div class="polaroid-front">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="回忆照片15" loading="lazy" decoding="async">
+                    <div class="pin"></div>
+                </div>
+                <div class="polaroid-back">
+                    <h3>老友重逢</h3>
+                    <p>多年后的重聚，时间仿佛没有留下痕迹，友情依旧</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="wall-anchor" id="wall-anchor"></div>
+    <div class="wall-load-more-wrap">
+        <button class="wall-load-more" id="wall-load-more" type="button">加载更多拍立得</button>
+    </div>
+
+    <div class="editor-modal" id="editor-modal" hidden>
+        <div class="editor-backdrop" id="editor-backdrop"></div>
+        <div class="editor-dialog" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+            <button class="editor-close" id="editor-close-btn" aria-label="关闭编辑">×</button>
+            <div class="editor-preview">
+                <img id="editor-photo" alt="编辑预览">
+            </div>
+            <div class="editor-sidebar">
+                <form class="editor-panel" id="editor-form">
+                    <h2 class="editor-title" id="editor-title">便签编辑</h2>
+                    <p class="editor-subtitle">点击保存后会更新照片标签/日期（后端）和便签文案（本地）</p>
+
+                    <div class="editor-field">
+                        <label for="editor-note-title">便签标题</label>
+                        <input id="editor-note-title" type="text" maxlength="32" placeholder="例如：海边假期">
+                    </div>
+
+                    <div class="editor-field">
+                        <label for="editor-note-body">便签内容</label>
+                        <textarea id="editor-note-body" maxlength="220" placeholder="记录一下这张照片的故事..."></textarea>
+                    </div>
+
+                    <div class="editor-field">
+                        <label for="editor-date">拍摄日期</label>
+                        <input id="editor-date" type="date">
+                    </div>
+
+                    <div class="editor-field">
+                        <label for="editor-tags">标签（逗号分隔）</label>
+                        <input id="editor-tags" type="text" maxlength="120" placeholder="例如：旅行,海边,家庭">
+                    </div>
+                </form>
+
+                <div class="editor-footer">
+                    <div class="editor-actions">
+                        <button type="button" class="editor-btn editor-btn-cancel" id="editor-cancel-btn">取消</button>
+                        <button type="submit" form="editor-form" class="editor-btn editor-btn-save" id="editor-save-btn">保存便签</button>
+                    </div>
+                    <div class="editor-status" id="editor-status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        function getCsrfHeaders(extraHeaders = {}) {
+            return csrfToken ? { ...extraHeaders, 'X-CSRFToken': csrfToken } : extraHeaders;
+        }
+
+        function normalizeTags(rawTags) {
+            if (!rawTags) return [];
+            if (Array.isArray(rawTags)) {
+                return rawTags.map(t => String(t).trim()).filter(Boolean);
+            }
+            return String(rawTags)
+                .split(/[\s,，;；|、/]+/)
+                .map(t => t.trim())
+                .filter(Boolean);
+        }
+
+        const fallbackMemoBodies = [
+            '镜头把日常抬升为展品，平凡因此有了仪式感。',
+            '画面中的留白让故事继续生长，像一段未写完的诗。',
+            '光线经过这一刻时放慢了脚步，把温柔留在了画面里。',
+            '日常被安静收藏下来，于是平凡也拥有了被纪念的理由。',
+            '这一瞬没有大声喧哗，却把情绪轻轻留在了镜头深处。',
+            '时间在这里停了一下，让普通的一天多了一点值得回望的光。',
+            '照片替我们记住了当时的空气、神情和那些没说出口的心意。',
+            '有些时刻不必隆重，也值得被认真放进回忆里珍藏。',
+            '当下被温柔定格，后来回看时，连沉默都会发亮。',
+            '生活的细节被悄悄显影，于是这一刻有了故事感。'
+        ];
+
+        function pickFallbackMemoBody(photo) {
+            const seedSource = String((photo && (photo.url || photo.date || photo.tags)) || 'memo');
+            let seed = 0;
+            for (let i = 0; i < seedSource.length; i += 1) {
+                seed = (seed * 31 + seedSource.charCodeAt(i)) >>> 0;
+            }
+            return fallbackMemoBodies[seed % fallbackMemoBodies.length];
+        }
+
+        function defaultTitle(photo) {
+            if (photo && photo.date) return photo.date;
+            const tags = normalizeTags(photo && photo.tags);
+            if (tags.length > 0) return tags[0];
+            return '回忆瞬间';
+        }
+
+        function defaultBody(photo) {
+            return pickFallbackMemoBody(photo);
+        }
+
+        function applyCardMemo(card, photo) {
+            const title = String(photo.note_title || defaultTitle(photo)).trim();
+            const body = String(photo.note_body || defaultBody(photo)).trim();
+            const titleEl = card.querySelector('.polaroid-back h3');
+            const bodyEl = card.querySelector('.polaroid-back p');
+            if (titleEl) titleEl.textContent = title;
+            if (bodyEl) bodyEl.textContent = body;
+            card.dataset.filename = photo.url || '';
+            card.dataset.date = photo.date || '';
+            card.dataset.tags = Array.isArray(photo.tags) ? photo.tags.join(',') : (photo.tags || '');
+            card.dataset.memoTitle = title;
+            card.dataset.memoBody = body;
+        }
+
+        // 随机化胶带和图钉的位置 + 点击编辑
+        document.addEventListener('DOMContentLoaded', function() {
+            const wall = document.getElementById('polaroid-wall');
+            const templateCard = wall.querySelector('.polaroid').cloneNode(true);
+            const cardPhotoMap = new Map();
+            const wallCount = document.getElementById('wall-count');
+            const wallTip = document.getElementById('wall-tip');
+            const wallLoadMoreBtn = document.getElementById('wall-load-more');
+            const wallAnchor = document.getElementById('wall-anchor');
+            let allPhotos = [];
+            let renderedCount = 0;
+            let autoSaveTimer = null;
+            let isSaving = false;
+            let lastSavedSnapshot = '';
+            let isHydratingEditor = false;
+
+            const editorModal = document.getElementById('editor-modal');
+            const editorBackdrop = document.getElementById('editor-backdrop');
+            const editorPhoto = document.getElementById('editor-photo');
+            const editorForm = document.getElementById('editor-form');
+            const editorCloseBtn = document.getElementById('editor-close-btn');
+            const editorCancelBtn = document.getElementById('editor-cancel-btn');
+            const editorSaveBtn = document.getElementById('editor-save-btn');
+            const editorStatus = document.getElementById('editor-status');
+            const editorNoteTitle = document.getElementById('editor-note-title');
+            const editorNoteBody = document.getElementById('editor-note-body');
+            const editorDate = document.getElementById('editor-date');
+            const editorTags = document.getElementById('editor-tags');
+            let activeCard = null;
+
+            function getBatchSize() {
+                const width = window.innerWidth;
+                if (width >= 3200) return 24;
+                if (width >= 2400) return 18;
+                if (width >= 1600) return 15;
+                return 12;
+            }
+
+            function getInitialBatchSize() {
+                return Math.max(getBatchSize() + 6, Math.floor(getBatchSize() * 1.6));
+            }
+
+            function updateWallStatus() {
+                if (wallCount) {
+                    wallCount.textContent = `${renderedCount} / ${allPhotos.length}`;
+                }
+                if (wallTip) {
+                    wallTip.textContent = renderedCount < allPhotos.length
+                        ? '向下滚动可继续展开剩余拍立得'
+                        : '全部拍立得都已经铺开了';
+                }
+                if (wallLoadMoreBtn) {
+                    wallLoadMoreBtn.disabled = renderedCount >= allPhotos.length;
+                    wallLoadMoreBtn.textContent = renderedCount >= allPhotos.length ? '已展示全部拍立得' : '加载更多拍立得';
+                }
+            }
+
+            function decoratePolaroid(polaroid) {
+                const tape = polaroid.querySelector('.tape');
+                const pin = polaroid.querySelector('.pin');
+                const randomPolaroidRotation = (Math.random() * 8 - 4).toFixed(2);
+                polaroid.style.transform = `rotate(${randomPolaroidRotation}deg)`;
+
+                if (tape) {
+                    const randomRotation = (Math.random() * 10 - 5).toFixed(2);
+                    const randomLeft = (Math.random() * 40 + 30).toFixed(2);
+                    tape.style.transform = `translateX(-50%) rotate(${randomRotation}deg)`;
+                    tape.style.left = `${randomLeft}%`;
+                }
+
+                if (pin) {
+                    const randomRight = (Math.random() * 40 + 10).toFixed(2);
+                    pin.style.right = `${randomRight}px`;
+                }
+            }
+
+            function createPolaroidCard(photo) {
+                const polaroid = templateCard.cloneNode(true);
+                const img = polaroid.querySelector('.polaroid-front img');
+                if (img) {
+                    img.src = `/static/photos/${encodeURI(String(photo.url || ''))}`;
+                    img.alt = photo.url;
+                }
+                cardPhotoMap.set(polaroid, photo);
+                applyCardMemo(polaroid, photo);
+                decoratePolaroid(polaroid);
+                polaroid.addEventListener('click', () => {
+                    openEditor(polaroid);
+                });
+                return polaroid;
+            }
+
+            function renderNextBatch(batchSize) {
+                const take = Math.min(batchSize, allPhotos.length - renderedCount);
+                if (take <= 0) {
+                    updateWallStatus();
+                    return 0;
+                }
+                const fragment = document.createDocumentFragment();
+                for (let i = 0; i < take; i += 1) {
+                    fragment.appendChild(createPolaroidCard(allPhotos[renderedCount + i]));
+                }
+                wall.appendChild(fragment);
+                renderedCount += take;
+                updateWallStatus();
+                return take;
+            }
+
+            function setStatus(message, isError = false) {
+                if (!editorStatus) return;
+                editorStatus.textContent = message || '';
+                editorStatus.style.color = isError ? '#b71c1c' : 'rgba(93, 64, 55, 0.72)';
+            }
+
+            function collectEditorPayload(photo) {
+                return {
+                    filename: photo.url,
+                    date: (editorDate && editorDate.value) ? editorDate.value : '',
+                    tags: editorTags ? editorTags.value.trim() : '',
+                    note_title: editorNoteTitle ? editorNoteTitle.value.trim() : '',
+                    note_body: editorNoteBody ? editorNoteBody.value.trim() : ''
+                };
+            }
+
+            function payloadSnapshot(payload) {
+                return JSON.stringify({
+                    filename: payload.filename || '',
+                    date: payload.date || '',
+                    tags: payload.tags || '',
+                    note_title: payload.note_title || '',
+                    note_body: payload.note_body || ''
+                });
+            }
+
+            async function saveActiveCard(options = {}) {
+                if (!activeCard || isSaving) return false;
+
+                const photo = cardPhotoMap.get(activeCard);
+                if (!photo || !photo.url) {
+                    setStatus('未找到照片信息，无法保存', true);
+                    return false;
+                }
+
+                const payload = collectEditorPayload(photo);
+                const snapshot = payloadSnapshot(payload);
+                if (!options.force && snapshot === lastSavedSnapshot) {
+                    return true;
+                }
+
+                isSaving = true;
+                if (editorSaveBtn) {
+                    editorSaveBtn.disabled = true;
+                    editorSaveBtn.classList.add('is-saving');
+                    editorSaveBtn.textContent = '保存便签';
+                }
+                setStatus(options.auto ? '正在自动保存...' : '保存中...');
+
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    const resp = await fetch('/api/update_photo', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
+                        body: JSON.stringify(payload),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    const result = await resp.json().catch(() => ({}));
+                    if (!resp.ok) {
+                        throw new Error(result.error || '保存失败');
+                    }
+
+                    cardPhotoMap.forEach((cardPhoto, cardEl) => {
+                        if (cardPhoto.url !== photo.url) return;
+                        cardPhoto.date = payload.date || '';
+                        cardPhoto.tags = payload.tags || '';
+                        cardPhoto.note_title = payload.note_title || '';
+                        cardPhoto.note_body = payload.note_body || '';
+                        applyCardMemo(cardEl, cardPhoto);
+                    });
+
+                    lastSavedSnapshot = snapshot;
+                    setStatus(options.auto ? '已自动保存' : '已保存');
+                    if (options.closeAfterSave) {
+                        setTimeout(closeEditor, 220);
+                    }
+                    return true;
+                } catch (error) {
+                    const message = error && error.name === 'AbortError'
+                        ? '保存超时，请检查网络或稍后重试'
+                        : (error && error.message ? error.message : '保存失败');
+                    setStatus(message, true);
+                    return false;
+                } finally {
+                    isSaving = false;
+                    if (editorSaveBtn) {
+                        editorSaveBtn.disabled = false;
+                        editorSaveBtn.classList.remove('is-saving');
+                        editorSaveBtn.textContent = '保存便签';
+                    }
+                }
+            }
+
+            function scheduleAutoSave() {
+                if (!activeCard || isHydratingEditor) return;
+                if (autoSaveTimer) {
+                    clearTimeout(autoSaveTimer);
+                }
+                setStatus('检测到修改，将自动保存...');
+                autoSaveTimer = setTimeout(() => {
+                    saveActiveCard({ auto: true });
+                }, 900);
+            }
+
+            function openEditor(card) {
+                if (!card || !editorModal) return;
+                const photo = cardPhotoMap.get(card);
+                if (!photo || !photo.url) {
+                    setStatus('该卡片暂未绑定照片', true);
+                    return;
+                }
+
+                activeCard = card;
+                const photoUrl = `/static/photos/${encodeURI(String(photo.url || ''))}`;
+                if (editorPhoto) {
+                    editorPhoto.removeAttribute('src');
+                    editorPhoto.onerror = () => {
+                        setStatus('预览图加载失败，请检查文件名或网络', true);
+                    };
+                    editorPhoto.src = photoUrl;
+                    editorPhoto.alt = photo.url;
+                }
+                isHydratingEditor = true;
+                if (editorNoteTitle) editorNoteTitle.value = card.dataset.memoTitle || '';
+                if (editorNoteBody) editorNoteBody.value = card.dataset.memoBody || '';
+                if (editorDate) editorDate.value = card.dataset.date || '';
+                if (editorTags) editorTags.value = card.dataset.tags || '';
+                lastSavedSnapshot = payloadSnapshot(collectEditorPayload(photo));
+                setStatus('');
+                requestAnimationFrame(() => {
+                    isHydratingEditor = false;
+                });
+
+                editorModal.hidden = false;
+                document.body.classList.add('modal-open');
+            }
+
+            function closeEditor() {
+                if (autoSaveTimer) {
+                    clearTimeout(autoSaveTimer);
+                    autoSaveTimer = null;
+                }
+                activeCard = null;
+                if (editorModal) editorModal.hidden = true;
+                document.body.classList.remove('modal-open');
+            }
+
+            wall.innerHTML = '';
+
+            fetch('/api/images', { credentials: 'same-origin' })
+                .then(response => response.ok ? response.json() : [])
+                .then(photos => {
+                    if (!Array.isArray(photos) || photos.length === 0) return;
+                    allPhotos = photos.filter(photo => photo && photo.url);
+                    renderNextBatch(getInitialBatchSize());
+                    updateWallStatus();
+                })
+                .catch(() => {});
+
+            if (wallLoadMoreBtn) {
+                wallLoadMoreBtn.addEventListener('click', () => {
+                    renderNextBatch(getBatchSize());
+                });
+            }
+
+            if (wallAnchor && typeof IntersectionObserver !== 'undefined') {
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            renderNextBatch(Math.max(8, Math.floor(getBatchSize() * 0.7)));
+                        }
+                    });
+                }, { rootMargin: '300px 0px' });
+                observer.observe(wallAnchor);
+            }
+
+            window.addEventListener('scroll', () => {
+                const remaining = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+                if (remaining < 520) {
+                    renderNextBatch(Math.max(8, Math.floor(getBatchSize() * 0.8)));
+                }
+            }, { passive: true });
+
+            if (editorBackdrop) {
+                editorBackdrop.addEventListener('click', closeEditor);
+            }
+            if (editorCloseBtn) {
+                editorCloseBtn.addEventListener('click', closeEditor);
+            }
+            if (editorCancelBtn) {
+                editorCancelBtn.addEventListener('click', closeEditor);
+            }
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && editorModal && !editorModal.hidden) {
+                    closeEditor();
+                }
+            });
+
+            [editorNoteTitle, editorNoteBody, editorDate, editorTags].forEach((field) => {
+                if (!field) return;
+                field.addEventListener('input', scheduleAutoSave);
+                field.addEventListener('change', scheduleAutoSave);
+            });
+
+            if (editorForm) {
+                editorForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    if (autoSaveTimer) {
+                        clearTimeout(autoSaveTimer);
+                        autoSaveTimer = null;
+                    }
+                    await saveActiveCard({ force: true, closeAfterSave: true });
+                });
+            }
+        });
+    </script>
+    <script src="{{ url_for('static', filename='unified-style-menu.js') }}?v=2"></script>
+</body>
+</html>

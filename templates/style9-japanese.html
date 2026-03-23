@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>和风电子相框 - Japanese Zen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Yuji+Syuku&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --sakura-pink: #FFB7C5;
+            --wood-color: #D4A574;
+            --shoji-white: #FDFBF7;
+            --matcha-green: #7A9B76;
+            --dark-wood: #8B6B4A;
+        }
+
+        body {
+            font-family: 'Noto Serif JP', 'Yuji Syuku', serif;
+            background-color: var(--shoji-white);
+            min-height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 183, 197, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(122, 155, 118, 0.1) 0%, transparent 20%),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23D4A574' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        .sakura-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .petal {
+            position: absolute;
+            top: -10%;
+            width: 14px;
+            height: 12px;
+            border-radius: 70% 30% 70% 30%;
+            background: radial-gradient(circle at 30% 35%, #ffd7e1 0%, #ffb7c5 70%, rgba(255, 183, 197, 0.25) 100%);
+            box-shadow: 0 0 6px rgba(255, 183, 197, 0.35);
+            opacity: 0.8;
+            animation: sakuraFall linear infinite;
+            will-change: transform, opacity;
+            filter: blur(0.15px);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 木质边框 */
+        .wood-frame {
+            width: min(92vw, 1600px);
+            background: linear-gradient(135deg, var(--wood-color) 0%, var(--dark-wood) 100%);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+                0 8px 20px rgba(0, 0, 0, 0.15);
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+            animation: woodBreath 9s ease-in-out infinite;
+        }
+
+        .photo-stage {
+            width: 100%;
+            height: clamp(420px, 64vh, 820px);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            margin: 0 auto;
+            background:
+                linear-gradient(140deg, rgba(253, 251, 247, 0.92), rgba(212, 165, 116, 0.20));
+            box-shadow: inset 0 0 0 1px rgba(139, 107, 74, 0.22);
+        }
+
+        .photo-meta-chip,
+        .memory-salvage-chip {
+            position: absolute;
+            z-index: 5;
+            backdrop-filter: blur(8px);
+        }
+
+        .photo-meta-chip {
+            left: 18px;
+            bottom: 18px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(253, 251, 247, 0.82);
+            border: 1px solid rgba(139, 107, 74, 0.2);
+            color: #6A523D;
+            font-size: 13px;
+            letter-spacing: 0.06em;
+            box-shadow: 0 12px 24px rgba(72, 54, 36, 0.12);
+        }
+
+        .memory-salvage-chip {
+            top: 18px;
+            right: 18px;
+            padding: 9px 14px;
+            border-radius: 14px;
+            background: rgba(126, 61, 49, 0.78);
+            color: rgba(255, 245, 233, 0.96);
+            font-size: 12px;
+            letter-spacing: 0.18em;
+            box-shadow: 0 12px 24px rgba(126, 61, 49, 0.18);
+        }
+
+        .wood-photo-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: blur(20px) sepia(0.18) saturate(0.88) brightness(0.76);
+            transform: scale(1.05);
+            opacity: 0.34;
+            z-index: 1;
+            animation: bgPan 24s ease-in-out infinite alternate;
+        }
+
+        .photo-stage::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 3;
+            background:
+                radial-gradient(circle at 50% 46%, transparent 58%, rgba(72, 54, 36, 0.12) 100%),
+                linear-gradient(180deg, rgba(255, 250, 242, 0.10), rgba(80, 56, 34, 0.08));
+        }
+
+        .photo-stage::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 4;
+            box-shadow: inset 0 0 0 1px rgba(244, 232, 214, 0.34);
+        }
+
+        .wood-photo {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center center;
+            border-radius: 6px;
+            display: block;
+            box-sizing: border-box;
+            padding: clamp(6px, 0.7vw, 12px);
+            filter: saturate(1.06) contrast(1.04);
+            box-shadow: 0 10px 36px rgba(58, 42, 28, 0.16);
+            z-index: 2;
+            transition: opacity 0.7s ease, transform 0.9s ease;
+        }
+
+        .wood-photo.photo-refreshing {
+            opacity: 0.72;
+            transform: scale(0.992);
+        }
+
+        .wood-photo.is-portrait {
+            padding: clamp(10px, 1.1vw, 16px) clamp(24px, 3vw, 52px);
+        }
+
+        .wood-photo.is-landscape {
+            padding: clamp(4px, 0.45vw, 8px);
+        }
+
+        .wood-photo.is-square {
+            padding: clamp(8px, 0.8vw, 13px) clamp(14px, 1.8vw, 24px);
+        }
+
+        body.has-salvaged-photo .wood-photo {
+            filter: sepia(0.2) saturate(0.92) contrast(1.02) brightness(0.94);
+        }
+
+        body.has-salvaged-photo .photo-stage::before {
+            background:
+                radial-gradient(circle at 50% 46%, transparent 54%, rgba(103, 71, 47, 0.18) 100%),
+                linear-gradient(180deg, rgba(255, 250, 242, 0.08), rgba(72, 40, 25, 0.12));
+        }
+
+        /* 主题切换器 */
+        .theme-switcher {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .theme-switcher:hover {
+            opacity: 1;
+        }
+
+        .theme-switcher::before {
+            content: '🎨';
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 24px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--wood-color);
+        }
+
+        .theme-buttons {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            border: 2px solid var(--wood-color);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .theme-switcher:hover .theme-buttons {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .theme-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--wood-color);
+            background: var(--shoji-white);
+            color: var(--dark-wood);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Noto Serif JP', serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .theme-btn:hover {
+            background: var(--sakura-pink);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .theme-btn.active {
+            background: var(--matcha-green);
+            color: white;
+            font-weight: 500;
+        }
+
+        /* 信息面板 */
+        .info-panel {
+            background: rgba(253, 251, 247, 0.95);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid var(--wood-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-display {
+            text-align: center;
+        }
+
+        .current-time {
+            font-size: 48px;
+            font-weight: 500;
+            color: var(--dark-wood);
+            font-family: 'Yuji Syuku', serif;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .current-date {
+            font-size: 16px;
+            color: var(--wood-color);
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .weather-display {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, rgba(122, 155, 118, 0.1) 0%, rgba(255, 183, 197, 0.1) 100%);
+            border-radius: 8px;
+            border: 1px solid var(--wood-color);
+        }
+
+        .weather-icon {
+            font-size: 32px;
+        }
+
+        .weather-info {
+            text-align: right;
+        }
+
+        .weather-temp {
+            font-size: 28px;
+            font-weight: 500;
+            color: var(--dark-wood);
+            font-family: 'Yuji Syuku', serif;
+        }
+
+        .weather-location {
+            font-size: 14px;
+            color: var(--wood-color);
+            margin-top: 2px;
+        }
+
+        @keyframes sakuraFall {
+            0% {
+                transform: translate3d(0, -8vh, 0) rotate(0deg);
+                opacity: 0;
+            }
+            12% {
+                opacity: 0.68;
+            }
+            100% {
+                transform: translate3d(var(--drift-x, 80px), 110vh, 0) rotate(420deg);
+                opacity: 0.06;
+            }
+        }
+
+        @keyframes woodBreath {
+            0%, 100% {
+                transform: translateY(0);
+                box-shadow:
+                    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+                    0 8px 20px rgba(0, 0, 0, 0.15);
+            }
+            50% {
+                transform: translateY(-2px);
+                box-shadow:
+                    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+                    0 14px 26px rgba(0, 0, 0, 0.19);
+            }
+        }
+
+        @keyframes bgPan {
+            0% {
+                transform: scale(1.05) translate3d(-1.2%, -1.2%, 0);
+            }
+            100% {
+                transform: scale(1.1) translate3d(1.2%, 1.2%, 0);
+            }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .wood-frame {
+                width: 100%;
+            }
+
+            .photo-stage {
+                height: min(54vh, 520px);
+            }
+
+            .wood-photo.is-portrait {
+                padding: 10px 16px;
+            }
+
+            .info-panel {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .current-time {
+                font-size: 36px;
+            }
+            
+            .weather-display {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: 99999; display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+        <a href="/" style="color: #fff; text-decoration: none; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px;">首页</a>
+        <a href="/?theme=style7" style="color: #fff; text-decoration: none; padding: 4px 8px;">7</a>
+        <a href="/?theme=style8" style="color: #fff; text-decoration: none; padding: 4px 8px;">8</a>
+        <a href="/?theme=style9" style="color: #fff; text-decoration: none; padding: 4px 8px;">9</a>
+        <a href="/?theme=style10" style="color: #fff; text-decoration: none; padding: 4px 8px;">10</a>
+        <a href="/?theme=style11" style="color: #fff; text-decoration: none; padding: 4px 8px;">11</a>
+        <a href="/?theme=style12" style="color: #fff; text-decoration: none; padding: 4px 8px;">12</a>
+        <a href="/?theme=style13" style="color: #fff; text-decoration: none; padding: 4px 8px;">13</a>
+        <a href="/?theme=style14" style="color: #fff; text-decoration: none; padding: 4px 8px;">14</a>
+        <a href="/?theme=style15" style="color: #fff; text-decoration: none; padding: 4px 8px;">15</a>
+        <a href="/?theme=style16" style="color: #fff; text-decoration: none; padding: 4px 8px;">16</a>
+    </div>
+    <div class="sakura-layer" id="sakura-layer" aria-hidden="true"></div>
+    <!-- 主题切换器 -->
+    <div class="theme-switcher">
+        <div class="theme-buttons">
+            <button class="theme-btn active" onclick="switchTheme('style9')">和风日式</button>
+            <button class="theme-btn" onclick="switchTheme('style10')">北欧极简</button>
+            <button class="theme-btn" onclick="switchTheme('style11')">复古胶片</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="wood-frame">
+            <div class="photo-stage">
+                <img id="main-photo-bg" class="wood-photo-bg" alt="" aria-hidden="true" loading="eager">
+                <img id="main-photo" class="wood-photo" alt="当前照片" loading="eager">
+                <div class="photo-meta-chip" data-photo-date-target>拍摄日期未记录</div>
+                <div class="memory-salvage-chip" data-salvage-target hidden>记忆打捞</div>
+            </div>
+        </div>
+
+        <!-- 信息面板 -->
+        <div class="info-panel">
+            <div class="time-display">
+                <div class="current-time" id="current-time">--:--:--</div>
+                <div class="current-date" id="current-date">----年--月--日 星期--</div>
+            </div>
+            
+            <div class="weather-display">
+                <div class="weather-icon" id="weather-icon">🌤️</div>
+                <div class="weather-info">
+                    <div class="weather-temp" id="weather-temp">--°C</div>
+                    <div class="weather-location" id="weather-location">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 时间日期更新
+        function updateDateTime() {
+            const now = new Date();
+            
+            // 更新时间
+            const timeElement = document.getElementById('current-time');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // 更新日期
+            const dateElement = document.getElementById('current-date');
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            const weekDay = weekDays[now.getDay()];
+            dateElement.textContent = `${year}年${month}月${day}日 星期${weekDay}`;
+        }
+
+        function weatherIconFromCode(code) {
+            if (code <= 3) return '☀️';
+            if (code <= 48) return '🌫️';
+            if (code <= 67) return '🌧️';
+            if (code <= 77) return '❄️';
+            if (code <= 86) return '🌨️';
+            return '⛈️';
+        }
+
+        async function fetchMainPhoto() {
+            try {
+                const response = await fetch('/api/get_photo', { credentials: 'same-origin' });
+                if (!response.ok) return;
+                const photo = await response.json();
+                if (!photo || !photo.url) return;
+                const img = document.getElementById('main-photo');
+                const bg = document.getElementById('main-photo-bg');
+                const photoUrl = `/static/photos/${photo.url}`;
+                const needsSwitch = img.src !== window.location.origin + photoUrl;
+
+                img.classList.remove('is-landscape', 'is-portrait', 'is-square');
+                if (needsSwitch) {
+                    img.classList.add('photo-refreshing');
+                }
+                img.onload = () => {
+                    const ratio = img.naturalWidth / img.naturalHeight;
+                    if (ratio > 1.28) {
+                        img.classList.add('is-landscape');
+                    } else if (ratio < 0.78) {
+                        img.classList.add('is-portrait');
+                    } else {
+                        img.classList.add('is-square');
+                    }
+                    img.classList.remove('photo-refreshing');
+                };
+
+                img.src = photoUrl;
+                img.alt = photo.url;
+                if (bg) bg.src = photoUrl;
+                if (typeof window.__applyUnifiedPhotoMeta === 'function') {
+                    window.__applyUnifiedPhotoMeta(photo);
+                }
+            } catch (error) {
+                console.log('照片获取失败', error);
+            }
+        }
+
+        function initSakuraPetals() {
+            const layer = document.getElementById('sakura-layer');
+            if (!layer) return;
+            const count = window.innerWidth >= 2400 ? 24 : 16;
+            for (let i = 0; i < count; i++) {
+                const petal = document.createElement('span');
+                petal.className = 'petal';
+                petal.style.left = `${Math.random() * 100}%`;
+                petal.style.animationDuration = `${14 + Math.random() * 10}s`;
+                petal.style.animationDelay = `${-Math.random() * 20}s`;
+                petal.style.setProperty('--drift-x', `${(Math.random() * 180 - 90).toFixed(0)}px`);
+                layer.appendChild(petal);
+            }
+        }
+
+        // 获取天气信息（统一走后端配置）
+        async function fetchWeather() {
+            try {
+                const response = await fetch('/api/weather-config', { credentials: 'same-origin' });
+                if (!response.ok) throw new Error('weather failed');
+                const data = await response.json();
+
+                if (!data.enabled || !data.current) {
+                    document.getElementById('weather-temp').textContent = '--°C';
+                    document.getElementById('weather-location').textContent = '天气已关闭';
+                    document.getElementById('weather-icon').textContent = '🌤️';
+                    return;
+                }
+
+                const weather = data.current;
+                const temp = Math.round(weather.temperature_2m);
+                const weatherCode = Number(weather.weather_code ?? 0);
+
+                if (!Number.isNaN(temp)) {
+                    document.getElementById('weather-temp').textContent = `${temp}°C`;
+                }
+                document.getElementById('weather-location').textContent = '本地天气';
+                document.getElementById('weather-icon').textContent = weatherIconFromCode(weatherCode);
+            } catch (error) {
+                console.log('天气获取失败，使用默认值');
+                document.getElementById('weather-temp').textContent = '--°C';
+                document.getElementById('weather-location').textContent = '本地天气';
+                document.getElementById('weather-icon').textContent = '🌤️';
+            }
+        }
+
+        // 主题切换
+        function switchTheme(theme) {
+            localStorage.setItem('selectedTheme', theme);
+            window.location.href = `/?theme=${encodeURIComponent(theme)}`;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            initSakuraPetals();
+            fetchMainPhoto();
+            setInterval(fetchMainPhoto, 300000);
+            fetchWeather();
+            
+            // 检查当前主题
+            const currentTheme = localStorage.getItem('selectedTheme') || 'style9';
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes('和风') && currentTheme === 'style9') {
+                    btn.classList.add('active');
+                } else if (btn.textContent.includes('北欧') && currentTheme === 'style10') {
+                    btn.classList.add('active');
+                } else if (btn.textContent.includes('复古') && currentTheme === 'style11') {
+                    btn.classList.add('active');
+                }
+            });
+        });
+</script>
+<script src="{{ url_for('static', filename='unified-style-menu.js') }}?v=2"></script>
+</body>
+</html>

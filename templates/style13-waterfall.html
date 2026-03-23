@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style-13 瀑布流</title>
+    <!-- 字体预加载 -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" as="style">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: radial-gradient(circle at 50% 50%, #ffecd2 0%, #fcb69f 25%, #a1c4fd 50%, #c2e9fb 75%, #ffecd2 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-family: 'Open Sans', sans-serif;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: #ff6b6b;
+            color: white;
+        }
+        .waterfall-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            column-count: 3;
+            column-gap: 20px;
+        }
+        .waterfall-status {
+            max-width: 1200px;
+            margin: 0 auto 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.72);
+            border: 1px solid rgba(255,255,255,0.56);
+            color: rgba(42, 52, 68, 0.84);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+        }
+        .waterfall-status strong {
+            color: #ff6b6b;
+        }
+        .load-anchor {
+            height: 1px;
+        }
+        .load-more-wrap {
+            max-width: 1200px;
+            margin: 26px auto 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .load-more-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.86);
+            color: #394457;
+            cursor: pointer;
+            box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+            font-family: 'Open Sans', sans-serif;
+        }
+        .load-more-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            background: #ff6b6b;
+            color: #fff;
+        }
+        .load-more-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .photo-card {
+            break-inside: avoid;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, outline 0.3s ease;
+            position: relative;
+        }
+        .photo-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.2), 0 6px 12px rgba(0,0,0,0.15);
+            outline: 3px solid white;
+            z-index: 10;
+        }
+        .photo-card img {
+            width: 100%;
+            display: block;
+        }
+        .photo-card img {
+            height: auto;
+            object-fit: contain;
+        }
+        .card-tag {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            color: #fff;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+        .card-meta {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.95);
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.22);
+        }
+        .empty-state {
+            max-width: 620px;
+            margin: 40px auto;
+            text-align: center;
+            color: rgba(60, 60, 60, 0.78);
+            background: rgba(255,255,255,0.75);
+            padding: 24px 20px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+        /* 4K屏专属媒体查询 */
+        @media (min-width: 3200px) {
+            .waterfall-container {
+                column-count: 5;
+                column-gap: 40px;
+            }
+            .photo-card {
+                margin-bottom: 40px;
+            }
+        }
+        @media (max-width: 768px) {
+            .waterfall-container {
+                column-count: 2;
+            }
+        }
+        @media (max-width: 480px) {
+            .waterfall-container {
+                column-count: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: 99999; display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+        <a href="/" style="color: #fff; text-decoration: none; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px;">首页</a>
+        <a href="/?theme=style7" style="color: #fff; text-decoration: none; padding: 4px 8px;">7</a>
+        <a href="/?theme=style8" style="color: #fff; text-decoration: none; padding: 4px 8px;">8</a>
+        <a href="/?theme=style9" style="color: #fff; text-decoration: none; padding: 4px 8px;">9</a>
+        <a href="/?theme=style10" style="color: #fff; text-decoration: none; padding: 4px 8px;">10</a>
+        <a href="/?theme=style11" style="color: #fff; text-decoration: none; padding: 4px 8px;">11</a>
+        <a href="/?theme=style12" style="color: #fff; text-decoration: none; padding: 4px 8px;">12</a>
+        <a href="/?theme=style13" style="color: #fff; text-decoration: none; padding: 4px 8px;">13</a>
+        <a href="/?theme=style14" style="color: #fff; text-decoration: none; padding: 4px 8px;">14</a>
+        <a href="/?theme=style15" style="color: #fff; text-decoration: none; padding: 4px 8px;">15</a>
+        <a href="/?theme=style16" style="color: #fff; text-decoration: none; padding: 4px 8px;">16</a>
+    </div>
+    <div class="filter-buttons" id="filter-buttons">
+        <button class="filter-btn active" data-filter="all">全部</button>
+    </div>
+    <div class="waterfall-status">
+        <span><strong id="visible-count">0 / 0</strong> 当前已展示</span>
+        <span id="waterfall-tip">向下滚动可继续加载更多照片</span>
+    </div>
+    <div class="waterfall-container" id="waterfall-container"></div>
+    <div class="load-anchor" id="load-anchor"></div>
+    <div class="load-more-wrap">
+        <button class="load-more-btn" id="load-more-btn" type="button">加载更多照片</button>
+    </div>
+    <script>
+        const UNTAGGED_KEY = '__untagged__';
+        let activeFilter = 'all';
+        let allPhotos = [];
+        let filteredPhotos = [];
+        let renderedCount = 0;
+        let observer = null;
+
+        function normalizeTags(rawTags) {
+            if (!rawTags) return [];
+            if (Array.isArray(rawTags)) {
+                return rawTags.map(t => String(t).trim()).filter(Boolean);
+            }
+            return String(rawTags)
+                .split(/[\s,，;；|、/]+/)
+                .map(t => t.trim())
+                .filter(Boolean);
+        }
+
+        function tagModelFromPhoto(photo) {
+            const tags = normalizeTags(photo.tags);
+            if (tags.length === 0) {
+                return [{ key: UNTAGGED_KEY, label: '未分类' }];
+            }
+            const seen = new Set();
+            const result = [];
+            tags.forEach(tag => {
+                const key = tag.toLowerCase();
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    result.push({ key, label: tag });
+                }
+            });
+            return result;
+        }
+
+        function getBatchSize() {
+            const width = window.innerWidth;
+            if (width >= 3200) return 36;
+            if (width >= 2400) return 28;
+            if (width >= 1600) return 20;
+            return 12;
+        }
+
+        function createPhotoCard(photo) {
+            const tagModels = tagModelFromPhoto(photo);
+            const card = document.createElement('div');
+            card.className = 'photo-card';
+            card.dataset.tagKeys = tagModels.map(t => t.key).join(',');
+
+            const img = document.createElement('img');
+            img.src = `/static/photos/${photo.url}`;
+            img.alt = photo.url || '照片';
+            img.loading = 'lazy';
+            img.decoding = 'async';
+
+            const badge = document.createElement('div');
+            badge.className = 'card-tag';
+            badge.textContent = tagModels[0].label;
+
+            const meta = document.createElement('div');
+            meta.className = 'card-meta';
+            meta.textContent = photo.date || '未标注日期';
+
+            card.appendChild(img);
+            card.appendChild(badge);
+            card.appendChild(meta);
+            return card;
+        }
+
+        function updateStatus() {
+            const countEl = document.getElementById('visible-count');
+            const tipEl = document.getElementById('waterfall-tip');
+            const loadBtn = document.getElementById('load-more-btn');
+            if (countEl) {
+                countEl.textContent = `${renderedCount} / ${filteredPhotos.length}`;
+            }
+            if (tipEl) {
+                tipEl.textContent = renderedCount < filteredPhotos.length
+                    ? '向下滚动可继续加载更多照片'
+                    : '这一组照片已经全部展开';
+            }
+            if (loadBtn) {
+                loadBtn.disabled = renderedCount >= filteredPhotos.length;
+                loadBtn.textContent = renderedCount >= filteredPhotos.length ? '已展示全部' : '加载更多照片';
+            }
+        }
+
+        function renderNextBatch(batchSize) {
+            const container = document.getElementById('waterfall-container');
+            if (!container) return 0;
+            const take = Math.min(batchSize, filteredPhotos.length - renderedCount);
+            if (take <= 0) {
+                updateStatus();
+                return 0;
+            }
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < take; i += 1) {
+                fragment.appendChild(createPhotoCard(filteredPhotos[renderedCount + i]));
+            }
+            container.appendChild(fragment);
+            renderedCount += take;
+            updateStatus();
+            return take;
+        }
+
+        function resetGridAndRender() {
+            const container = document.getElementById('waterfall-container');
+            if (!container) return;
+            container.innerHTML = '';
+            renderedCount = 0;
+            renderNextBatch(Math.max(getBatchSize(), 1));
+        }
+
+        function renderFilterButtons(tagStats) {
+            const filterWrap = document.getElementById('filter-buttons');
+            if (!filterWrap) return;
+
+            filterWrap.innerHTML = '';
+
+            const allBtn = document.createElement('button');
+            allBtn.className = 'filter-btn';
+            allBtn.dataset.filter = 'all';
+            allBtn.textContent = '全部';
+            filterWrap.appendChild(allBtn);
+
+            tagStats.forEach(tag => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.dataset.filter = tag.key;
+                btn.textContent = `${tag.label} (${tag.count})`;
+                filterWrap.appendChild(btn);
+            });
+
+            filterWrap.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeFilter = btn.dataset.filter;
+                    applyFilter(activeFilter);
+                });
+            });
+        }
+
+        function applyFilter(filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            filteredPhotos = allPhotos.filter(photo => {
+                if (filter === 'all') return true;
+                const keys = tagModelFromPhoto(photo).map(tag => tag.key);
+                return keys.includes(filter);
+            });
+            resetGridAndRender();
+        }
+
+        async function hydratePhotos() {
+            try {
+                const response = await fetch('/api/images', { credentials: 'same-origin' });
+                if (!response.ok) return;
+                const photos = await response.json();
+                if (!Array.isArray(photos) || photos.length === 0) {
+                    const container = document.getElementById('waterfall-container');
+                    if (container) {
+                        container.innerHTML = '<div class="empty-state">暂无照片，请先上传并添加标签。</div>';
+                    }
+                    return;
+                }
+
+                const container = document.getElementById('waterfall-container');
+                if (!container) return;
+
+                const statsMap = new Map();
+                allPhotos = photos;
+                photos.forEach(photo => {
+                    tagModelFromPhoto(photo).forEach(tag => {
+                        if (!statsMap.has(tag.key)) {
+                            statsMap.set(tag.key, { key: tag.key, label: tag.label, count: 0 });
+                        }
+                        statsMap.get(tag.key).count += 1;
+                    });
+                });
+
+                const sortedTags = Array.from(statsMap.values())
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 12);
+
+                renderFilterButtons(sortedTags);
+                applyFilter(activeFilter);
+            } catch (error) {
+                console.log('照片加载失败', error);
+            }
+        }
+
+        function initLoadMore() {
+            const anchor = document.getElementById('load-anchor');
+            const loadBtn = document.getElementById('load-more-btn');
+            if (loadBtn) {
+                loadBtn.addEventListener('click', () => {
+                    renderNextBatch(getBatchSize());
+                });
+            }
+            if (!anchor || typeof IntersectionObserver === 'undefined') return;
+            observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        renderNextBatch(Math.max(8, Math.floor(getBatchSize() * 0.8)));
+                    }
+                });
+            }, { rootMargin: '320px 0px' });
+            observer.observe(anchor);
+        }
+
+        window.addEventListener('resize', () => {
+            updateStatus();
+        });
+
+        initLoadMore();
+        hydratePhotos();
+    </script>
+    <script src="{{ url_for('static', filename='unified-style-menu.js') }}?v=2"></script>
+</body>
+</html>

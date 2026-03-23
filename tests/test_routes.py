@@ -168,6 +168,54 @@ class TestWeatherAPI:
         assert 'enabled' in data
 
 
+class TestDailyQuoteAPI:
+    """每日一言 API 测试"""
+
+    @pytest.fixture
+    def client(self):
+        """创建 Flask 测试客户端"""
+        from app import create_app
+        app = create_app()
+        app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = False
+        with app.test_client() as client:
+            yield client
+
+    def test_daily_quote_requires_auth(self, client):
+        """/api/daily-quote 需要认证"""
+        response = client.get('/api/daily-quote')
+        assert response.status_code == 401
+
+    def test_daily_quote_returns_payload(self, client, monkeypatch):
+        """每日一言返回标准字段"""
+        import routes.api as api_module
+
+        fake_payload = {
+            'text': '测试句子',
+            'source': '测试来源',
+            'provider': 'local',
+            'lang': 'zh',
+            'date': '2026-03-23'
+        }
+        monkeypatch.setattr(
+            api_module,
+            '_resolve_daily_quote',
+            lambda force_refresh=False: (fake_payload, True)
+        )
+
+        response = client.get(
+            '/api/daily-quote',
+            headers={'Authorization': 'Basic YWRtaW46VGVzdFBhc3MxMjMh'}
+        )
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['text'] == '测试句子'
+        assert data['source'] == '测试来源'
+        assert data['provider'] == 'local'
+        assert data['lang'] == 'zh'
+        assert data['cached'] is True
+
+
 class TestImageAPI:
     """图片 API 测试"""
 
@@ -195,3 +243,76 @@ class TestImageAPI:
         """/api/get_photo 需要认证"""
         response = client.get('/api/get_photo')
         assert response.status_code == 401
+
+    def test_api_images_includes_note_fields(self, client, monkeypatch):
+        """/api/images 返回便签字段（note_title/note_body）"""
+        import routes.api as api_module
+        from services.metadata import PhotoMetadataService
+
+        monkeypatch.setattr(
+            api_module,
+            'get_photo_index',
+            lambda: [{
+                'url': 'demo.jpg',
+                'date': '2026-03-23',
+                'month': 3,
+                'tags': '旅行',
+                'weight': 1.0
+            }]
+        )
+        monkeypatch.setattr(
+            PhotoMetadataService,
+            'load',
+            classmethod(lambda cls, filepath=None: {'demo.jpg': {'note_title': '标题', 'note_body': '正文'}})
+        )
+        monkeypatch.setattr(
+            PhotoMetadataService,
+            'all',
+            classmethod(lambda cls: {'demo.jpg': {'note_title': '标题', 'note_body': '正文'}})
+        )
+
+        response = client.get(
+            '/api/images',
+            headers={'Authorization': 'Basic YWRtaW46VGVzdFBhc3MxMjMh'}
+        )
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert isinstance(data, list)
+        assert data[0]['note_title'] == '标题'
+        assert data[0]['note_body'] == '正文'
+
+    def test_update_photo_supports_note_fields(self, client, monkeypatch):
+        """/api/update_photo 支持保存便签字段"""
+        from services.metadata import PhotoMetadataService
+        from services.photo_index import PhotoIndexService
+
+        captured = {}
+
+        def fake_update(cls, url, date, tags, note_title=None, note_body=None):
+            captured['url'] = url
+            captured['date'] = date
+            captured['tags'] = tags
+            captured['note_title'] = note_title
+            captured['note_body'] = note_body
+
+        monkeypatch.setattr(PhotoMetadataService, 'update', classmethod(fake_update))
+        monkeypatch.setattr(PhotoMetadataService, 'save', classmethod(lambda cls, filepath=None: True))
+        monkeypatch.setattr(PhotoIndexService, 'calculate_weight', staticmethod(lambda tags, tag_weights=None: 1.0))
+        monkeypatch.setattr(PhotoIndexService, 'update_photo', staticmethod(lambda *args, **kwargs: None))
+
+        response = client.post(
+            '/api/update_photo',
+            json={
+                'filename': 'demo.jpg',
+                'date': '2026-03-23',
+                'tags': '旅行,家庭',
+                'note_title': '我的标题',
+                'note_body': '我的正文'
+            },
+            headers={'Authorization': 'Basic YWRtaW46VGVzdFBhc3MxMjMh'}
+        )
+
+        assert response.status_code == 200
+        assert captured['url'] == 'demo.jpg'
+        assert captured['note_title'] == '我的标题'
+        assert captured['note_body'] == '我的正文'

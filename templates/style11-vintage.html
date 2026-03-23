@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复古胶片电子相框 - Vintage Film</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --film-black: #1A1A1A;
+            --warm-yellow: #F4E4C1;
+            --dark-red: #8B4040;
+            --vintage-green: #5A6B5C;
+            --film-brown: #3D2B1F;
+            --grain-opacity: 0.05;
+        }
+
+        body {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            background-color: var(--film-black);
+            color: var(--warm-yellow);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 胶片颗粒质感 */
+        .film-grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: var(--grain-opacity);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 胶片齿孔边框 */
+        .film-strip {
+            background: var(--film-brown);
+            padding: 25px 20px;
+            position: relative;
+            margin-bottom: 25px;
+            border-radius: 3px;
+            box-shadow: 
+                inset 0 0 30px rgba(0, 0, 0, 0.5),
+                0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .film-caption,
+        .film-salvage-badge {
+            position: absolute;
+            z-index: 6;
+            backdrop-filter: blur(8px);
+        }
+
+        .film-caption {
+            left: 48px;
+            bottom: 24px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(26, 18, 12, 0.66);
+            border: 1px solid rgba(244, 228, 193, 0.18);
+            color: rgba(244, 228, 193, 0.92);
+            font-size: 12px;
+            letter-spacing: 0.06em;
+        }
+
+        .film-salvage-badge {
+            top: 22px;
+            right: 48px;
+            padding: 9px 14px;
+            border-radius: 14px;
+            background: rgba(139, 64, 64, 0.76);
+            color: rgba(255, 244, 224, 0.94);
+            border: 1px solid rgba(244, 228, 193, 0.14);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+        }
+
+        .film-photo {
+            width: 100%;
+            height: min(60vh, 680px);
+            object-fit: cover;
+            border-radius: 2px;
+            display: block;
+            filter: contrast(1.06) saturate(1.02);
+            transition: filter 0.35s ease;
+        }
+
+        body.has-salvaged-photo .film-photo {
+            filter: sepia(0.22) contrast(1.04) saturate(0.92) brightness(0.94);
+        }
+
+        body.has-salvaged-photo .light-leak {
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(139, 64, 64, 0.16) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(244, 228, 193, 0.08) 0%, transparent 50%);
+        }
+
+        .film-strip::before,
+        .film-strip::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            background: repeating-linear-gradient(
+                to bottom,
+                var(--film-black) 0px,
+                var(--film-black) 8px,
+                transparent 8px,
+                transparent 16px
+            );
+            z-index: 2;
+        }
+
+        .film-strip::before {
+            left: 0;
+            border-right: 2px solid #2A1F15;
+        }
+
+        .film-strip::after {
+            right: 0;
+            border-left: 2px solid #2A1F15;
+        }
+
+        /* 齿孔效果 */
+        .sprocket-holes {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 3;
+        }
+
+        .hole {
+            width: 20px;
+            height: 12px;
+            background: var(--film-black);
+            border-radius: 2px;
+            margin: 0 auto;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 主题切换器 */
+        .theme-switcher {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .theme-switcher:hover {
+            opacity: 1;
+        }
+
+        .theme-switcher::before {
+            content: '🎞️';
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 24px;
+            cursor: pointer;
+            background: rgba(61, 43, 31, 0.9);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--dark-red);
+        }
+
+        .theme-buttons {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(61, 43, 31, 0.95);
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--dark-red);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .theme-switcher:hover .theme-buttons {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .theme-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--dark-red);
+            background: var(--film-brown);
+            color: var(--warm-yellow);
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .theme-btn:hover {
+            background: var(--dark-red);
+            color: var(--warm-yellow);
+            transform: scale(1.05);
+        }
+
+        .theme-btn.active {
+            background: var(--vintage-green);
+            color: var(--warm-yellow);
+            font-weight: 500;
+            box-shadow: 0 0 10px rgba(90, 107, 92, 0.5);
+        }
+
+        /* 信息面板 */
+        .info-panel {
+            background: rgba(61, 43, 31, 0.9);
+            border: 2px solid var(--dark-red);
+            padding: 25px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            box-shadow: 
+                inset 0 0 20px rgba(0, 0, 0, 0.3),
+                0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-panel::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            border: 1px solid var(--dark-red);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .time-display {
+            text-align: center;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            border: 1px solid var(--dark-red);
+        }
+
+        .current-time {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--warm-yellow);
+            font-family: 'Playfair Display', serif;
+            line-height: 1;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .current-date {
+            font-size: 16px;
+            color: var(--warm-yellow);
+            font-family: 'Noto Serif SC', serif;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        .weather-display {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            border: 1px solid var(--dark-red);
+        }
+
+        .weather-icon {
+            font-size: 36px;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        .weather-info {
+            text-align: right;
+        }
+
+        .weather-temp {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--warm-yellow);
+            font-family: 'Playfair Display', serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .weather-location {
+            font-size: 14px;
+            color: var(--warm-yellow);
+            margin-top: 4px;
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        /* 漏光效果 */
+        .light-leak {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(139, 64, 64, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(244, 228, 193, 0.05) 0%, transparent 50%);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .film-strip {
+                padding: 20px 15px;
+            }
+            
+            .info-panel {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .current-time {
+                font-size: 36px;
+            }
+            
+            .weather-display {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: 99999; display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+        <a href="/" style="color: #fff; text-decoration: none; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px;">首页</a>
+        <a href="/?theme=style7" style="color: #fff; text-decoration: none; padding: 4px 8px;">7</a>
+        <a href="/?theme=style8" style="color: #fff; text-decoration: none; padding: 4px 8px;">8</a>
+        <a href="/?theme=style9" style="color: #fff; text-decoration: none; padding: 4px 8px;">9</a>
+        <a href="/?theme=style10" style="color: #fff; text-decoration: none; padding: 4px 8px;">10</a>
+        <a href="/?theme=style11" style="color: #fff; text-decoration: none; padding: 4px 8px;">11</a>
+        <a href="/?theme=style12" style="color: #fff; text-decoration: none; padding: 4px 8px;">12</a>
+        <a href="/?theme=style13" style="color: #fff; text-decoration: none; padding: 4px 8px;">13</a>
+        <a href="/?theme=style14" style="color: #fff; text-decoration: none; padding: 4px 8px;">14</a>
+        <a href="/?theme=style15" style="color: #fff; text-decoration: none; padding: 4px 8px;">15</a>
+        <a href="/?theme=style16" style="color: #fff; text-decoration: none; padding: 4px 8px;">16</a>
+    </div>
+    <!-- 胶片颗粒 -->
+    <div class="film-grain"></div>
+    
+    <!-- 主题切换器 -->
+        <div class="theme-switcher">
+            <div class="theme-buttons">
+            <button class="theme-btn" onclick="switchTheme('style9')">和风日式</button>
+            <button class="theme-btn" onclick="switchTheme('style10')">北欧极简</button>
+            <button class="theme-btn active" onclick="switchTheme('style11')">复古胶片</button>
+            </div>
+        </div>
+
+    <div class="container">
+        <!-- 原有胶片边框结构 -->
+        <div class="film-strip">
+            <div class="sprocket-holes left">
+                <div class="hole"></div>
+                <div class="hole"></div>
+                <div class="hole"></div>
+                <div class="hole"></div>
+                <div class="hole"></div>
+            </div>
+            
+            <img id="main-photo" class="film-photo" alt="当前照片" loading="eager">
+            <div class="film-caption" data-photo-date-target>拍摄日期未记录</div>
+            <div class="film-salvage-badge" data-salvage-target hidden>记忆打捞</div>
+            
+            <div class="sprocket-holes right">
+                <div class="hole"></div>
+                <div class="hole"></div>
+                <div class="hole"></div>
+                <div class="hole"></div>
+                <div class="hole"></div>
+            </div>
+            
+            <!-- 漏光效果 -->
+            <div class="light-leak"></div>
+        </div>
+
+        <!-- 信息面板 -->
+        <div class="info-panel">
+            <div class="time-display">
+                <div class="current-time" id="current-time">--:--:--</div>
+                <div class="current-date" id="current-date">----年--月--日 星期--</div>
+            </div>
+            
+            <div class="weather-display">
+                <div class="weather-icon" id="weather-icon">🌤️</div>
+                <div class="weather-info">
+                    <div class="weather-temp" id="weather-temp">--°C</div>
+                    <div class="weather-location" id="weather-location">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 时间日期更新
+        function updateDateTime() {
+            const now = new Date();
+            
+            // 更新时间
+            const timeElement = document.getElementById('current-time');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // 更新日期
+            const dateElement = document.getElementById('current-date');
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            const weekDay = weekDays[now.getDay()];
+            dateElement.textContent = `${year}年${month}月${day}日 星期${weekDay}`;
+        }
+
+        function weatherIconFromCode(code) {
+            if (code <= 3) return '☀️';
+            if (code <= 48) return '🌫️';
+            if (code <= 67) return '🌧️';
+            if (code <= 77) return '❄️';
+            if (code <= 86) return '🌨️';
+            return '⛈️';
+        }
+
+        async function fetchMainPhoto() {
+            try {
+                const response = await fetch('/api/get_photo', { credentials: 'same-origin' });
+                if (!response.ok) return;
+                const photo = await response.json();
+                if (!photo || !photo.url) return;
+                const img = document.getElementById('main-photo');
+                img.src = `/static/photos/${photo.url}`;
+                img.alt = photo.url;
+                if (typeof window.__applyUnifiedPhotoMeta === 'function') {
+                    window.__applyUnifiedPhotoMeta(photo);
+                }
+            } catch (error) {
+                console.log('照片获取失败', error);
+            }
+        }
+
+        // 获取天气信息（统一走后端配置）
+        async function fetchWeather() {
+            try {
+                const response = await fetch('/api/weather-config', { credentials: 'same-origin' });
+                if (!response.ok) throw new Error('weather failed');
+                const data = await response.json();
+
+                if (!data.enabled || !data.current) {
+                    document.getElementById('weather-temp').textContent = '--°C';
+                    document.getElementById('weather-location').textContent = '天气已关闭';
+                    document.getElementById('weather-icon').textContent = '🌤️';
+                    return;
+                }
+
+                const weather = data.current;
+                const temp = Math.round(weather.temperature_2m);
+                const weatherCode = Number(weather.weather_code ?? 0);
+
+                if (!Number.isNaN(temp)) {
+                    document.getElementById('weather-temp').textContent = `${temp}°C`;
+                }
+                document.getElementById('weather-location').textContent = '本地天气';
+                document.getElementById('weather-icon').textContent = weatherIconFromCode(weatherCode);
+            } catch (error) {
+                console.log('天气获取失败，使用默认值');
+                document.getElementById('weather-temp').textContent = '--°C';
+                document.getElementById('weather-location').textContent = '本地天气';
+                document.getElementById('weather-icon').textContent = '🌤️';
+            }
+        }
+
+        // 主题切换
+        function switchTheme(theme) {
+            localStorage.setItem('selectedTheme', theme);
+            window.location.href = `/?theme=${encodeURIComponent(theme)}`;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            fetchMainPhoto();
+            setInterval(fetchMainPhoto, 300000);
+            fetchWeather();
+            
+            // 检查当前主题
+            const currentTheme = localStorage.getItem('selectedTheme') || 'style11';
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes('和风') && currentTheme === 'style9') {
+                    btn.classList.add('active');
+                } else if (btn.textContent.includes('北欧') && currentTheme === 'style10') {
+                    btn.classList.add('active');
+                } else if (btn.textContent.includes('复古') && currentTheme === 'style11') {
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='unified-style-menu.js') }}?v=2"></script>
+</body>
+</html>

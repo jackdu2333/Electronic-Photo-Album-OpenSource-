@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全景卷轴</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #2d2d2d 100%);
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .panoramic-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scroll-container {
+            display: flex;
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            cursor: grab;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .scroll-container:active {
+            cursor: grabbing;
+        }
+
+        .photo-strip {
+            display: flex;
+            align-items: center;
+            padding: 0 4rem;
+            gap: 3rem;
+            height: 100%;
+            will-change: transform;
+        }
+
+        .panoramic-item {
+            flex-shrink: 0;
+            height: 80%;
+            width: auto;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-origin: center center;
+        }
+
+        .panoramic-item:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .panoramic-item img {
+            height: 100%;
+            width: auto;
+            max-width: 90vw;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.5),
+                0 10px 30px rgba(0,0,0,0.3);
+            transition: box-shadow 0.4s ease;
+        }
+
+        .panoramic-item:hover img {
+            box-shadow: 
+                0 30px 80px rgba(0,0,0,0.6),
+                0 15px 40px rgba(0,0,0,0.4),
+                0 0 0 2px rgba(255,255,255,0.1);
+        }
+
+        .photo-label {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            font-size: 1rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .panoramic-item:hover .photo-label {
+            opacity: 1;
+        }
+
+        .scroll-hint {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.6);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        .batch-chip {
+            position: fixed;
+            top: 28px;
+            left: 28px;
+            z-index: 80;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.48);
+            color: rgba(255,255,255,0.92);
+            font-size: 0.95rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .scroll-hint::before,
+        .scroll-hint::after {
+            content: '';
+            width: 40px;
+            height: 2px;
+            background: rgba(255,255,255,0.4);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bff6b);
+            width: 0%;
+            z-index: 100;
+            transition: width 0.1s ease;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 3840px) {
+            .photo-strip {
+                padding: 0 3rem;
+                gap: 2.5rem;
+            }
+        }
+
+        @media (max-width: 2560px) {
+            .photo-strip {
+                padding: 0 2rem;
+                gap: 2rem;
+            }
+            .panoramic-item {
+                height: 75%;
+            }
+        }
+
+        @media (max-width: 1920px) {
+            .photo-strip {
+                padding: 0 1.5rem;
+                gap: 1.5rem;
+            }
+            .panoramic-item {
+                height: 70%;
+            }
+            .photo-label {
+                font-size: 0.9rem;
+                padding: 0.6rem 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: 99999; display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+        <a href="/" style="color: #fff; text-decoration: none; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px;">首页</a>
+        <a href="/?theme=style7" style="color: #fff; text-decoration: none; padding: 4px 8px;">7</a>
+        <a href="/?theme=style8" style="color: #fff; text-decoration: none; padding: 4px 8px;">8</a>
+        <a href="/?theme=style9" style="color: #fff; text-decoration: none; padding: 4px 8px;">9</a>
+        <a href="/?theme=style10" style="color: #fff; text-decoration: none; padding: 4px 8px;">10</a>
+        <a href="/?theme=style11" style="color: #fff; text-decoration: none; padding: 4px 8px;">11</a>
+        <a href="/?theme=style12" style="color: #fff; text-decoration: none; padding: 4px 8px;">12</a>
+        <a href="/?theme=style13" style="color: #fff; text-decoration: none; padding: 4px 8px;">13</a>
+        <a href="/?theme=style14" style="color: #fff; text-decoration: none; padding: 4px 8px;">14</a>
+        <a href="/?theme=style15" style="color: #fff; text-decoration: none; padding: 4px 8px;">15</a>
+        <a href="/?theme=style16" style="color: #fff; text-decoration: none; padding: 4px 8px;">16</a>
+    </div>
+    <div class="panoramic-wrapper">
+        <div class="progress-bar" id="progress"></div>
+        <div class="batch-chip" id="batchChip">已展开 0 / 0</div>
+        <div class="scroll-container" id="scrollContainer">
+            <div class="photo-strip" id="photoStrip">
+                <!-- 照片将通过JavaScript动态加载 -->
+            </div>
+        </div>
+        <div class="scroll-hint">← 横向滚动浏览更多照片 →</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const photoStrip = document.getElementById('photoStrip');
+            const scrollContainer = document.getElementById('scrollContainer');
+            const progressBar = document.getElementById('progress');
+            const batchChip = document.getElementById('batchChip');
+            const scrollHint = document.querySelector('.scroll-hint');
+            let allPhotos = [];
+            let renderedCount = 0;
+            let loadingMore = false;
+
+            function getBatchSize() {
+                const width = window.innerWidth;
+                if (width >= 3200) return 14;
+                if (width >= 2400) return 12;
+                if (width >= 1600) return 10;
+                return 8;
+            }
+            
+            function updateBatchChip() {
+                if (batchChip) {
+                    batchChip.textContent = `已展开 ${renderedCount} / ${allPhotos.length}`;
+                }
+                if (scrollHint) {
+                    scrollHint.textContent = renderedCount < allPhotos.length
+                        ? '继续向右滑动，自动展开下一组照片'
+                        : '全部照片都已经展开，可以继续回看';
+                }
+            }
+
+            function appendPhotos(list) {
+                list.forEach((photo, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'panoramic-item';
+
+                    const img = document.createElement('img');
+                    img.src = photo.url;
+                    img.alt = photo.title;
+                    img.loading = 'lazy';
+
+                    const label = document.createElement('div');
+                    label.className = 'photo-label';
+                    label.textContent = photo.title;
+
+                    item.appendChild(img);
+                    item.appendChild(label);
+                    photoStrip.appendChild(item);
+
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        item.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateY(0)';
+                    }, index * 80);
+                });
+                updateProgress();
+            }
+
+            function renderNextBatch(batchSize) {
+                if (loadingMore) return;
+                loadingMore = true;
+                const take = Math.min(batchSize, allPhotos.length - renderedCount);
+                if (take <= 0) {
+                    loadingMore = false;
+                    updateBatchChip();
+                    return;
+                }
+                const list = allPhotos.slice(renderedCount, renderedCount + take);
+                appendPhotos(list);
+                renderedCount += take;
+                updateBatchChip();
+                loadingMore = false;
+            }
+
+            function loadPhotos() {
+                fetch('/api/images', { credentials: 'same-origin' })
+                    .then(response => response.ok ? response.json() : [])
+                    .then(data => {
+                        const source = Array.isArray(data) ? data.filter(item => item && item.url) : [];
+                        if (!source.length) {
+                            updateBatchChip();
+                            return;
+                        }
+
+                        allPhotos = source.map((item, index) => ({
+                            title: item.date ? `拍摄于 ${item.date}` : `作品 ${index + 1}`,
+                            url: `/static/photos/${item.url}`
+                        }));
+                        photoStrip.innerHTML = '';
+                        renderedCount = 0;
+                        renderNextBatch(getBatchSize() * 2);
+                    })
+                    .catch(() => {
+                        updateBatchChip();
+                    });
+            }
+
+            loadPhotos();
+
+            // 更新进度条
+            function updateProgress() {
+                const scrollLeft = scrollContainer.scrollLeft;
+                const scrollWidth = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                const progress = scrollWidth > 0 ? (scrollLeft / scrollWidth) * 100 : 0;
+                progressBar.style.width = `${progress}%`;
+            }
+
+            scrollContainer.addEventListener('scroll', updateProgress);
+            scrollContainer.addEventListener('scroll', () => {
+                const remaining = scrollContainer.scrollWidth - scrollContainer.clientWidth - scrollContainer.scrollLeft;
+                if (remaining < Math.max(520, window.innerWidth * 0.3)) {
+                    renderNextBatch(getBatchSize());
+                }
+            });
+            
+            // 鼠标拖拽滚动
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+            
+            scrollContainer.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - scrollContainer.offsetLeft;
+                scrollLeft = scrollContainer.scrollLeft;
+                scrollContainer.style.cursor = 'grabbing';
+            });
+
+            scrollContainer.addEventListener('mouseleave', () => {
+                isDown = false;
+                scrollContainer.style.cursor = 'grab';
+            });
+
+            scrollContainer.addEventListener('mouseup', () => {
+                isDown = false;
+                scrollContainer.style.cursor = 'grab';
+            });
+
+            scrollContainer.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - scrollContainer.offsetLeft;
+                const walk = (x - startX) * 2;
+                scrollContainer.scrollLeft = scrollLeft - walk;
+            });
+
+            // 鼠标滚轮横向滚动
+            scrollContainer.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                scrollContainer.scrollLeft += e.deltaY * 2;
+            });
+
+            // 触摸设备支持
+            let touchStartX = 0;
+            let touchScrollLeft = 0;
+            
+            scrollContainer.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchScrollLeft = scrollContainer.scrollLeft;
+            });
+            
+            scrollContainer.addEventListener('touchmove', (e) => {
+                if (!touchStartX) return;
+                const touchX = e.touches[0].clientX;
+                const walk = (touchStartX - touchX) * 1.5;
+                scrollContainer.scrollLeft = touchScrollLeft + walk;
+            });
+            
+            scrollContainer.addEventListener('touchend', () => {
+                touchStartX = 0;
+            });
+            
+            // 初始化进度条
+            updateProgress();
+            updateBatchChip();
+        });
+    </script>
+    <script src="{{ url_for('static', filename='unified-style-menu.js') }}?v=2"></script>
+</body>
+</html>

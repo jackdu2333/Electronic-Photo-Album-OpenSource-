@@ -68,6 +68,10 @@ cookies.txt
 
 # Temporary files
 tmp_*.html
+preview-*.html
+preview-*.bak
+templates/*.bak*
+static/*.bak.*
 *-preview*.png
 index-*.png
 login-preview*.png

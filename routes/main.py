@@ -17,12 +17,57 @@ def index():
     首页渲染
 
     认证由 auth.py 的 before_request 统一处理
+    支持主题切换：?theme=style1...style16（style5 已下线，自动兼容到 style4）
     """
+    # 获取主题偏好（URL 参数 > Session > 默认）
+    theme = request.args.get('theme') or session.get('theme', 'default')
+    if theme == 'style5':
+        theme = 'style4'
+
+    # 首页内置样式（style5 已下线）
+    home_style_map = {
+        'style1': 'style-1',
+        'style2': 'style-2',
+        'style3': 'style-3',
+        'style4': 'style-4',
+        'style6': 'style-6',
+    }
+
+    # 独立模板主题（7-16）
+    theme_templates = {
+        'style7': 'style7-zen.html',
+        'style8': 'style8-cyberpunk.html',
+        'style9': 'style9-japanese.html',
+        'style10': 'style10-nordic.html',
+        'style11': 'style11-vintage.html',
+        'style12': 'style12-floating.html',
+        'style13': 'style13-waterfall.html',
+        'style14': 'style14-panoramic.html',
+        'style15': 'style15-polaroid.html',
+        'style16': 'style16-gallery.html',
+    }
+
+    forced_home_style = None
+
+    # 保存主题到 session
+    if theme in home_style_map or theme in theme_templates:
+        session['theme'] = theme
+
+    # 选择模板
+    if theme in home_style_map:
+        template_name = 'index.html'
+        forced_home_style = home_style_map[theme]
+    elif theme in theme_templates:
+        template_name = theme_templates[theme]
+    else:
+        template_name = 'index.html'
+
     resp = make_response(render_template(
-        'index.html',
+        template_name,
         username=session.get('_username', 'User'),
         baby_name=config.BABY_NAME,
-        baby_birthday=config.BABY_BIRTHDAY
+        baby_birthday=config.BABY_BIRTHDAY,
+        forced_home_style=forced_home_style
     ))
     resp.headers['Cache-Control'] = 'no-store'
     return resp
