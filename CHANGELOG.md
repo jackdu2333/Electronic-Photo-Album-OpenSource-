@@ -69,7 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **文档**：
 - 📄 新增 `docs/auth.md` 认证配置说明
 - 📄 新增 `docs/Baota-deployment.md` 宝塔部署指南
-- 📄 新增 `docs/2026-03-20-progress-summary.md` 项目进展回顾
 
 ### Changed
 

@@ -76,3 +76,6 @@ static/*.bak.*
 index-*.png
 login-preview*.png
 downloaded_script.js
+
+# Private local notes
+.private-docs/

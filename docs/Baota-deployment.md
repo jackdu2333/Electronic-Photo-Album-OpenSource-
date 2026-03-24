@@ -1,6 +1,6 @@
 # 宝塔面板部署指南
 
-本文档介绍如何在阿里云/腾讯云云服务器上使用宝塔面板部署 Digital Photo Frame。
+本文档介绍如何在阿里云、腾讯云等云服务器上，使用宝塔面板部署 Digital Photo Frame。
 
 ---
 
@@ -39,17 +39,17 @@ sudo make install
 
 ---
 
-### 2. 克隆项目
+### 2. 获取项目代码
 
 ```bash
 # 进入网站目录
 cd /www/wwwroot
 
 # 克隆项目
-git clone https://github.com/jackdu2333/-Electronic-Photo-Album-OpenSource-.git photo_frame_v2
+git clone https://github.com/<your-org-or-username>/<your-repo>.git digital-photo-frame
 
 # 进入项目目录
-cd photo_frame_v2
+cd digital-photo-frame
 ```
 
 ---
@@ -102,8 +102,8 @@ SQLITE_BUSY_TIMEOUT_MS=10000
 1. 登录宝塔面板
 2. 安装 **Python 项目管理器** 插件
 3. 添加项目：
-   - **项目名称**: photo_frame_v2
-   - **项目路径**: `/www/wwwroot/photo_frame_v2`
+   - **项目名称**: `digital-photo-frame`
+   - **项目路径**: 你的项目实际路径，例如 `/www/wwwroot/digital-photo-frame`
    - **Python 版本**: 选择 Python 3.11
    - **端口**: 5000
    - **启动文件**: `app.py`
@@ -149,15 +149,21 @@ server {
 如果从旧版本升级，需要迁移数据：
 
 ```bash
-# 1. 备份旧数据
-cp -r /www/wwwroot/photo_frame/static/photos /www/wwwroot/photo_frame_v2/static/photos
-cp /www/wwwroot/photo_frame/photos.db /www/wwwroot/photo_frame_v2/
-cp /www/wwwroot/photo_frame/photo_metadata.json /www/wwwroot/photo_frame_v2/
-cp /www/wwwroot/photo_frame/messages.json /www/wwwroot/photo_frame_v2/
+# 1. 先备份旧项目数据
+cp -r <old_project_path>/static/photos <new_project_path>/static/photos
+cp <old_project_path>/photos.db <new_project_path>/
+cp <old_project_path>/photo_metadata.json <new_project_path>/
+cp <old_project_path>/messages.json <new_project_path>/
 
-# 2. 或者创建软链接（推荐）
-ln -s /www/wwwroot/photo_frame/static/photos /www/wwwroot/photo_frame_v2/static/photos
+# 2. 或者为照片目录创建软链接（推荐）
+ln -s <old_project_path>/static/photos <new_project_path>/static/photos
 ```
+
+说明：
+
+- `<old_project_path>` 指旧版本项目目录
+- `<new_project_path>` 指当前要上线的新版本目录
+- 如果是首次部署，可跳过本节
 
 ---
 
@@ -218,6 +224,9 @@ SQLITE_BUSY_TIMEOUT_MS=20000
 
 **解决方法**：
 1. 停止宝塔 Python 项目管理器
+2. 检查 Gunicorn 监听端口与启动命令是否重复
+3. 检查日志目录、数据库文件、照片目录是否有读写权限
+4. 确认 `.env` 中的 `SECRET_KEY`、`ADMIN_USERS` 等关键配置已生效
 2. 手动启动 gunicorn 测试
 3. 确认成功后再交给宝塔托管
 
