@@ -391,3 +391,14 @@ class TestBackgroundRebuilder:
         photo_index.PhotoIndexService.start_background_rebuilder('/tmp/none', {}, None)
 
         assert photo_index._background_rebuilder_started is False
+
+    def test_background_rebuilder_skips_when_lock_is_held(self, monkeypatch):
+        from services import photo_index
+
+        monkeypatch.setattr(photo_index.config, 'ENABLE_BACKGROUND_INDEX_REBUILD', True)
+        monkeypatch.setattr(photo_index, '_background_rebuilder_started', False)
+        monkeypatch.setattr(photo_index, '_try_acquire_background_rebuild_lock', lambda *_args: False)
+
+        photo_index.PhotoIndexService.start_background_rebuilder('/tmp/none', {}, None)
+
+        assert photo_index._background_rebuilder_started is False

@@ -6,6 +6,8 @@ import os
 import logging
 import threading
 import time
+import tempfile
+import hashlib
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
@@ -22,6 +24,47 @@ _photo_index: List[Dict[str, Any]] = []
 _index_lock = threading.RLock()
 _rebuild_lock = threading.Lock()
 _background_rebuilder_started = False
+_background_rebuild_lock_fd = None
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows fallback
+    fcntl = None
+
+
+def _background_rebuild_lock_path(upload_folder: str) -> str:
+    """为当前部署实例生成稳定的跨进程锁文件路径。"""
+    identity = f"{os.path.abspath(upload_folder)}::{os.path.abspath(config.DATABASE_FILE)}"
+    digest = hashlib.sha1(identity.encode('utf-8')).hexdigest()[:12]
+    return os.path.join(
+        tempfile.gettempdir(),
+        f"photo-index-rebuilder-{digest}.lock"
+    )
+
+
+def _try_acquire_background_rebuild_lock(upload_folder: str) -> bool:
+    """
+    在多 worker 场景下只允许一个进程启动后台重建线程。
+
+    Gunicorn 多进程 + SQLite 时，让每个 worker 都周期性全量扫描并写库，
+    容易放大锁竞争和超时风险。
+    """
+    global _background_rebuild_lock_fd
+
+    if _background_rebuild_lock_fd is not None or fcntl is None:
+        return True
+
+    lock_path = _background_rebuild_lock_path(upload_folder)
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o644)
+
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        return False
+
+    _background_rebuild_lock_fd = fd
+    return True
 
 
 def set_photo_index(index: List[Dict[str, Any]]):
@@ -164,6 +207,12 @@ class PhotoIndexService:
         logger_obj = app_logger or logger
         interval = config.INDEX_REBUILD_INTERVAL_SECONDS
 
+        if not _try_acquire_background_rebuild_lock(upload_folder):
+            logger_obj.info(
+                "Background photo index rebuilder skipped in this worker; lock is held by another process"
+            )
+            return
+
         def _runner():
             logger_obj.info(
                 f"Background photo index rebuilder started (interval={interval}s)"
@@ -203,17 +252,12 @@ class PhotoIndexService:
             # 防御性调用，确保表与列都存在
             init_database()
 
-            # 1. 插入新照片（已有的跳过，view_count 保持不变）
-            inserted = PhotoDAO.insert_or_ignore(records)
+            stats = PhotoDAO.sync_records(records)
+            inserted = stats.get('inserted', 0)
+            deleted = stats.get('deleted', 0)
+
             if inserted > 0:
                 logger.info(f"Inserted {inserted} new photos to database")
-
-            # 2. 单一事务批量更新元数据（P2 修复：原来每条记录各开一个连接/事务）
-            PhotoDAO.bulk_update_metadata(records)
-
-            # 3. 删除文件系统中已不存在的照片记录
-            current_urls = tuple(r[0] for r in records)
-            deleted = PhotoDAO.delete_missing(current_urls)
             if deleted > 0:
                 logger.info(f"Deleted {deleted} photos from database")
 

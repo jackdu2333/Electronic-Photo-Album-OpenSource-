@@ -286,6 +286,69 @@ class PhotoDAO:
             conn.close()
 
     @staticmethod
+    def sync_records(records: List[tuple]) -> Dict[str, int]:
+        """
+        在单一事务中完成照片索引同步，减少 SQLite 写锁持有次数。
+
+        Args:
+            records: [(url, date, month, tags, weight), ...]
+
+        Returns:
+            包含 inserted/updated/deleted 计数的字典
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
+
+            inserted = 0
+            updated = 0
+
+            if records:
+                before_insert = conn.total_changes
+                c.executemany(
+                    """
+                    INSERT OR IGNORE INTO photos (url, date, month, tags, weight, view_count)
+                    VALUES (?, ?, ?, ?, ?, 0)
+                    """,
+                    records
+                )
+                inserted = conn.total_changes - before_insert
+
+                before_update = conn.total_changes
+                c.executemany(
+                    """
+                    UPDATE photos
+                    SET date=?, month=?, tags=?, weight=?
+                    WHERE url=?
+                    """,
+                    [(date, month, tags, weight, url) for url, date, month, tags, weight in records]
+                )
+                updated = conn.total_changes - before_update
+
+                current_urls = tuple(r[0] for r in records)
+                placeholders = ','.join('?' * len(current_urls))
+                c.execute(
+                    f"DELETE FROM photos WHERE url NOT IN ({placeholders})",
+                    current_urls
+                )
+            else:
+                c.execute("DELETE FROM photos")
+
+            deleted = c.rowcount
+            conn.commit()
+            return {
+                'inserted': inserted,
+                'updated': updated,
+                'deleted': deleted,
+            }
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    @staticmethod
     def increment_view_count(url: str) -> bool:
         """
         增加照片展示次数
