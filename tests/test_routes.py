@@ -82,6 +82,79 @@ class TestAuthRequired:
         assert response.status_code == 200
 
 
+class TestLoginFlow:
+    """登录与退出流程测试"""
+
+    @pytest.fixture
+    def client(self):
+        """创建 Flask 测试客户端"""
+        from app import create_app
+        app = create_app()
+        app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = False
+        with app.test_client() as client:
+            yield client
+
+    def test_login_success_redirects_to_index(self, client):
+        """标准表单登录成功后跳转首页"""
+        response = client.post(
+            '/login',
+            data={'username': 'admin', 'password': 'TestPass123!'},
+            follow_redirects=False
+        )
+        assert response.status_code == 302
+        assert response.headers['Location'].endswith('/')
+
+    def test_login_json_response_remains_supported(self, client):
+        """旧的 JSON 登录调用仍可兼容"""
+        response = client.post(
+            '/login',
+            data={'username': 'admin', 'password': 'TestPass123!'},
+            headers={
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        )
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['success'] is True
+        assert data['username'] == 'admin'
+
+    def test_login_with_remember_me_sets_persistent_cookie(self, client):
+        """勾选保持登录后，session cookie 应带持久化信息"""
+        response = client.post(
+            '/login',
+            data={
+                'username': 'admin',
+                'password': 'TestPass123!',
+                'remember_me': 'on'
+            },
+            follow_redirects=False
+        )
+        cookie = response.headers.get('Set-Cookie', '')
+        assert response.status_code == 302
+        assert 'Expires=' in cookie or 'Max-Age=' in cookie
+
+    def test_logout_clears_session(self, client):
+        """退出后应回到未登录状态"""
+        login_response = client.post(
+            '/login',
+            data={'username': 'admin', 'password': 'TestPass123!'},
+            follow_redirects=False
+        )
+        assert login_response.status_code == 302
+
+        authed_index = client.get('/', follow_redirects=False)
+        assert authed_index.status_code == 200
+
+        logout_response = client.get('/logout', follow_redirects=False)
+        assert logout_response.status_code == 302
+        assert '/login' in logout_response.headers['Location']
+
+        anon_index = client.get('/', follow_redirects=False)
+        assert anon_index.status_code == 302
+
+
 class TestMessageAPI:
     """留言板 API 测试"""
 

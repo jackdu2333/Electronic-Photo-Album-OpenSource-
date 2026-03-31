@@ -2,31 +2,53 @@ package com.onetwo.photoframe
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.view.KeyEvent
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
-import android.webkit.HttpAuthHandler
+import android.webkit.CookieManager
+import android.webkit.SslErrorHandler
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        private const val PREFS_NAME = "photo_frame_prefs"
+        private const val KEY_SERVER_URL = "server_url"
+    }
+
     private lateinit var webView: WebView
+    private lateinit var prefs: SharedPreferences
+    private lateinit var serverSetupContainer: ScrollView
+    private lateinit var serverUrlInput: EditText
+    private lateinit var saveServerButton: Button
+    private lateinit var changeServerButton: Button
+    private lateinit var serverStatusText: TextView
 
     // --- File Upload Support ---
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private val FILE_CHOOSER_REQUEST_CODE = 101
+    private var currentServerUrl: String? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,14 +57,34 @@ class MainActivity : AppCompatActivity() {
         // 1. Keep Screen On
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // 2. Create WebView Programmatically
-        webView = WebView(this)
-        setContentView(webView)
+        // 2. Inflate screen
+        setContentView(R.layout.activity_main)
+
+        prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        webView = findViewById(R.id.web_view)
+        serverSetupContainer = findViewById(R.id.server_setup_container)
+        serverUrlInput = findViewById(R.id.server_url_input)
+        saveServerButton = findViewById(R.id.save_server_button)
+        changeServerButton = findViewById(R.id.change_server_button)
+        serverStatusText = findViewById(R.id.server_status_text)
 
         // 3. Immersive Mode (Hide System Bars)
         hideSystemUI()
 
         // 4. Configure WebView
+        configureWebView()
+        configureSetupUi()
+
+        val savedServerUrl = prefs.getString(KEY_SERVER_URL, null)?.trim().takeUnless { it.isNullOrEmpty() }
+        if (savedServerUrl != null) {
+            connectToServer(savedServerUrl)
+        } else {
+            showServerSetup()
+        }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun configureWebView() {
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true // Essential for localStorage
@@ -54,20 +96,50 @@ class MainActivity : AppCompatActivity() {
             allowFileAccess = true
         }
 
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        cookieManager.setAcceptThirdPartyCookies(webView, true)
+
         webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                view?.loadUrl(url ?: "")
-                return true
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                return false
             }
 
-            override fun onReceivedHttpAuthRequest(
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                currentServerUrl = url ?: currentServerUrl
+                hideServerSetup()
+            }
+
+            override fun onReceivedError(
                 view: WebView?,
-                handler: HttpAuthHandler?,
-                host: String?,
-                realm: String?
+                request: WebResourceRequest?,
+                error: WebResourceError?
             ) {
-                // Auto-login for TV convenience (Configure in your local environment)
-                handler?.proceed("admin", "password")
+                super.onReceivedError(view, request, error)
+                if (request?.isForMainFrame == true) {
+                    val message = error?.description?.toString()?.trim()
+                    showServerSetup(
+                        prefillUrl = currentServerUrl,
+                        message = if (message.isNullOrEmpty()) {
+                            getString(R.string.server_error_load_failed)
+                        } else {
+                            getString(R.string.server_error_load_failed) + "\n" + message
+                        }
+                    )
+                }
+            }
+
+            override fun onReceivedSslError(
+                view: WebView?,
+                handler: SslErrorHandler?,
+                error: android.net.http.SslError?
+            ) {
+                handler?.cancel()
+                showServerSetup(
+                    prefillUrl = currentServerUrl,
+                    message = getString(R.string.server_error_ssl)
+                )
             }
         }
 
@@ -95,14 +167,85 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         }
+    }
 
-        // 5. Load URL (Replace with your server address)
-        webView.loadUrl("http://192.168.1.100:5000")
-        
-        // 6. Force Focus
+    private fun configureSetupUi() {
+        saveServerButton.setOnClickListener {
+            val normalized = normalizeServerUrl(serverUrlInput.text?.toString())
+            if (normalized == null) {
+                showStatus(getString(R.string.server_error_invalid))
+                return@setOnClickListener
+            }
+
+            prefs.edit().putString(KEY_SERVER_URL, normalized).apply()
+            connectToServer(normalized)
+        }
+
+        changeServerButton.setOnClickListener {
+            showServerSetup(
+                prefillUrl = currentServerUrl,
+                message = getString(R.string.server_change_hint)
+            )
+        }
+    }
+
+    private fun connectToServer(url: String) {
+        currentServerUrl = url
+        saveServerButton.isEnabled = false
+        saveServerButton.text = getString(R.string.server_status_connecting)
+        showStatus(getString(R.string.server_status_connecting), isError = false)
+        webView.loadUrl(url)
+    }
+
+    private fun showServerSetup(prefillUrl: String? = null, message: String? = null) {
+        serverSetupContainer.visibility = View.VISIBLE
+        changeServerButton.visibility = View.GONE
+        saveServerButton.isEnabled = true
+        saveServerButton.text = getString(R.string.server_setup_save)
+
+        val candidate = prefillUrl
+            ?: currentServerUrl
+            ?: prefs.getString(KEY_SERVER_URL, null)
+            ?: ""
+        serverUrlInput.setText(candidate)
+        serverUrlInput.setSelection(serverUrlInput.text.length)
+        if (message.isNullOrBlank()) {
+            serverStatusText.visibility = View.GONE
+        } else {
+            showStatus(message)
+        }
+    }
+
+    private fun hideServerSetup() {
+        serverSetupContainer.visibility = View.GONE
+        changeServerButton.visibility = View.VISIBLE
+        serverStatusText.visibility = View.GONE
+        webView.visibility = View.VISIBLE
+
+        // Keep remote/touch interaction on the page natural after successful connect.
         webView.isFocusable = true
         webView.isFocusableInTouchMode = true
         webView.requestFocus()
+    }
+
+    private fun showStatus(message: String, isError: Boolean = true) {
+        serverStatusText.visibility = View.VISIBLE
+        serverStatusText.text = message
+        serverStatusText.setTextColor(
+            if (isError) 0xFFFFB4B4.toInt() else 0xFFB6C3D6.toInt()
+        )
+    }
+
+    private fun normalizeServerUrl(raw: String?): String? {
+        val value = raw?.trim().orEmpty()
+        if (value.isEmpty()) return null
+
+        val uri = Uri.parse(value)
+        val scheme = uri.scheme?.lowercase()
+        if (scheme != "http" && scheme != "https") return null
+        if (uri.host.isNullOrBlank()) return null
+
+        return value.trimEnd('/')
     }
 
     // Handle result from file picker
@@ -134,6 +277,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        hideSystemUI()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        CookieManager.getInstance().flush()
+    }
+
+    override fun onDestroy() {
+        CookieManager.getInstance().flush()
+        webView.destroy()
+        super.onDestroy()
+    }
+
     private fun hideSystemUI() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.insetsController?.let { controller ->
@@ -157,15 +316,32 @@ class MainActivity : AppCompatActivity() {
         if (event?.action == KeyEvent.ACTION_DOWN) {
             Log.d("PhotoFrame", "Key Down: ${event.keyCode}")
             when (event.keyCode) {
-                KeyEvent.KEYCODE_DPAD_LEFT -> {
-                    Log.d("PhotoFrame", "DPAD LEFT detected, executing prevImage()")
-                    webView.post { webView.loadUrl("javascript:prevImage()") }
+                KeyEvent.KEYCODE_MENU -> {
+                    showServerSetup(
+                        prefillUrl = currentServerUrl,
+                        message = getString(R.string.server_change_hint)
+                    )
                     return true
                 }
+                KeyEvent.KEYCODE_BACK -> {
+                    if (serverSetupContainer.isVisible && !currentServerUrl.isNullOrBlank()) {
+                        hideServerSetup()
+                        return true
+                    }
+                }
+                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    if (!serverSetupContainer.isVisible) {
+                        Log.d("PhotoFrame", "DPAD LEFT detected, executing prevImage()")
+                        webView.post { webView.loadUrl("javascript:prevImage()") }
+                        return true
+                    }
+                }
                 KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-                    Log.d("PhotoFrame", "DPAD RIGHT/ENTER detected, executing nextImage()")
-                    webView.post { webView.loadUrl("javascript:nextImage()") }
-                    return true
+                    if (!serverSetupContainer.isVisible) {
+                        Log.d("PhotoFrame", "DPAD RIGHT/ENTER detected, executing nextImage()")
+                        webView.post { webView.loadUrl("javascript:nextImage()") }
+                        return true
+                    }
                 }
             }
         }

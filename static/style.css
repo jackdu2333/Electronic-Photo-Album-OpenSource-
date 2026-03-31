@@ -110,6 +110,12 @@ body.admin-body {
     font-weight: 400;
 }
 
+.ios-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
 /* Main Content */
 .admin-main-ios {
     max-width: 800px;

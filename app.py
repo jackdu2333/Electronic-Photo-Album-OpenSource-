@@ -7,7 +7,7 @@ Digital Photo Frame - 主应用入口
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Flask
 from werkzeug.exceptions import HTTPException
@@ -82,6 +82,7 @@ def create_app(config_obj=None):
     app.config['WTF_CSRF_SECRET_KEY'] = config.SECRET_KEY
     app.config['WTF_CSRF_TIME_LIMIT'] = 3600
     app.config['WTF_CSRF_SSL_STRICT'] = not config.DEBUG
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
     # --- 日志配置 ---
     setup_logging(app)

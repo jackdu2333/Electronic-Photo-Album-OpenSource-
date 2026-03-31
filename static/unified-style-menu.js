@@ -186,7 +186,6 @@
             }
 
             .usm-home-link {
-                justify-self: start;
                 text-decoration: none;
                 color: #e5edff;
                 font-size: 12px;
@@ -195,6 +194,23 @@
                 border-radius: 999px;
                 border: 1px solid rgba(255, 255, 255, 0.12);
                 background: rgba(255, 255, 255, 0.04);
+            }
+
+            .usm-top-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .usm-logout-link {
+                text-decoration: none;
+                color: #ffd6d6;
+                font-size: 12px;
+                font-weight: 600;
+                padding: 8px 12px;
+                border-radius: 999px;
+                border: 1px solid rgba(255, 128, 128, 0.22);
+                background: rgba(255, 96, 96, 0.08);
             }
 
             .usm-group {
@@ -590,7 +606,10 @@
                         <div class="usm-hero-title">共 ${STYLE_ITEMS.length} 套样式，菜单已按新的连续顺序重排</div>
                         <div class="usm-hero-meta">当前展示使用连续序号 1-${STYLE_ITEMS.length}。为了兼容现有链接和代码，内部主题编号仍保留原来的 style id。</div>
                     </div>
-                    <a class="usm-home-link" href="/">返回首页</a>
+                    <div class="usm-top-actions">
+                        <a class="usm-home-link" href="/">返回首页</a>
+                        <a class="usm-logout-link" href="/logout">退出登录</a>
+                    </div>
                 </div>
             </div>
         `;

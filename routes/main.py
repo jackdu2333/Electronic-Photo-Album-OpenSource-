@@ -3,12 +3,24 @@
 首页、登录页等基础页面
 """
 import time
-from flask import Blueprint, render_template, request, make_response, session, redirect, url_for, flash
+from flask import Blueprint, render_template, request, make_response, session, redirect, url_for, flash, current_app
 
 from config import config
 from auth import auth
 
 main_bp = Blueprint('main', __name__, url_prefix='/')
+
+
+def _prefers_json_response() -> bool:
+    """兼容旧前端/客户端：当请求明显偏向 JSON 时返回 JSON。"""
+    requested_with = request.headers.get('X-Requested-With', '')
+    if requested_with.lower() == 'xmlhttprequest':
+        return True
+
+    best = request.accept_mimetypes.best_match(['application/json', 'text/html'])
+    if best == 'application/json':
+        return request.accept_mimetypes[best] >= request.accept_mimetypes['text/html']
+    return False
 
 
 @main_bp.route('/')
@@ -88,8 +100,11 @@ def login_page():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
+        remember_me = request.form.get('remember_me') in {'on', 'true', '1', 'yes'}
 
         if not username or not password:
+            if _prefers_json_response():
+                return make_response({'success': False, 'error': '请输入用户名和密码'}, 400)
             flash('请输入用户名和密码')
             return render_template('login.html')
 
@@ -99,11 +114,16 @@ def login_page():
             session['_auth_ok'] = True
             session['_username'] = username
             session['_login_time'] = time.time()
+            session.permanent = remember_me
 
-            # 返回成功响应（前端会处理跳转）
-            return make_response({'success': True, 'username': username}, 200)
+            if _prefers_json_response():
+                return make_response({'success': True, 'username': username, 'remember_me': remember_me}, 200)
+
+            return redirect(url_for('main.index'))
         else:
             # 登录失败
+            if _prefers_json_response():
+                return make_response({'success': False, 'error': '用户名或密码错误'}, 401)
             flash('用户名或密码错误')
             return render_template('login.html', error=True)
 
@@ -111,11 +131,13 @@ def login_page():
     return render_template('login.html')
 
 
-@main_bp.route('/logout')
+@main_bp.route('/logout', methods=['GET', 'POST'])
 def logout():
     """登出"""
     session.clear()
-    return redirect(url_for('main.login_page'))
+    resp = redirect(url_for('main.login_page'))
+    resp.delete_cookie(current_app.config.get('SESSION_COOKIE_NAME', 'session'))
+    return resp
 
 
 @main_bp.route('/admin')

@@ -144,10 +144,10 @@
             position: absolute;
             bottom: 80px;
             left: 8%;
-            width: 70px;
-            height: 70px;
+            width: clamp(76px, 6vw, 88px);
+            height: clamp(76px, 6vw, 88px);
             background: #C44536;
-            border-radius: 8px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -161,50 +161,61 @@
 
         .seal-text {
             color: white;
-            font-size: 28px;
+            font-size: clamp(23px, 1.9vw, 30px);
             font-weight: 300;
-            writing-mode: vertical-rl;
-            letter-spacing: 0.2em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            gap: 3px;
             font-family: 'Noto Sans JP', 'SimSun', sans-serif;
         }
 
+        .seal-text span {
+            display: block;
+        }
+
         .zen-tag {
-            width: clamp(82px, 6.8vw, 112px);
+            width: clamp(104px, 7.8vw, 136px);
             height: clamp(360px, 58vh, 620px);
-            padding: 14px 10px;
+            padding: 14px 12px 16px;
             border-radius: 18px;
             background: rgba(255, 255, 255, 0.72);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(139, 115, 85, 0.18);
             box-shadow: 0 16px 42px rgba(139, 115, 85, 0.16);
             display: grid;
-            grid-template-rows: minmax(82px, auto) 1px minmax(0, 1fr) 1px minmax(120px, auto);
+            grid-template-rows: auto 1px minmax(0, 1fr) 1px auto;
             justify-items: center;
-            align-items: center;
-            row-gap: 10px;
+            align-items: stretch;
+            row-gap: 12px;
         }
 
         .zen-greeting {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            font-size: clamp(15px, 1.05vw, 19px);
+            writing-mode: horizontal-tb;
+            font-size: clamp(14px, 0.98vw, 17px);
             color: #7B654C;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.26em;
             white-space: nowrap;
-            max-height: 100%;
-            overflow: hidden;
+            text-align: center;
+            padding-left: 0.26em;
+            align-self: center;
         }
 
         .zen-quote {
             writing-mode: vertical-rl;
             text-orientation: mixed;
-            font-size: clamp(16px, 1.2vw, 22px);
-            line-height: 1.45;
+            font-size: clamp(16px, 1.18vw, 22px);
+            line-height: 1.65;
             color: #5F4C39;
             letter-spacing: 0.06em;
-            white-space: nowrap;
-            max-height: 100%;
+            white-space: normal;
+            overflow-wrap: anywhere;
             overflow: hidden;
+            width: 100%;
+            height: 100%;
+            text-align: left;
         }
 
         .zen-meta {
@@ -212,19 +223,19 @@
             flex-direction: row;
             align-items: flex-start;
             justify-content: center;
-            gap: 6px;
-            width: auto;
+            gap: 10px;
+            width: 100%;
         }
 
         .zen-meta-item {
             writing-mode: vertical-rl;
             text-orientation: mixed;
-            font-size: 12px;
+            font-size: 11px;
             color: rgba(92, 92, 92, 0.78);
             letter-spacing: 0.04em;
             line-height: 1.35;
             white-space: nowrap;
-            max-height: 132px;
+            max-height: 104px;
             overflow: hidden;
         }
 
@@ -266,8 +277,8 @@
             }
 
             .zen-tag {
-                width: clamp(76px, 8vw, 98px);
-                padding: 12px 8px;
+                width: clamp(92px, 9vw, 118px);
+                padding: 12px 10px 14px;
             }
         }
     </style>
@@ -295,12 +306,11 @@
 
         <!-- 右侧竖向题签 -->
         <aside class="zen-tag" aria-label="题签信息">
-            <div class="zen-greeting" id="zen-greeting">午后安好</div>
+            <div class="zen-greeting" id="zen-greeting">午安</div>
             <div class="zen-separator"></div>
             <div class="zen-quote" id="zen-quote">风来听风，雨来听雨。</div>
             <div class="zen-separator"></div>
             <div class="zen-meta">
-                <div class="zen-meta-item" id="photo-date-tag" data-photo-date-target>拍摄日期未记录</div>
                 <div class="zen-meta-item" id="quote-source-tag">来源 每日一言</div>
                 <div class="zen-meta-item" id="latest-message-tag">留言 暂无</div>
             </div>
@@ -320,7 +330,10 @@
 
     <!-- 红色印章 -->
     <div class="seal">
-        <div class="seal-text">記憶</div>
+        <div class="seal-text" aria-label="記憶">
+            <span>記</span>
+            <span>憶</span>
+        </div>
     </div>
 
     <script>
@@ -332,11 +345,9 @@
         function updateZenTagStatic() {
             const now = new Date();
             const hour = now.getHours();
-            let greeting = '夜静心安';
-            if (hour >= 5 && hour < 11) greeting = '晨光安好';
-            else if (hour >= 11 && hour < 14) greeting = '午间从容';
-            else if (hour >= 14 && hour < 18) greeting = '午后安好';
-            else if (hour >= 18 && hour < 23) greeting = '晚来清宁';
+            let greeting = '晚安';
+            if (hour >= 5 && hour < 11) greeting = '早安';
+            else if (hour >= 11 && hour < 18) greeting = '午安';
 
             const greetingEl = document.getElementById('zen-greeting');
             if (greetingEl) greetingEl.textContent = greeting;
@@ -397,7 +408,8 @@
                 const quoteEl = document.getElementById('zen-quote');
                 const quoteSourceTag = document.getElementById('quote-source-tag');
                 if (quoteEl) {
-                    quoteEl.textContent = clipText(data.text, 14);
+                    quoteEl.textContent = clipText(data.text, 36);
+                    quoteEl.title = data.text;
                 }
                 if (quoteSourceTag) {
                     const source = clipText(data.source || data.provider || '每日一言', 10);

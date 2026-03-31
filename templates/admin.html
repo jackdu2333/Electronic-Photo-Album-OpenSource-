@@ -25,7 +25,10 @@
                 相框
             </a>
             <h1 class="ios-nav-title">管理后台</h1>
-            <a href="{{ url_for('main.manage_page') }}" class="ios-nav-action">整理</a>
+            <div class="ios-nav-actions">
+                <a href="{{ url_for('main.manage_page') }}" class="ios-nav-action">整理</a>
+                <a href="{{ url_for('main.logout') }}" class="ios-nav-action">退出</a>
+            </div>
         </div>
     </header>
 
