@@ -15,6 +15,7 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.SslErrorHandler
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -42,7 +43,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var serverSetupContainer: ScrollView
     private lateinit var serverUrlInput: EditText
     private lateinit var saveServerButton: Button
-    private lateinit var changeServerButton: Button
     private lateinit var serverStatusText: TextView
 
     // --- File Upload Support ---
@@ -65,7 +65,6 @@ class MainActivity : AppCompatActivity() {
         serverSetupContainer = findViewById(R.id.server_setup_container)
         serverUrlInput = findViewById(R.id.server_url_input)
         saveServerButton = findViewById(R.id.save_server_button)
-        changeServerButton = findViewById(R.id.change_server_button)
         serverStatusText = findViewById(R.id.server_status_text)
 
         // 3. Immersive Mode (Hide System Bars)
@@ -99,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
         cookieManager.setAcceptThirdPartyCookies(webView, true)
+        webView.addJavascriptInterface(ServerControlBridge(), "AndroidApp")
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -180,13 +180,6 @@ class MainActivity : AppCompatActivity() {
             prefs.edit().putString(KEY_SERVER_URL, normalized).apply()
             connectToServer(normalized)
         }
-
-        changeServerButton.setOnClickListener {
-            showServerSetup(
-                prefillUrl = currentServerUrl,
-                message = getString(R.string.server_change_hint)
-            )
-        }
     }
 
     private fun connectToServer(url: String) {
@@ -199,7 +192,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showServerSetup(prefillUrl: String? = null, message: String? = null) {
         serverSetupContainer.visibility = View.VISIBLE
-        changeServerButton.visibility = View.GONE
+        webView.visibility = View.GONE
         saveServerButton.isEnabled = true
         saveServerButton.text = getString(R.string.server_setup_save)
 
@@ -218,7 +211,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun hideServerSetup() {
         serverSetupContainer.visibility = View.GONE
-        changeServerButton.visibility = View.VISIBLE
         serverStatusText.visibility = View.GONE
         webView.visibility = View.VISIBLE
 
@@ -246,6 +238,18 @@ class MainActivity : AppCompatActivity() {
         if (uri.host.isNullOrBlank()) return null
 
         return value.trimEnd('/')
+    }
+
+    private inner class ServerControlBridge {
+        @JavascriptInterface
+        fun openServerSetup() {
+            runOnUiThread {
+                showServerSetup(
+                    prefillUrl = currentServerUrl,
+                    message = getString(R.string.server_change_hint)
+                )
+            }
+        }
     }
 
     // Handle result from file picker

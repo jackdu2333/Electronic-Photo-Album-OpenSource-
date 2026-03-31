@@ -117,20 +117,4 @@
                 android:textSize="13sp" />
         </LinearLayout>
     </ScrollView>
-
-    <Button
-        android:id="@+id/change_server_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_margin="16dp"
-        android:backgroundTint="#AA111827"
-        android:minHeight="44dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:text="@string/change_server"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:visibility="gone" />
-
 </FrameLayout>

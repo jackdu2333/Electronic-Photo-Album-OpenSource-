@@ -11,8 +11,8 @@ android {
         applicationId = "com.onetwo.photoframe"
         minSdk = 24 // Android 7.0 (Nougat) - Common for TVs
         targetSdk = 34
-        versionCode = 4
-        versionName = "2.0.2"
+        versionCode = 5
+        versionName = "2.0.3"
     }
 
     signingConfigs {

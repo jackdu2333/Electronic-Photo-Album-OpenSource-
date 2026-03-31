@@ -57,6 +57,54 @@
         }) || STYLE_ITEMS[1];
     }
 
+    function canOpenAndroidServerSetup() {
+        try {
+            return !!window.AndroidApp && typeof window.AndroidApp.openServerSetup !== 'undefined';
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function openAndroidServerSetup() {
+        if (!canOpenAndroidServerSetup()) {
+            return false;
+        }
+        try {
+            window.AndroidApp.openServerSetup();
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function syncAndroidServerEntry() {
+        const adminEntry = document.getElementById('mobile-admin-entry');
+        if (!adminEntry) return;
+
+        const existingEntry = adminEntry.querySelector('[data-android-server-entry="true"]');
+        if (!canOpenAndroidServerSetup()) {
+            if (existingEntry) existingEntry.remove();
+            return;
+        }
+        if (existingEntry) return;
+
+        const entry = document.createElement('a');
+        entry.href = '#';
+        entry.className = 'admin-btn';
+        entry.dataset.androidServerEntry = 'true';
+        entry.textContent = '⚙︎ 更换地址';
+        entry.addEventListener('click', function (event) {
+            event.preventDefault();
+            if (!openAndroidServerSetup()) return;
+            adminEntry.classList.remove('visible');
+            const toggle = document.getElementById('admin-toggle-btn');
+            if (toggle) {
+                toggle.classList.remove('open');
+            }
+        });
+        adminEntry.appendChild(entry);
+    }
+
     function injectStyles() {
         if (document.getElementById('unified-style-menu-css')) return;
 
@@ -213,6 +261,19 @@
                 background: rgba(255, 96, 96, 0.08);
             }
 
+            .usm-device-link {
+                appearance: none;
+                text-decoration: none;
+                color: #d8ecff;
+                font-size: 12px;
+                font-weight: 600;
+                padding: 8px 12px;
+                border-radius: 999px;
+                border: 1px solid rgba(137, 189, 255, 0.24);
+                background: rgba(71, 122, 255, 0.10);
+                cursor: pointer;
+            }
+
             .usm-group {
                 margin-top: 14px;
             }
@@ -343,6 +404,19 @@
             #unified-photo-nav button:disabled {
                 opacity: 0.45;
                 cursor: not-allowed;
+            }
+
+            @media (max-width: 900px) {
+                #unified-style-menu.usm-has-mobile-admin {
+                    left: 14px;
+                    right: auto;
+                    transform-origin: top left;
+                }
+
+                #unified-style-menu.usm-has-mobile-admin .usm-hotspot {
+                    left: -14px;
+                    right: auto;
+                }
             }
 
             @media (max-width: 600px) {
@@ -578,6 +652,8 @@
     }
 
     function renderMenu() {
+        syncAndroidServerEntry();
+
         const legacyQuick = document.getElementById('quick-theme-nav');
         if (legacyQuick) legacyQuick.remove();
 
@@ -593,6 +669,9 @@
 
         const wrap = document.createElement('div');
         wrap.id = 'unified-style-menu';
+        if (document.getElementById('admin-toggle-btn')) {
+            wrap.classList.add('usm-has-mobile-admin');
+        }
         wrap.innerHTML = `
             <div class="usm-hotspot" aria-hidden="true"></div>
             <button type="button" class="usm-toggle" aria-expanded="false">
@@ -608,6 +687,7 @@
                     </div>
                     <div class="usm-top-actions">
                         <a class="usm-home-link" href="/">返回首页</a>
+                        ${canOpenAndroidServerSetup() ? '<button type="button" class="usm-device-link">更换地址</button>' : ''}
                         <a class="usm-logout-link" href="/logout">退出登录</a>
                     </div>
                 </div>
@@ -619,8 +699,19 @@
         const panel = wrap.querySelector('.usm-panel');
         const toggle = wrap.querySelector('.usm-toggle');
         const hotspot = wrap.querySelector('.usm-hotspot');
+        const deviceLink = wrap.querySelector('.usm-device-link');
         const prefersTouchReveal = window.matchMedia && window.matchMedia('(hover: none)').matches;
         let hideTimer = null;
+
+        if (deviceLink) {
+            deviceLink.addEventListener('click', function (event) {
+                event.preventDefault();
+                if (!openAndroidServerSetup()) return;
+                panel.hidden = true;
+                toggle.setAttribute('aria-expanded', 'false');
+                wrap.classList.remove('usm-open');
+            });
+        }
 
         function clearHideTimer() {
             if (hideTimer) {

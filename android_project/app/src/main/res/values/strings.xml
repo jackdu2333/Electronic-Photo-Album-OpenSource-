@@ -6,11 +6,11 @@
     <string name="server_setup_subtitle">首次启动请填写服务器地址。这个地址只保存在当前设备，不会写进公开 APK。</string>
     <string name="server_setup_hint">https://example.com</string>
     <string name="server_setup_save">保存并连接</string>
-    <string name="server_setup_footer">示例：https://photo.example.com 或 http://192.168.1.100:5000\n已进入相框后，可点右上角“更换地址”，电视遥控器也可以按菜单键重新配置。</string>
+    <string name="server_setup_footer">示例：https://photo.example.com 或 http://192.168.1.100:5000\n已进入相框后，可在网页设置菜单里修改地址，电视遥控器也可以按菜单键重新配置。</string>
     <string name="change_server">更换地址</string>
     <string name="server_error_invalid">请输入完整的服务器地址，并包含 http:// 或 https://</string>
     <string name="server_status_connecting">正在连接服务器，请稍候…</string>
     <string name="server_error_load_failed">无法打开该服务器，请检查地址、网络，或确认服务已启动。</string>
     <string name="server_error_ssl">SSL 证书校验失败，请检查 https 配置。</string>
-    <string name="server_change_hint">已打开的相框页面上，可以随时修改服务器地址。</string>
+    <string name="server_change_hint">已打开的相框页面上，可以从设置菜单进入服务器地址修改。</string>
 </resources>
