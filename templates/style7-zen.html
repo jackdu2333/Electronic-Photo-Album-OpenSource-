@@ -179,16 +179,16 @@
         .zen-tag {
             width: clamp(104px, 7.8vw, 136px);
             height: clamp(360px, 58vh, 620px);
-            padding: 14px 12px 16px;
+            padding: 16px 14px 18px;
             border-radius: 18px;
             background: rgba(255, 255, 255, 0.72);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(139, 115, 85, 0.18);
             box-shadow: 0 16px 42px rgba(139, 115, 85, 0.16);
             display: grid;
-            grid-template-rows: auto 1px minmax(0, 1fr) 1px auto;
+            grid-template-rows: minmax(26px, auto) 1px minmax(0, 1fr) 1px minmax(52px, auto);
             justify-items: center;
-            align-items: stretch;
+            align-items: center;
             row-gap: 12px;
         }
 
@@ -196,10 +196,11 @@
             writing-mode: horizontal-tb;
             font-size: clamp(14px, 0.98vw, 17px);
             color: #7B654C;
-            letter-spacing: 0.26em;
+            letter-spacing: 0.18em;
             white-space: nowrap;
             text-align: center;
-            padding-left: 0.26em;
+            padding-left: 0.18em;
+            justify-self: center;
             align-self: center;
         }
 
@@ -207,36 +208,40 @@
             writing-mode: vertical-rl;
             text-orientation: mixed;
             font-size: clamp(16px, 1.18vw, 22px);
-            line-height: 1.65;
+            line-height: 1.72;
             color: #5F4C39;
             letter-spacing: 0.06em;
             white-space: normal;
             overflow-wrap: anywhere;
             overflow: hidden;
-            width: 100%;
+            width: max-content;
+            max-width: 100%;
             height: 100%;
-            text-align: left;
+            text-align: center;
+            justify-self: center;
+            align-self: center;
         }
 
         .zen-meta {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            justify-content: center;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 1fr;
+            align-content: center;
+            justify-items: center;
+            row-gap: 6px;
             width: 100%;
+            text-align: center;
         }
 
         .zen-meta-item {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            font-size: 11px;
+            font-size: 10px;
             color: rgba(92, 92, 92, 0.78);
-            letter-spacing: 0.04em;
-            line-height: 1.35;
+            letter-spacing: 0.08em;
+            line-height: 1.45;
             white-space: nowrap;
-            max-height: 104px;
+            width: 100%;
+            max-width: 100%;
             overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .zen-separator {
@@ -278,7 +283,94 @@
 
             .zen-tag {
                 width: clamp(92px, 9vw, 118px);
-                padding: 12px 10px 14px;
+                padding: 14px 11px 16px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            body {
+                overflow: hidden;
+            }
+
+            .hero-cluster {
+                left: 18px;
+                right: 18px;
+                top: 50%;
+                transform: translateY(-50%);
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .photo-frame {
+                flex: 0 0 min(55vw, 220px);
+                width: min(55vw, 220px);
+                box-shadow:
+                    0 18px 42px rgba(139, 115, 85, 0.18),
+                    inset 0 0 0 8px #FFFFFF,
+                    inset 0 0 0 10px #E8E4DC;
+            }
+
+            .zen-tag {
+                flex: 0 0 min(24vw, 92px);
+                width: min(24vw, 92px);
+                height: min(58vh, 490px);
+                padding: 12px 9px 14px;
+                row-gap: 10px;
+            }
+
+            .zen-quote {
+                font-size: 15px;
+                line-height: 1.55;
+            }
+
+            .zen-meta-item {
+                font-size: 9px;
+                letter-spacing: 0.04em;
+                line-height: 1.45;
+            }
+
+            .info-panel {
+                left: 16px;
+                top: 36%;
+                width: 42vw;
+                transform: translateY(-50%);
+                z-index: 2;
+                pointer-events: none;
+            }
+
+            .time {
+                font-size: 52px;
+                letter-spacing: 0.12em;
+                margin-bottom: 18px;
+            }
+
+            .divider {
+                width: 42px;
+                margin: 22px 0;
+            }
+
+            .date {
+                right: -28px;
+                height: 150px;
+                font-size: 11px;
+                letter-spacing: 0.22em;
+            }
+
+            .weather {
+                margin-top: 22px;
+                gap: 8px;
+                font-size: 18px;
+            }
+
+            .weather-icon {
+                font-size: 28px;
+            }
+
+            .seal {
+                left: 32px;
+                bottom: 78px;
+                width: 76px;
+                height: 76px;
             }
         }
     </style>
@@ -359,6 +451,13 @@
             return text.length > maxLen ? `${text.slice(0, maxLen)}…` : text;
         }
 
+        function photoStaticUrl(filename) {
+            return '/static/photos/' + String(filename || '')
+                .split('/')
+                .map(part => encodeURIComponent(part))
+                .join('/');
+        }
+
         function updateDateTime() {
             const now = new Date();
             document.getElementById('current-time').textContent =
@@ -376,7 +475,7 @@
 
                 const img = document.getElementById('main-photo');
                 img.onerror = null;
-                img.src = `/static/photos/${photo.url}`;
+                img.src = photoStaticUrl(photo.url);
                 img.alt = photo.url;
                 if (typeof window.__applyUnifiedPhotoMeta === 'function') {
                     window.__applyUnifiedPhotoMeta(photo);

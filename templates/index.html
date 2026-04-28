@@ -1669,6 +1669,8 @@
         html[data-home-style="style-6"] #chat-container {
             min-height: 168px;
             max-height: 280px;  /* 修复：增加高度 */
+            box-sizing: border-box;
+            width: 100%;
             margin-bottom: 70px;
             padding: 18px 18px 12px;
             border-top: none;
@@ -1850,7 +1852,10 @@
         html[data-home-style="style-6"] .slide-date {
             top: auto;
             bottom: 22px;
-            right: 24px;
+            left: calc(var(--style6-frame-gap) + 14px);
+            right: auto;
+            max-width: calc(100% - (var(--style6-frame-gap) * 2) - 156px);
+            box-sizing: border-box;
             color: rgba(36, 48, 56, 0.82);
             background: rgba(255, 255, 255, 0.86);
             text-shadow: none;
@@ -1859,6 +1864,9 @@
             box-shadow: 0 10px 28px rgba(74, 86, 96, 0.08);
             font-size: 12px;
             letter-spacing: 0.08em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* ========== 控制按钮 ========== */
@@ -2347,7 +2355,13 @@
                 min-height: 96px;
                 height: 120px;
                 max-height: 140px;
+                box-sizing: border-box;
+                width: 100%;
                 margin-bottom: 0;
+            }
+
+            html[data-home-style="style-6"] #chat-input-area {
+                padding-right: 20px;
             }
 
             html[data-home-style="style-3"] .slide {
@@ -2368,6 +2382,12 @@
                 bottom: auto;
                 font-size: 14px;
                 padding: 7px 12px;
+            }
+
+            html[data-home-style="style-6"] .slide-date {
+                left: 16px;
+                right: auto;
+                max-width: calc(100% - 112px);
             }
 
             html[data-home-style="style-5"] body {

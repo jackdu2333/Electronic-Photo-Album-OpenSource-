@@ -39,6 +39,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
+    function photoStaticUrl(filename) {
+        return '/static/photos/' + String(filename || '')
+            .split('/')
+            .map(part => encodeURIComponent(part))
+            .join('/');
+    }
+
+    function photoApiPath(filename) {
+        return '/api/images/' + String(filename || '')
+            .split('/')
+            .map(part => encodeURIComponent(part))
+            .join('/');
+    }
+
     // ==========================================
     // PAGE DETECTION
     // ==========================================
@@ -226,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             currentDisplayedUrl = photoData.url;
 
-            const url = `/static/photos/${photoData.url}`;
+            const url = photoStaticUrl(photoData.url);
             const date = photoData.date;
 
             // Create Slide Group (starts invisible, opacity:0 via CSS)
@@ -363,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(photo => {
                     preloadedPhoto = photo;
                     // Pre-fetch both bg and fg into browser cache
-                    const url = `/static/photos/${photo.url}`;
+                    const url = photoStaticUrl(photo.url);
                     preloadedImgEl = new Image();
                     preloadedImgEl.src = url;
                 })
@@ -881,34 +895,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = document.createElement('div');
                 card.className = 'gallery-card-item';
                 const filename = img.url; // Relative path from backend
-                const url = `/static/photos/${filename}`;
+                const url = photoStaticUrl(filename);
                 const dateInfo = img.date ? `\n拍摄时间: ${img.date}` : '';
 
-                card.innerHTML = `
-                    <div class="gallery-image" style="background-image: url('${url}')" loading="lazy" title="${filename}${dateInfo}"></div>
-                    <div class="gallery-overlay">
-                        <button class="delete-btn" title="删除图片">
-                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                        <a href="${url}" target="_blank" class="view-btn" title="查看大图">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                        </a>
-                    </div>
-                `;
+                const imageDiv = document.createElement('div');
+                imageDiv.className = 'gallery-image';
+                imageDiv.style.backgroundImage = `url("${url}")`;
+                imageDiv.title = `${filename}${dateInfo}`;
 
-                card.querySelector('.delete-btn').addEventListener('click', () => {
+                const overlay = document.createElement('div');
+                overlay.className = 'gallery-overlay';
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.title = '删除图片';
+                deleteBtn.innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
+                deleteBtn.addEventListener('click', () => {
                     if (confirm('确定要删除这张照片吗？')) {
                         deleteImage(filename, card);
                     }
                 });
 
+                const viewLink = document.createElement('a');
+                viewLink.href = url;
+                viewLink.target = '_blank';
+                viewLink.rel = 'noopener noreferrer';
+                viewLink.className = 'view-btn';
+                viewLink.title = '查看大图';
+                viewLink.innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>';
+
+                overlay.appendChild(deleteBtn);
+                overlay.appendChild(viewLink);
+                card.appendChild(imageDiv);
+                card.appendChild(overlay);
                 galleryGrid.appendChild(card);
             });
         }
 
         function deleteImage(filename, cardElement) {
-            fetch(`/api/images/${filename}`, {
-                method: 'DELETE'
+            fetch(photoApiPath(filename), {
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: getCsrfHeaders()
             })
                 .then(response => {
                     if (response.ok) {

@@ -95,26 +95,39 @@ class TestRecommendationAlgorithm:
         data = json.loads(response.data)
         assert 'url' in data or 'error' in data  # 可能返回照片或错误
 
-    def test_recommendation_prefers_high_weight(self, app_with_photos):
+    def test_recommendation_prefers_high_weight(self, app_with_photos, monkeypatch):
         """推荐算法偏好高权重照片"""
         client, db_path = app_with_photos
 
-        # 多次请求，统计返回结果
-        results = []
-        for _ in range(20):
-            response = client.get(
-                '/api/get_photo',
-                headers={'Authorization': 'Basic YWRtaW46VGVzdFBhc3MxMjMh'}
-            )
-            data = json.loads(response.data)
-            if 'url' in data:
-                results.append(data['url'])
+        from services import recommendation
 
-        # 高权重照片应该更频繁出现
-        if results:
-            weight_2_count = sum(1 for r in results if 'photo1' in r)
-            low_weight_count = sum(1 for r in results if 'photo5' in r)
-            assert weight_2_count >= low_weight_count
+        captured = {}
+
+        def fake_choices(population, weights, k):
+            captured['population'] = population
+            captured['weights'] = weights
+            captured['k'] = k
+            return [population[0]]
+
+        # 固定随机入口，避免抽样波动让测试偶发失败
+        monkeypatch.setattr(recommendation.random, 'randint', lambda *_args: 100)
+        monkeypatch.setattr(recommendation.random, 'choices', fake_choices)
+
+        response = client.get(
+            '/api/get_photo',
+            headers={'Authorization': 'Basic YWRtaW46VGVzdFBhc3MxMjMh'}
+        )
+        data = json.loads(response.data)
+
+        assert response.status_code == 200
+        assert captured['k'] == 1
+        assert data['url'] == captured['population'][0]['url']
+
+        weight_by_url = {
+            photo['url']: weight
+            for photo, weight in zip(captured['population'], captured['weights'])
+        }
+        assert weight_by_url['photo1.jpg'] > weight_by_url['photo5.jpg']
 
     def test_force_show_state_is_persistent(self, app_with_photos):
         from services.recommendation import set_force_show, get_force_show_state

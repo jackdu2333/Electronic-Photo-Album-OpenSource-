@@ -403,10 +403,10 @@
     <div class="filter-toolbar">
         <div class="search-container">
 
-            <input type="text" id="search-input" class="search-input" placeholder="智能搜素: '6月', '25年6月', '宝宝' ...">
+            <input type="text" id="search-input" class="search-input" placeholder="智能搜索: '6月', '25年6月', '宝宝' ...">
         </div>
         <div class="filter-tips">
-            支持搜素: 2025年, 6月, 旅行 等关键词
+            支持搜索: 2025年, 6月, 旅行 等关键词
         </div>
     </div>
 
@@ -432,6 +432,13 @@
         const loadMoreBtn = document.getElementById('load-more-btn');
         const searchInput = document.getElementById('search-input');
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        function photoStaticUrl(filename) {
+            return '/static/photos/' + String(filename || '')
+                .split('/')
+                .map(part => encodeURIComponent(part))
+                .join('/');
+        }
 
         // Init
         document.addEventListener('DOMContentLoaded', () => {
@@ -618,37 +625,94 @@
             }
 
             const tagsValue = photo.tags ? photo.tags : '';
-            const thumbUrl = `/static/photos/${photo.url}`;
+            const thumbUrl = photoStaticUrl(photo.url);
 
-            div.innerHTML = `
-                <div class="img-container">
-                    <img src="${thumbUrl}" loading="lazy" alt="${photo.url}">
-                </div>
-                <div class="card-body">
-                    <div class="file-name" title="${photo.url}">${photo.url}</div>
-                    
-                    <div class="form-group">
-                        <label>日期</label>
-                        <div class="date-input-group">
-                            <input type="text" class="date-part year" maxlength="2" placeholder="YY" value="${yy}">
-                            <span class="date-label">年</span>
-                            <input type="text" class="date-part month" maxlength="2" placeholder="MM" value="${mm}">
-                            <span class="date-label">月</span>
-                            <input type="text" class="date-part day" maxlength="2" placeholder="DD" value="${dd}">
-                            <span class="date-label">日</span>
-                        </div>
-                    </div>
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'img-container';
 
-                    <div class="form-group">
-                        <label>标签 (逗号分隔)</label>
-                        <input type="text" class="tags-input" placeholder="例如: 宝宝, 生日" value="${tagsValue}">
-                    </div>
+            const image = document.createElement('img');
+            image.src = thumbUrl;
+            image.loading = 'lazy';
+            image.alt = photo.url;
+            imageContainer.appendChild(image);
 
-                    <div class="action-row">
-                        <button class="save-btn" onclick="savePhoto('${photo.url}', this)">保存</button>
-                    </div>
-                </div>
-            `;
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
+
+            const fileName = document.createElement('div');
+            fileName.className = 'file-name';
+            fileName.title = photo.url;
+            fileName.textContent = photo.url;
+
+            const dateGroup = document.createElement('div');
+            dateGroup.className = 'form-group';
+
+            const dateLabel = document.createElement('label');
+            dateLabel.textContent = '日期';
+
+            const dateInputGroup = document.createElement('div');
+            dateInputGroup.className = 'date-input-group';
+
+            const dateParts = [
+                { className: 'year', placeholder: 'YY', value: yy, suffix: '年' },
+                { className: 'month', placeholder: 'MM', value: mm, suffix: '月' },
+                { className: 'day', placeholder: 'DD', value: dd, suffix: '日' }
+            ];
+
+            dateParts.forEach(part => {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = `date-part ${part.className}`;
+                input.maxLength = 2;
+                input.placeholder = part.placeholder;
+                input.value = part.value;
+
+                const suffix = document.createElement('span');
+                suffix.className = 'date-label';
+                suffix.textContent = part.suffix;
+
+                dateInputGroup.appendChild(input);
+                dateInputGroup.appendChild(suffix);
+            });
+
+            dateGroup.appendChild(dateLabel);
+            dateGroup.appendChild(dateInputGroup);
+
+            const tagsGroup = document.createElement('div');
+            tagsGroup.className = 'form-group';
+
+            const tagsLabel = document.createElement('label');
+            tagsLabel.textContent = '标签 (逗号分隔)';
+
+            const tagsInput = document.createElement('input');
+            tagsInput.type = 'text';
+            tagsInput.className = 'tags-input';
+            tagsInput.placeholder = '例如: 宝宝, 生日';
+            tagsInput.value = tagsValue;
+
+            tagsGroup.appendChild(tagsLabel);
+            tagsGroup.appendChild(tagsInput);
+
+            const actionRow = document.createElement('div');
+            actionRow.className = 'action-row';
+
+            const saveBtn = document.createElement('button');
+            saveBtn.type = 'button';
+            saveBtn.className = 'save-btn';
+            saveBtn.textContent = '保存';
+            saveBtn.addEventListener('click', () => {
+                window.savePhoto(photo.url, saveBtn);
+            });
+
+            actionRow.appendChild(saveBtn);
+
+            cardBody.appendChild(fileName);
+            cardBody.appendChild(dateGroup);
+            cardBody.appendChild(tagsGroup);
+            cardBody.appendChild(actionRow);
+
+            div.appendChild(imageContainer);
+            div.appendChild(cardBody);
 
             grid.appendChild(div);
         }

@@ -485,6 +485,15 @@
         return date ? '拍摄于 ' + date : '拍摄日期未记录';
     }
 
+    function photoStaticUrl(filename) {
+        return '/static/photos/' + String(filename || '')
+            .split('/')
+            .map(function (part) {
+                return encodeURIComponent(part);
+            })
+            .join('/');
+    }
+
     function applyPhotoMetaToDom(input) {
         const photo = normalizePhotoEntry(input);
         if (!photo) return null;
@@ -547,7 +556,7 @@
     function applyPhotoUrlToDom(input) {
         const photo = normalizePhotoEntry(input);
         if (!photo || !photo.url) return;
-        const targetUrl = '/static/photos/' + photo.url;
+        const targetUrl = photoStaticUrl(photo.url);
 
         const display = document.getElementById('photo-display');
         if (display) {
@@ -558,7 +567,7 @@
         const mainPhoto = document.getElementById('main-photo');
         if (mainPhoto) {
             mainPhoto.src = targetUrl;
-            mainPhoto.alt = url;
+            mainPhoto.alt = photo.url;
         }
 
         const mainPhotoBg = document.getElementById('main-photo-bg');

@@ -257,6 +257,92 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        @media (max-width: 600px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .time {
+                top: 64px;
+                left: 16px;
+                font-size: clamp(54px, 18vw, 78px);
+                letter-spacing: 2px;
+            }
+
+            .date {
+                top: 142px;
+                left: 20px;
+                font-size: 14px;
+                letter-spacing: 3px;
+            }
+
+            .weather {
+                top: 58px;
+                right: 18px;
+                gap: 6px;
+                font-size: 20px;
+            }
+
+            .photo-frame {
+                top: 47%;
+                width: min(62vw, 260px);
+                height: min(60vh, 506px);
+                min-height: 420px;
+                border-width: 2px;
+            }
+
+            .photo-meta-chip,
+            .memory-salvage-chip {
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+
+            .hud-corner {
+                width: 42px;
+                height: 54px;
+                border-width: 2px;
+            }
+
+            .hud-tl,
+            .hud-tr {
+                top: 200px;
+            }
+
+            .hud-tl,
+            .hud-bl {
+                left: 50px;
+            }
+
+            .hud-tr,
+            .hud-br {
+                right: 50px;
+            }
+
+            .daily-quote-panel {
+                left: 14px;
+                right: 14px;
+                bottom: 34px;
+                transform: none;
+                width: auto;
+                min-height: 92px;
+                padding: 12px 14px 10px;
+            }
+
+            .daily-quote-text {
+                font-size: 16px;
+                white-space: normal;
+                overflow-wrap: anywhere;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+            }
+
+            .daily-quote-source {
+                max-width: 100%;
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -321,6 +407,13 @@
             return text.length > maxLen ? `${text.slice(0, maxLen)}…` : text;
         }
 
+        function photoStaticUrl(filename) {
+            return '/static/photos/' + String(filename || '')
+                .split('/')
+                .map(part => encodeURIComponent(part))
+                .join('/');
+        }
+
         function updateDateTime() {
             const now = new Date();
             document.getElementById('current-time').textContent =
@@ -338,7 +431,7 @@
 
                 const img = document.getElementById('main-photo');
                 img.onerror = null;
-                img.src = `/static/photos/${photo.url}`;
+                img.src = photoStaticUrl(photo.url);
                 img.alt = photo.url;
                 if (typeof window.__applyUnifiedPhotoMeta === 'function') {
                     window.__applyUnifiedPhotoMeta(photo);
