@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>复古胶片电子相框 - Vintage Film</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
@@ -26,8 +26,14 @@
             background-color: var(--film-black);
             color: var(--warm-yellow);
             min-height: 100vh;
+            min-height: 100dvh;
             overflow: hidden;
             position: relative;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            color-scheme: dark;
+            padding-right: env(safe-area-inset-right);
         }
 
         /* 胶片颗粒质感 */
@@ -38,15 +44,16 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 1000;
+            z-index: 100;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
             opacity: var(--grain-opacity);
         }
 
         .container {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-rows: 1fr auto;
             min-height: 100vh;
+            min-height: 100dvh;
             padding: 30px;
             position: relative;
             z-index: 1;
@@ -98,7 +105,8 @@
         .film-photo {
             width: 100%;
             height: min(60vh, 680px);
-            object-fit: cover;
+            object-fit: contain;
+            background-color: var(--film-black);
             border-radius: 2px;
             display: block;
             filter: contrast(1.06) saturate(1.02);
@@ -178,6 +186,14 @@
             opacity: 1;
         }
 
+        .theme-switcher:focus-within {
+            opacity: 1;
+        }
+
+        @media (hover: none) {
+            .theme-switcher { opacity: 1; visibility: visible; }
+        }
+
         .theme-switcher::before {
             content: '🎞️';
             position: absolute;
@@ -210,7 +226,7 @@
             border: 2px solid var(--dark-red);
             opacity: 0;
             transform: translateY(-10px);
-            transition: all 0.3s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         .theme-switcher:hover .theme-buttons {
@@ -227,7 +243,7 @@
             cursor: pointer;
             font-family: 'Noto Serif SC', serif;
             font-size: 14px;
-            transition: all 0.3s ease;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
             text-align: center;
             min-width: 120px;
         }
@@ -346,6 +362,26 @@
             background: 
                 radial-gradient(ellipse at 20% 30%, rgba(139, 64, 64, 0.1) 0%, transparent 50%),
                 radial-gradient(ellipse at 80% 70%, rgba(244, 228, 193, 0.05) 0%, transparent 50%);
+        }
+
+        /* 照片加载失败兜底 */
+        .film-strip {
+            background-color: #2A1F15;
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            .container {
+                padding: 12px;
+            }
+            .film-photo {
+                height: min(50vh, 360px);
+            }
+            .current-time {
+                font-size: 28px;
+            }
+            .info-panel {
+                padding: 12px;
+            }
         }
 
         /* 响应式 */
@@ -483,7 +519,7 @@
                 const photo = await response.json();
                 if (!photo || !photo.url) return;
                 const img = document.getElementById('main-photo');
-                img.src = `/static/photos/${photo.url}`;
+                img.src = `/static/photos/${encodeURI(photo.url)}`;
                 img.alt = photo.url;
                 if (typeof window.__applyUnifiedPhotoMeta === 'function') {
                     window.__applyUnifiedPhotoMeta(photo);

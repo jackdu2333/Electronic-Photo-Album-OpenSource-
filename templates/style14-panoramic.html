@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>全景卷轴</title>
     <style>
         * {
@@ -13,9 +13,13 @@
 
         body {
             background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #2d2d2d 100%);
-            height: 100vh;
+            height: 100vh; height: 100dvh;
             overflow: hidden;
             font-family: 'Segoe UI', system-ui, sans-serif;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
 
         .panoramic-wrapper {
@@ -50,7 +54,6 @@
             padding: 0 4rem;
             gap: 3rem;
             height: 100%;
-            will-change: transform;
         }
 
         .panoramic-item {
@@ -158,24 +161,7 @@
         }
 
         /* 响应式适配 */
-        @media (max-width: 3840px) {
-            .photo-strip {
-                padding: 0 3rem;
-                gap: 2.5rem;
-            }
-        }
-
-        @media (max-width: 2560px) {
-            .photo-strip {
-                padding: 0 2rem;
-                gap: 2rem;
-            }
-            .panoramic-item {
-                height: 75%;
-            }
-        }
-
-        @media (max-width: 1920px) {
+        @media (min-width: 1920px) {
             .photo-strip {
                 padding: 0 1.5rem;
                 gap: 1.5rem;
@@ -188,22 +174,26 @@
                 padding: 0.6rem 1.2rem;
             }
         }
+
+        @media (min-width: 2560px) {
+            .photo-strip {
+                padding: 0 2rem;
+                gap: 2rem;
+            }
+            .panoramic-item {
+                height: 75%;
+            }
+        }
+
+        @media (min-width: 3840px) {
+            .photo-strip {
+                padding: 0 3rem;
+                gap: 2.5rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: 99999; display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-        <a href="/" style="color: #fff; text-decoration: none; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px;">首页</a>
-        <a href="/?theme=style7" style="color: #fff; text-decoration: none; padding: 4px 8px;">7</a>
-        <a href="/?theme=style8" style="color: #fff; text-decoration: none; padding: 4px 8px;">8</a>
-        <a href="/?theme=style9" style="color: #fff; text-decoration: none; padding: 4px 8px;">9</a>
-        <a href="/?theme=style10" style="color: #fff; text-decoration: none; padding: 4px 8px;">10</a>
-        <a href="/?theme=style11" style="color: #fff; text-decoration: none; padding: 4px 8px;">11</a>
-        <a href="/?theme=style12" style="color: #fff; text-decoration: none; padding: 4px 8px;">12</a>
-        <a href="/?theme=style13" style="color: #fff; text-decoration: none; padding: 4px 8px;">13</a>
-        <a href="/?theme=style14" style="color: #fff; text-decoration: none; padding: 4px 8px;">14</a>
-        <a href="/?theme=style15" style="color: #fff; text-decoration: none; padding: 4px 8px;">15</a>
-        <a href="/?theme=style16" style="color: #fff; text-decoration: none; padding: 4px 8px;">16</a>
-    </div>
     <div class="panoramic-wrapper">
         <div class="progress-bar" id="progress"></div>
         <div class="batch-chip" id="batchChip">已展开 0 / 0</div>
@@ -225,6 +215,19 @@
             let allPhotos = [];
             let renderedCount = 0;
             let loadingMore = false;
+
+            const lazyLoadObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                            delete img.dataset.src;
+                            lazyLoadObserver.unobserve(img);
+                        }
+                    }
+                });
+            }, { root: scrollContainer, rootMargin: '200px' });
 
             function getBatchSize() {
                 const width = window.innerWidth;
@@ -251,9 +254,9 @@
                     item.className = 'panoramic-item';
 
                     const img = document.createElement('img');
-                    img.src = photo.url;
+                    img.dataset.src = photo.url;
                     img.alt = photo.title;
-                    img.loading = 'lazy';
+                    lazyLoadObserver.observe(img);
 
                     const label = document.createElement('div');
                     label.className = 'photo-label';
@@ -302,7 +305,7 @@
 
                         allPhotos = source.map((item, index) => ({
                             title: item.date ? `拍摄于 ${item.date}` : `作品 ${index + 1}`,
-                            url: `/static/photos/${item.url}`
+                            url: `/static/photos/${encodeURI(item.url)}`
                         }));
                         photoStrip.innerHTML = '';
                         renderedCount = 0;
@@ -324,27 +327,40 @@
             }
 
             scrollContainer.addEventListener('scroll', updateProgress);
+            let scrollRaf = false;
             scrollContainer.addEventListener('scroll', () => {
-                const remaining = scrollContainer.scrollWidth - scrollContainer.clientWidth - scrollContainer.scrollLeft;
-                if (remaining < Math.max(520, window.innerWidth * 0.3)) {
-                    renderNextBatch(getBatchSize());
+                if (!scrollRaf) {
+                    scrollRaf = true;
+                    requestAnimationFrame(() => {
+                        const remaining = scrollContainer.scrollWidth - scrollContainer.clientWidth - scrollContainer.scrollLeft;
+                        if (remaining < Math.max(520, window.innerWidth * 0.3)) {
+                            renderNextBatch(getBatchSize());
+                        }
+                        scrollRaf = false;
+                    });
                 }
             });
             
             // 鼠标拖拽滚动
             let isDown = false;
             let startX;
+            let startY;
             let scrollLeft;
+            let wasDragged = false;
+            const DRAG_THRESHOLD = 5;
             
             scrollContainer.addEventListener('mousedown', (e) => {
                 isDown = true;
+                wasDragged = false;
                 startX = e.pageX - scrollContainer.offsetLeft;
+                startY = e.pageY;
                 scrollLeft = scrollContainer.scrollLeft;
                 scrollContainer.style.cursor = 'grabbing';
             });
 
             scrollContainer.addEventListener('mouseleave', () => {
                 isDown = false;
+                wasDragged = false;
                 scrollContainer.style.cursor = 'grab';
             });
 
@@ -358,14 +374,28 @@
                 e.preventDefault();
                 const x = e.pageX - scrollContainer.offsetLeft;
                 const walk = (x - startX) * 2;
+                if (Math.abs(walk) > DRAG_THRESHOLD) wasDragged = true;
                 scrollContainer.scrollLeft = scrollLeft - walk;
             });
 
+            // Prevent click events after drag
+            photoStrip.addEventListener('click', (e) => {
+                if (wasDragged) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }, true);
+
             // 鼠标滚轮横向滚动
             scrollContainer.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                scrollContainer.scrollLeft += e.deltaY * 2;
-            });
+                if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                    e.preventDefault();
+                    scrollContainer.scrollLeft += e.deltaX;
+                } else if (Math.abs(e.deltaY) > 0) {
+                    e.preventDefault();
+                    scrollContainer.scrollLeft += e.deltaY * 2;
+                }
+            }, { passive: false });
 
             // 触摸设备支持
             let touchStartX = 0;

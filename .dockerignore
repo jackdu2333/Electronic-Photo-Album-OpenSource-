@@ -1,0 +1,54 @@
+# Version Control
+.git/
+.gitignore
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+*.egg-info/
+dist/
+build/
+
+# Database & Data
+*.db
+*.db-shm
+*.db-wal
+static/photos/*
+!static/photos/.keep
+uploads/
+logs/
+messages.json
+photo_metadata.json
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+tests/
+test_route.py
+.coverage
+htmlcov/
+
+# Documentation (not needed in image)
+docs/
+CHANGELOG.md
+CODE_REVIEW_REPORT.md
+
+# Playwright
+.playwright-mcp/

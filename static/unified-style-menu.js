@@ -192,6 +192,10 @@
                 pointer-events: auto;
             }
 
+            .usm-panel::-webkit-scrollbar { width: 6px; }
+            .usm-panel::-webkit-scrollbar-track { background: transparent; }
+            .usm-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+
             .usm-panel[hidden] {
                 display: none;
             }
@@ -830,9 +834,21 @@
         initPhotoNavForTheme(activeTheme);
     }
 
+    function manageEditorModalZIndex() {
+        var modal = document.getElementById('editor-modal');
+        var menu = document.getElementById('unified-style-menu');
+        if (!modal || !menu) return;
+        function sync() {
+            menu.style.zIndex = modal.hidden ? '' : '99999';
+        }
+        sync();
+        new MutationObserver(sync).observe(modal, { attributes: true, attributeFilter: ['hidden'] });
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', renderMenu, { once: true });
     } else {
         renderMenu();
     }
+    manageEditorModalZIndex();
 })();

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>数字相册 - 样式 7：日式禅意</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@200;300;400&display=swap" rel="stylesheet">
     <style>
@@ -13,8 +13,9 @@
         }
 
         body {
-            width: 100vw;
-            min-height: 100vh;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
             margin: 0;
             font-family: 'Noto Sans JP', 'SimSun', sans-serif;
             background: #F5F3EF;
@@ -25,6 +26,11 @@
             background-size: 20px 20px, 40px 40px;
             background-position: 0 0, 10px 10px;
             overflow: hidden;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            color-scheme: light;
+            padding-right: env(safe-area-inset-right);
         }
 
         .hero-cluster {
@@ -98,7 +104,7 @@
         }
 
         .time {
-            font-size: clamp(56px, 4vw, 110px);
+            font-size: clamp(32px, 8vw, 110px);
             font-weight: 200;
             color: #5C5C5C;
             letter-spacing: 0.2em;
@@ -249,6 +255,27 @@
             height: 1px;
             flex: 0 0 1px;
             background: linear-gradient(to right, transparent, rgba(139, 115, 85, 0.44), transparent);
+        }
+
+        /* 照片加载失败兜底 */
+        .photo-frame {
+            background: linear-gradient(135deg, #d4c5a9 0%, #e8e4dc 100%);
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            .time {
+                font-size: clamp(24px, 6vw, 56px);
+                margin-bottom: 12px;
+            }
+            .divider {
+                margin: 16px 0;
+            }
+            .weather {
+                margin-top: 16px;
+            }
+            .photo-frame {
+                width: clamp(200px, 30vw, 420px);
+            }
         }
 
         @media (max-width: 1500px) {

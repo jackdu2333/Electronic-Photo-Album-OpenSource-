@@ -89,6 +89,8 @@ def send_message():
     sender = session.get('_username') or \
              (request.authorization.username if request.authorization else 'Guest')
 
+    # 前端使用 textContent 渲染，已天然防 XSS，此处不做服务端转义
+    # 避免双重转义导致 & 显示为 &amp;
     msg = {
         'id': uuid.uuid4().hex,
         'content': content,

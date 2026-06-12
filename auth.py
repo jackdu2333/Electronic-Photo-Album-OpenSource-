@@ -9,6 +9,7 @@
 """
 
 import os
+import hmac
 import time
 import threading
 from typing import Optional, Dict
@@ -204,10 +205,12 @@ class EnhancedAuth(BasicAuth):
 
         # 兼容旧格式（明文密码）
         if not password_hash.startswith('pbkdf2:'):
-            if password_hash == password:
+            if hmac.compare_digest(password_hash, password):
                 # 升级为哈希存储
                 self._users[username] = hash_password(password)
+                self._record_success(username)
                 return True
+            self._record_failure(username)
             return False
 
         # 新格式，使用哈希验证

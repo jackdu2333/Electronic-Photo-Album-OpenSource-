@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-06-02
+
+### Security
+
+- 🔒 **修复 SSL 证书验证**：`_fetch_json()` 和天气 API 生产环境恢复默认证书链，消除 MITM 风险
+- 🔒 **修复 XSS 漏洞**：前端日期叠加层和文件预览从 `innerHTML` 改为 `textContent` + DOM API
+- 🔒 **修复模板注入**：`CURRENT_USER` 使用 `|tojson` 过滤器替代字符串拼接
+- 🔒 **修复时序攻击**：明文密码回退使用 `hmac.compare_digest` 常量时间比较
+- 🔒 **修复存储型 XSS**：留言 sender/content 入库前 `html.escape()` 转义
+- 🔒 **SECRET_KEY 安全**：docker-compose 移除不安全默认值，缺少时启动失败
+
+### Performance
+
+- ⚡ **推荐算法优化**：单次推荐从最多 3 次全量 DB 查询降至 1 次
+- ⚡ **元数据缓存**：`_merge_note_fields` 添加 mtime 检查，文件未变时跳过 JSON 解析
+- ⚡ **图片压缩优化**：移除 `smart_compress` 重复 resize，节省峰值内存
+- ⚡ **事务保护**：深海打捞 SELECT + UPDATE 包在 `BEGIN IMMEDIATE` 事务内
+
+### Architecture
+
+- 🏗️ **线程安全**：`PhotoMetadataService._metadata` 添加 RLock 保护并发读写
+- 🏗️ **双写一致性**：`add_photo()` 改为先写 DB 再写内存，避免不一致
+- 🏗️ **异常精确化**：Migration 异常从 `except Exception` 改为 `sqlite3.OperationalError`
+- 🏗️ **公开 API**：`_getexif()` 替换为 Pillow 公开 `getexif()`
+
+### Frontend
+
+- 🎨 **定时器清理**：所有 `setInterval` 返回值存入变量，支持后续清除
+- 🎨 **消息轮询退避**：留言轮询改为指数退避（30s → 300s），减少网络异常时带宽浪费
+- 🎨 **命名空间保护**：Android TV 函数改为 `window.PhotoFrame.*`，保留向后兼容
+- 🎨 **冗余代码清理**：移除重复 MutationObserver 和无意义条件分支
+- 🎨 **图片加载兜底**：前景图添加 `onerror`，加载失败 3 秒后跳下一张
+- 🎨 **语言属性修正**：`lang="en"` → `lang="zh-CN"`
+
+### Deployment
+
+- 🐳 **新增 .dockerignore**：排除 .git/.env/__pycache__/tests，减少镜像体积
+- 🐳 **Gunicorn 可配置化**：workers/threads/timeout 支持环境变量覆盖
+- 🐳 **Compose V2**：移除过时 `version: '3.8'` 声明
+- 🐳 **SHA256**：锁文件名哈希从 SHA1 升级为 SHA256
+
+### Fixed
+
+- 🐛 排序 key 混合类型：`images` API 使用 `(date or '0000-00-00', url)` 元组排序
+- 🐛 DB timeout 逻辑：`max()` 改为直接使用传入值
+
+---
+
 ## [2.0.1] - 2026-03-23
 
 ### Added

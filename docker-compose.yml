@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   photoframe:
     build:
@@ -21,8 +19,8 @@ services:
       # 日志持久化
       - ./logs:/app/logs
     environment:
-      # 必需配置
-      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      # 必需配置（不设默认值，缺少 SECRET_KEY 时容器启动失败）
+      - SECRET_KEY=${SECRET_KEY:?请在 .env 中设置 SECRET_KEY}
       - ADMIN_USERS=${ADMIN_USERS:-admin:password}
       # 可选配置
       - FLASK_DEBUG=${FLASK_DEBUG:-false}

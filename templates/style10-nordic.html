@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>北欧极简电子相框 - Nordic Minimal</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
@@ -27,10 +27,18 @@
             background-color: var(--pure-white);
             color: var(--dark-gray);
             min-height: 100vh;
+            min-height: 100dvh;
             overflow: hidden;
             position: relative;
             isolation: isolate;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            color-scheme: light;
+            padding-right: env(safe-area-inset-right);
             background-image: 
+                radial-gradient(ellipse 42vw 42vw at 8% 0%, rgba(184, 212, 227, 0.17) 0%, transparent 50%),
+                radial-gradient(ellipse 42vw 42vw at 90% 86%, rgba(245, 245, 245, 0.25) 0%, transparent 50%),
                 radial-gradient(circle at 18% 16%, rgba(184, 212, 227, 0.18) 0%, transparent 20%),
                 radial-gradient(circle at 82% 84%, rgba(255, 255, 255, 0.62) 0%, transparent 22%),
                 linear-gradient(90deg, rgba(232, 232, 232, 0.08) 1px, transparent 1px),
@@ -38,39 +46,13 @@
             background-size: 50px 50px;
         }
 
-        body::before,
-        body::after {
-            content: '';
-            position: fixed;
-            width: 42vw;
-            height: 42vw;
-            min-width: 420px;
-            min-height: 420px;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 0;
-            filter: blur(70px);
-            opacity: 0.5;
-        }
-
-        body::before {
-            top: -12vw;
-            left: -10vw;
-            background: radial-gradient(circle, rgba(184, 212, 227, 0.34) 0%, rgba(184, 212, 227, 0) 68%);
-            animation: ambientBreatheLeft 22s ease-in-out infinite alternate;
-        }
-
-        body::after {
-            right: -10vw;
-            bottom: -14vw;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 64%);
-            animation: ambientBreatheRight 26s ease-in-out infinite alternate;
-        }
+        /* 静态渐变替代动画模糊，降低 GPU 开销 */
 
         .container {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-rows: 1fr auto;
             min-height: 100vh;
+            min-height: 100dvh;
             padding: 40px;
             max-width: 1400px;
             margin: 0 auto;
@@ -168,12 +150,13 @@
             z-index: 2;
             width: 100%;
             height: 100%;
-            background-size: cover;
+            background-size: contain;
             background-position: center;
+            background-repeat: no-repeat;
+            background-color: #F5F5F5;
             transition: opacity 0.8s ease, transform 0.8s ease;
             opacity: 0;
             transform: scale(1.02);
-            will-change: transform, opacity, background-position;
             filter: saturate(0.98) contrast(1.02);
         }
 
@@ -238,6 +221,14 @@
             opacity: 1;
         }
 
+        .theme-switcher:focus-within {
+            opacity: 1;
+        }
+
+        @media (hover: none) {
+            .theme-switcher { opacity: 1; visibility: visible; }
+        }
+
         .theme-switcher::before {
             content: '⚙️';
             position: absolute;
@@ -270,7 +261,7 @@
             border: 1px solid var(--light-gray);
             opacity: 0;
             transform: translateY(-10px);
-            transition: all 0.3s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         .theme-switcher:hover .theme-buttons {
@@ -288,7 +279,7 @@
             font-family: 'Inter', sans-serif;
             font-size: 13px;
             font-weight: 400;
-            transition: all 0.3s ease;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
             text-align: center;
             min-width: 100px;
             letter-spacing: 0.5px;
@@ -385,28 +376,6 @@
             letter-spacing: 0.5px;
         }
 
-        @keyframes ambientBreatheLeft {
-            0% {
-                transform: scale(1);
-                opacity: 0.38;
-            }
-            100% {
-                transform: scale(1.06);
-                opacity: 0.54;
-            }
-        }
-
-        @keyframes ambientBreatheRight {
-            0% {
-                transform: scale(1);
-                opacity: 0.3;
-            }
-            100% {
-                transform: scale(1.05);
-                opacity: 0.46;
-            }
-        }
-
         @keyframes frameAura {
             0%, 100% {
                 box-shadow: 0 12px 34px rgba(34, 45, 60, 0.06);
@@ -440,6 +409,27 @@
             }
             100% {
                 opacity: 0.5;
+            }
+        }
+
+        /* 照片加载失败兜底 */
+        .photo-container {
+            background: linear-gradient(135deg, #e8eef2 0%, #f5f5f5 100%);
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            .container {
+                padding: 16px;
+            }
+            .photo-container {
+                height: 55vh;
+                min-height: 300px;
+            }
+            .current-time {
+                font-size: 28px;
+            }
+            .info-panel {
+                padding: 12px;
             }
         }
 
@@ -559,7 +549,7 @@
                 if (!photo || !photo.url) return;
 
                 const display = document.getElementById('photo-display');
-                const nextUrl = `url('/static/photos/${photo.url}')`;
+                const nextUrl = `url('/static/photos/${encodeURI(photo.url)}')`;
                 const isNewPhoto = display.style.backgroundImage !== nextUrl;
                 if (isNewPhoto) {
                     display.classList.add('photo-switching');

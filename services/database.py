@@ -79,8 +79,9 @@ def init_database(db_file: Optional[str] = None):
     # Migration：旧数据库可能没有 view_count 列，安全添加
     try:
         c.execute("ALTER TABLE photos ADD COLUMN view_count INTEGER DEFAULT 0")
-    except Exception:
-        pass  # 列已存在时 SQLite 会报错，忽略即可
+    except sqlite3.OperationalError as e:
+        if 'duplicate column' not in str(e).lower():
+            raise  # 非列重复错误（如磁盘满、权限不足）应上抛
 
     # 复合索引：加速深海打捞查询（WHERE date <= ? ORDER BY view_count ASC）
     c.execute("CREATE INDEX IF NOT EXISTS idx_photos_date_viewcount ON photos(date, view_count)")
@@ -105,7 +106,7 @@ def get_db_connection(timeout: int = 10, check_same_thread: bool = False):
     if not DB_FILE:
         raise ValueError("DB_FILE not set. Call set_db_file() first.")
 
-    effective_timeout = max(timeout, config.SQLITE_BUSY_TIMEOUT_MS / 1000)
+    effective_timeout = timeout if timeout else config.SQLITE_BUSY_TIMEOUT_MS / 1000
     conn = sqlite3.connect(
         DB_FILE,
         timeout=effective_timeout,
@@ -395,6 +396,8 @@ class PhotoDAO:
         """
         获取深海打捞候选照片（冷数据）
 
+        SELECT + UPDATE 在 BEGIN IMMEDIATE 事务内执行，避免并发竞态。
+
         Args:
             cutoff_date: 截止日期，早于此日期的为冷数据
 
@@ -404,6 +407,7 @@ class PhotoDAO:
         conn = get_db_connection()
         try:
             c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
 
             # 精准打捞：优先取 view_count 最小（最少被看到）的冷照片
             c.execute("""
@@ -419,7 +423,7 @@ class PhotoDAO:
             row = c.fetchone()
 
             if row:
-                # 先自增 view_count
+                # 先自增 view_count（在同一事务内，避免 TOCTOU 竞态）
                 c.execute(
                     "UPDATE photos SET view_count = view_count + 1 WHERE url = ?",
                     (row["url"],)
@@ -430,7 +434,11 @@ class PhotoDAO:
                 result["view_count"] = row["view_count"] + 1
                 return result
 
+            conn.commit()
             return None
+        except Exception as e:
+            conn.rollback()
+            raise e
         finally:
             conn.close()
 

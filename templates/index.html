@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>数字相框 - Digital Photo Frame</title>
     <script>
@@ -20,11 +20,19 @@
             }
         })();
     </script>
+    <script>
+        // Fix 100vh on iOS Safari (address bar eats viewport height)
+        function setVH() {
+            document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+        }
+        setVH();
+        window.addEventListener('resize', setVH);
+    </script>
     <!-- Config from backend -->
     <script>
         window.BABY_CONFIG = {
-            name: '{{ baby_name | default("", true) }}',
-            birthday: '{{ baby_birthday | default("", true) }}'
+            name: {{ baby_name | default("", true) | tojson }},
+            birthday: {{ baby_birthday | default("", true) | tojson }}
         };
     </script>
     <!-- Google Font 'Inter' -->
@@ -32,6 +40,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        /* NOTE: Selector specificity chains throughout are technical debt.
+           Consider refactoring with @layer for cleaner cascade management. */
+
         /* --- Global Styles --- */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -42,10 +53,12 @@
                 radial-gradient(circle at 82% 16%, rgba(66, 94, 145, 0.10), transparent 26%),
                 #030405;
             color: #fff;
-            width: 100vw;
+            width: 100%;
             height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
             overflow: hidden;
             display: flex;
+            flex-direction: row;
             /* Flex container for split layout */
         }
 
@@ -57,7 +70,12 @@
         .slide-date,
         #chat-container,
         .message-bubble {
-            transition: all 0.45s ease;
+            transition: opacity 0.45s ease, transform 0.45s ease, background-color 0.45s ease, color 0.45s ease;
+        }
+
+        /* Style-1: Default - uses base styles */
+        html[data-home-style="style-1"] {
+            /* Intentionally inherits all base/global styles */
         }
 
         /* --- Layout --- */
@@ -65,7 +83,7 @@
             width: 35%;
             height: 100%;
             padding: 0;
-            padding-left: 60px;
+            padding-left: clamp(24px, 5vw, 60px);
             padding-top: 15vh;
             box-sizing: border-box;
             display: flex;
@@ -119,7 +137,7 @@
             color: rgba(255, 255, 255, 0.82);
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            margin-bottom: -10px;
+            margin-bottom: 0;
         }
 
         .time {
@@ -140,6 +158,7 @@
             white-space: nowrap;
         }
 
+        /* weather widget - populated by JS */
         #weather-widget {
             display: flex;
             align-items: center;
@@ -239,6 +258,8 @@
             font-size: 15px;
             line-height: 1.55;
             word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
             position: relative;
             backdrop-filter: blur(12px);
         }
@@ -324,9 +345,12 @@
             color: #0a84ff;
             font-size: 24px;
             cursor: pointer;
-            padding: 0 5px;
+            padding: 8px 10px;
+            min-width: 44px;
+            min-height: 44px;
             display: flex;
             align-items: center;
+            justify-content: center;
         }
 
         #chat-send-btn:active {
@@ -338,6 +362,13 @@
                 width: 100%;
                 padding-left: 20px;
                 padding-right: 20px;
+            }
+        }
+
+        @media (hover: none) {
+            #chat-input-area {
+                opacity: 1;
+                visibility: visible;
             }
         }
 
@@ -361,6 +392,7 @@
             height: 100%;
             opacity: 0;
             transition: opacity 2s ease-in-out;
+            will-change: opacity;
         }
 
         .slide-group.active {
@@ -445,6 +477,7 @@
             gap: 10px;
             opacity: 0;
             transition: opacity 0.3s;
+            will-change: opacity;
         }
 
         .photo-panel:hover #controls {
@@ -571,6 +604,7 @@
 
         /* --- Home Style 2: Immersive --- */
         html[data-home-style="style-2"] body {
+            color-scheme: dark;
             background:
                 radial-gradient(circle at top right, rgba(82, 119, 186, 0.24), transparent 30%),
                 radial-gradient(circle at bottom left, rgba(255, 189, 120, 0.12), transparent 28%),
@@ -596,6 +630,7 @@
             top: var(--style2-frame-gap);
             bottom: auto;
             height: calc(100vh - (var(--style2-frame-gap) * 2));
+            height: calc(calc(var(--vh, 1vh) * 100) - (var(--style2-frame-gap) * 2));
             width: var(--style2-panel-width);
             z-index: 120;
             padding: 34px 34px 30px;
@@ -607,7 +642,13 @@
             border: 1px solid rgba(255, 255, 255, 0.10);
             justify-content: flex-start;
             overflow: hidden;
+            overflow-y: auto;
+            scrollbar-width: none;
             box-sizing: border-box;
+        }
+
+        html[data-home-style="style-2"] .info-panel::-webkit-scrollbar {
+            display: none;
         }
 
         html[data-home-style="style-2"] .info-panel::before,
@@ -765,6 +806,7 @@
 
         /* --- Home Style 3: Gallery --- */
         html[data-home-style="style-3"] body {
+            color-scheme: light;
             background:
                 linear-gradient(180deg, #f0ece5 0%, #e7e0d4 44%, #ddd3c4 100%);
             color: #161616;
@@ -772,7 +814,7 @@
 
         html[data-home-style="style-3"] .info-panel {
             width: 28%;
-            min-width: 320px;
+            min-width: min(320px, 30vw);
             padding-left: 42px;
             padding-right: 32px;
             padding-top: 9vh;
@@ -791,11 +833,11 @@
             }
 
             html[data-home-style="style-3"] .time {
-                font-size: clamp(42px, 6vw, 68px) !important;  /* 缩小字体范围 */
+                font-size: clamp(42px, 6vw, 68px);  /* 缩小字体范围 */
             }
 
             html[data-home-style="style-3"] .date {
-                font-size: clamp(11px, 1.6vw, 16px) !important;  /* 缩小字体范围 */
+                font-size: clamp(11px, 1.6vw, 16px);  /* 缩小字体范围 */
             }
 
             html[data-home-style="style-3"] .greeting {
@@ -907,6 +949,7 @@
 
         /* --- Home Style 4: Floating Glass --- */
         html[data-home-style="style-4"] body {
+            color-scheme: dark;
             background:
                 radial-gradient(circle at top, rgba(255, 232, 208, 0.18), transparent 28%),
                 linear-gradient(180deg, rgba(8, 10, 15, 0.26), rgba(6, 8, 12, 0.72)),
@@ -1045,91 +1088,6 @@
             display: none !important;
         }
 
-        html[data-home-style="style-4"] #chat-container {
-            min-height: 60px;
-            height: auto;
-            max-height: 120px;
-            margin: 0;
-            padding-top: 18px;
-            margin-bottom: 60px;
-            padding-right: 0;
-            overflow: hidden;
-            mask-image: none;
-            -webkit-mask-image: none;
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-        }
-
-        html[data-home-style="style-4"] .message-row:not(:last-child) {
-            display: none;
-        }
-
-        html[data-home-style="style-4"] .message-row {
-            max-width: 100%;
-        }
-
-        html[data-home-style="style-4"] .sender-name {
-            font-size: 10px;
-            margin-bottom: 4px;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.42);
-        }
-
-        html[data-home-style="style-4"] .message-bubble {
-            padding: 0;
-            background: transparent;
-            border: none;
-            border-radius: 0;
-            font-size: 13px;
-            line-height: 1.55;
-            color: rgba(255, 255, 255, 0.74);
-            box-shadow: none;
-        }
-
-        html[data-home-style="style-4"] .my-message,
-        html[data-home-style="style-4"] .their-message {
-            align-self: stretch;
-            align-items: flex-start;
-        }
-
-        html[data-home-style="style-4"] .my-message .message-bubble,
-        html[data-home-style="style-4"] .their-message .message-bubble {
-            background: transparent;
-            color: rgba(255, 255, 255, 0.72);
-        }
-
-        html[data-home-style="style-4"] #chat-input-area {
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            padding: 14px 22px 18px;
-            opacity: 0;
-            margin-top: 0;
-            transition: opacity 0.28s ease;
-        }
-
-        html[data-home-style="style-4"] .info-panel:hover #chat-input-area,
-        html[data-home-style="style-4"] #chat-input-area:hover,
-        html[data-home-style="style-4"] #chat-input-area:focus-within {
-            opacity: 1;
-        }
-
-        html[data-home-style="style-4"] #chat-input {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.12);
-            border-radius: 999px;
-            color: rgba(255, 255, 255, 0.94);
-        }
-
-        html[data-home-style="style-4"] #chat-input::placeholder {
-            color: rgba(255, 255, 255, 0.42);
-        }
-
-        html[data-home-style="style-4"] #chat-send-btn {
-            color: rgba(255, 255, 255, 0.68);
-        }
-
         html[data-home-style="style-4"] #slideshow-container {
             border-radius: 0;
             background: transparent;
@@ -1182,8 +1140,8 @@
         }
 
         html[data-home-style="style-4"] #controls button {
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             background: rgba(255, 255, 255, 0.08);
             border-color: rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(18px);
@@ -1196,6 +1154,7 @@
 
         /* --- Home Style 5: Cinematic Edge (重构版) --- */
         html[data-home-style="style-5"] body {
+            color-scheme: dark;
             background:
                 radial-gradient(circle at center, rgba(255, 196, 120, 0.12), transparent 34%),
                 linear-gradient(180deg, rgba(5, 7, 10, 0.10), rgba(5, 7, 10, 0.68)),
@@ -1204,77 +1163,26 @@
             --style5-accent: 127, 183, 214;
         }
         
-        /* ========== 照片智能布局 ========== */
+        /* ========== 照片智能布局 (Style-5) ========== */
         html[data-home-style="style-5"] .photo-panel {
             position: relative;
             width: 100%;
             height: 100%;
             overflow: hidden;
+            padding: 0;
         }
 
-        html[data-home-style="style-5"] #slideshow-container {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            box-shadow: none;
-        }
-
-        html[data-home-style="style-5"] .slide-bg {
-            filter: blur(6px) brightness(85%) saturate(1.0);  /* 修复：减轻模糊 */
-            transform: scale(1.02);
-            opacity: 0.75;
-        }
-
-        html[data-home-style="style-5"] .slide {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            padding: calc(var(--style5-edge-gap) + 22px);
-            object-fit: contain;
-            object-position: center 45%;  /* 默认：稍向上，避让底部文字 */
-            filter: drop-shadow(0 16px 34px rgba(0, 0, 0, 0.16));
-        }
-
-        /* 横图优化：主体在上方 */
+        /* Orientation-specific rules (unique to this block, not overridden below) */
         html[data-home-style="style-5"] .slide.is-landscape {
             object-position: center 40%;
         }
 
-        /* 竖图优化：主体居中 */
         html[data-home-style="style-5"] .slide.is-portrait {
             object-position: center center;
         }
 
-        /* 方图优化：主体居中 */
         html[data-home-style="style-5"] .slide.is-square {
             object-position: center center;
-        }
-
-        html[data-home-style="style-5"] .slide-date {
-            top: auto;
-            right: auto;
-            left: var(--style5-edge-gap);  /* 修复：移到左下角 */
-            bottom: calc(var(--style5-edge-gap) + 72px);
-            transform: none;
-            padding: 8px 16px;
-            background: rgba(8, 10, 16, 0.24);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: none;
-            backdrop-filter: blur(14px);
-            text-shadow: none;
-            font-size: 10px;
-            letter-spacing: 0.24em;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.68);
-            border-radius: 999px;
-        }
-
-        html[data-home-style="style-5"] .photo-panel {
-            width: 100%;
-            padding: 0;
         }
 
         html[data-home-style="style-5"] .info-panel {
@@ -1312,6 +1220,7 @@
             top: var(--style5-edge-gap);
             left: var(--style5-edge-gap);
             gap: 4px;
+            pointer-events: auto;
         }
 
         html[data-home-style="style-5"] .info-bottom {
@@ -1462,9 +1371,9 @@
 
         /* ========== 输入框改进 ========== */
         html[data-home-style="style-5"] #chat-input-area {
-            position: fixed;
+            position: sticky;
             left: var(--style5-edge-gap);
-            bottom: calc(var(--style5-edge-gap) + 2px);
+            bottom: 0;
             width: min(520px, 48vw);
             padding: 0;
             opacity: 0;
@@ -1548,7 +1457,7 @@
             right: var(--style5-edge-gap);
             opacity: 0.9;  /* 修复：默认 0.9，更明显 */
             gap: 12px;
-            z-index: 122;
+            z-index: 130;
         }
 
         html[data-home-style="style-5"] #controls button {
@@ -1561,6 +1470,7 @@
 
         /* --- Home Style 6: Editorial Poster --- */
         html[data-home-style="style-6"] body {
+            color-scheme: light;
             background:
                 linear-gradient(180deg, rgba(244, 241, 236, 0.98), rgba(231, 234, 237, 0.98)),
                 #eef1f4;
@@ -1764,16 +1674,14 @@
         }
 
         html[data-home-style="style-6"] .photo-panel {
+            position: relative;
             width: calc(100% - var(--style6-side-width));
+            height: 100%;
             padding: var(--style6-frame-gap);
+            overflow: hidden;
         }
 
         /* ========== 照片智能布局 ========== */
-        html[data-home-style="style-6"] .photo-panel {
-            position: relative;
-            height: 100%;
-            overflow: hidden;
-        }
 
         html[data-home-style="style-6"] #slideshow-container {
             position: relative;
@@ -1981,6 +1889,7 @@
                 overflow-y: auto;
                 height: auto;
                 min-height: 100vh;
+                min-height: calc(var(--vh, 1vh) * 100);
                 background:
                     radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 24%),
                     #050608;
@@ -2093,6 +2002,7 @@
             body {
                 flex-direction: row;
                 height: 100vh;
+                height: calc(var(--vh, 1vh) * 100);
                 overflow: hidden;
             }
 
@@ -2200,8 +2110,8 @@
                 position: fixed;
                 top: 14px;
                 right: 14px;
-                width: 38px;
-                height: 38px;
+                width: 44px;
+                height: 44px;
                 border-radius: 50%;
                 background: rgba(0, 0, 0, 0.35);
                 border: 1px solid rgba(255, 255, 255, 0.25);
@@ -2272,6 +2182,7 @@
                 flex-direction: column;
                 overflow-y: auto;
                 min-height: 100vh;
+                min-height: calc(var(--vh, 1vh) * 100);
                 height: auto;
             }
 
@@ -2394,6 +2305,7 @@
             html[data-home-style="style-6"] body {
                 flex-direction: row;
                 height: 100vh;
+                height: calc(var(--vh, 1vh) * 100);
                 overflow: hidden;
             }
 
@@ -2519,6 +2431,12 @@
             z-index: 10;
             opacity: 0;
             animation: salvage-float-in 2s ease-out 1s forwards;
+        }
+
+        html[data-home-style="style-3"] .salvage-text,
+        html[data-home-style="style-6"] .salvage-text {
+            color: #333;
+            text-shadow: 0 1px 4px rgba(255, 255, 255, 0.55);
         }
 
         @keyframes salvage-float-in {
@@ -2752,7 +2670,7 @@
 
     <!-- Load existing slideshow logic (Cache busted for V1.3) -->
     <script>
-        const CURRENT_USER = "{{ username }}";
+        const CURRENT_USER = {{ username | tojson }};
     </script>
     <script src="{{ url_for('static', filename='script.js') }}?v=1.8"></script>
 
@@ -2781,12 +2699,7 @@
                 name = name.split('@')[0];
             }
 
-            // 特殊问候语：夜深了
-            if (hour >= 23 || hour < 5) {
-                document.getElementById('greeting').textContent = `${timeGreeting}，${name}`;
-            } else {
-                document.getElementById('greeting').textContent = `${timeGreeting}，${name}`;
-            }
+            document.getElementById('greeting').textContent = `${timeGreeting}，${name}`;
         }
 
         /* --- Clock & Date --- */
@@ -2820,7 +2733,7 @@
             updateGreeting();
         }
 
-        setInterval(updateClock, 1000); // Update every second
+        const clockTimer = setInterval(updateClock, 1000); // Update every second
         updateClock(); // Initial call
 
         /* --- Weather (Open-Meteo) --- */
@@ -2877,7 +2790,7 @@
         }
 
         // Fetch weather every 30 minutes
-        setInterval(fetchWeather, 30 * 60 * 1000);
+        const weatherTimer = setInterval(fetchWeather, 30 * 60 * 1000);
         fetchWeather(); // Initial call
 
     </script>

@@ -6,6 +6,7 @@ import os
 import json
 import logging
 import tempfile
+import threading
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from PIL import Image
@@ -31,6 +32,7 @@ class PhotoMetadataService:
     """
 
     _metadata: Dict[str, Any] = {}
+    _lock = threading.RLock()  # 保护 _metadata 的并发读写
 
     @classmethod
     def load(cls, filepath: Optional[str] = None) -> Dict[str, Any]:
@@ -46,18 +48,22 @@ class PhotoMetadataService:
         file_path = filepath or METADATA_FILE
 
         if not os.path.exists(file_path):
-            cls._metadata = {}
+            with cls._lock:
+                cls._metadata = {}
             logger.info("Metadata file not found, starting with empty metadata")
             return cls._metadata
 
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                cls._metadata = json.load(f)
+                data = json.load(f)
+            with cls._lock:
+                cls._metadata = data
             logger.info(f"Metadata loaded from {file_path}")
             return cls._metadata
         except Exception as e:
             logger.error(f"Error loading metadata: {e}")
-            cls._metadata = {}
+            with cls._lock:
+                cls._metadata = {}
             return cls._metadata
 
     @classmethod
@@ -74,6 +80,8 @@ class PhotoMetadataService:
         file_path = filepath or METADATA_FILE
 
         try:
+            with cls._lock:
+                data_copy = cls._metadata.copy()
             # 原子写入：先写临时文件，再 os.replace() 原子替换，防止写入中断导致文件损坏
             dir_name = os.path.dirname(os.path.abspath(file_path))
             with tempfile.NamedTemporaryFile(
@@ -81,7 +89,7 @@ class PhotoMetadataService:
                 delete=False, suffix='.tmp'
             ) as tmp_f:
                 tmp_path = tmp_f.name
-                json.dump(cls._metadata, tmp_f, ensure_ascii=False, indent=2)
+                json.dump(data_copy, tmp_f, ensure_ascii=False, indent=2)
             os.replace(tmp_path, file_path)
             logger.info(f"Metadata saved to {file_path}")
             return True
@@ -92,12 +100,14 @@ class PhotoMetadataService:
     @classmethod
     def get(cls, url: str) -> Optional[Dict[str, Any]]:
         """获取指定照片的元数据"""
-        return cls._metadata.get(url)
+        with cls._lock:
+            return cls._metadata.get(url)
 
     @classmethod
     def set(cls, url: str, metadata: Dict[str, Any]):
         """设置指定照片的元数据"""
-        cls._metadata[url] = metadata
+        with cls._lock:
+            cls._metadata[url] = metadata
 
     @classmethod
     def update(
@@ -118,15 +128,16 @@ class PhotoMetadataService:
             note_title: 便签标题（None 表示不更新）
             note_body: 便签正文（None 表示不更新）
         """
-        if url not in cls._metadata:
-            cls._metadata[url] = {}
+        with cls._lock:
+            if url not in cls._metadata:
+                cls._metadata[url] = {}
 
-        cls._metadata[url]['date'] = date
-        cls._metadata[url]['tags'] = tags
-        if note_title is not None:
-            cls._metadata[url]['note_title'] = str(note_title).strip()
-        if note_body is not None:
-            cls._metadata[url]['note_body'] = str(note_body).strip()
+            cls._metadata[url]['date'] = date
+            cls._metadata[url]['tags'] = tags
+            if note_title is not None:
+                cls._metadata[url]['note_title'] = str(note_title).strip()
+            if note_body is not None:
+                cls._metadata[url]['note_body'] = str(note_body).strip()
 
     @classmethod
     def extract_date(cls, file_path: str) -> Optional[str]:
@@ -147,7 +158,7 @@ class PhotoMetadataService:
         try:
             # 使用上下文管理器确保文件句柄及时释放，防止长时间运行时 fd 耗尽
             with Image.open(file_path) as image:
-                exif_data = image._getexif()
+                exif_data = image.getexif()  # 使用公开 API，而非 _getexif()
                 if exif_data:
                     for tag_id, value in exif_data.items():
                         tag_name = TAGS.get(tag_id, tag_id)
@@ -173,9 +184,11 @@ class PhotoMetadataService:
     @classmethod
     def clear(cls):
         """清空元数据"""
-        cls._metadata = {}
+        with cls._lock:
+            cls._metadata = {}
 
     @classmethod
     def all(cls) -> Dict[str, Any]:
         """获取所有元数据"""
-        return cls._metadata.copy()
+        with cls._lock:
+            return cls._metadata.copy()

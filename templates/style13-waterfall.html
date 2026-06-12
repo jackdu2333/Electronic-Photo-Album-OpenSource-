@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Style-13 瀑布流</title>
     <!-- 字体预加载 -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" as="style">
@@ -19,7 +19,12 @@
             background-size: 200% 200%;
             animation: gradientShift 15s ease infinite;
             min-height: 100vh;
+            min-height: 100dvh;
             padding: 20px;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
@@ -52,6 +57,7 @@
             margin: 0 auto;
             column-count: 3;
             column-gap: 20px;
+            column-fill: auto;
         }
         .waterfall-status {
             max-width: 1200px;
@@ -117,11 +123,10 @@
         }
         .photo-card img {
             width: 100%;
-            display: block;
-        }
-        .photo-card img {
             height: auto;
+            display: block;
             object-fit: contain;
+            aspect-ratio: 4/3;
         }
         .card-tag {
             position: absolute;
@@ -147,7 +152,7 @@
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255,255,255,0.22);
         }
-        .empty-state {
+        .curation-empty-state {
             max-width: 620px;
             margin: 40px auto;
             text-align: center;
@@ -181,19 +186,6 @@
     </style>
 </head>
 <body>
-    <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: 99999; display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-        <a href="/" style="color: #fff; text-decoration: none; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px;">首页</a>
-        <a href="/?theme=style7" style="color: #fff; text-decoration: none; padding: 4px 8px;">7</a>
-        <a href="/?theme=style8" style="color: #fff; text-decoration: none; padding: 4px 8px;">8</a>
-        <a href="/?theme=style9" style="color: #fff; text-decoration: none; padding: 4px 8px;">9</a>
-        <a href="/?theme=style10" style="color: #fff; text-decoration: none; padding: 4px 8px;">10</a>
-        <a href="/?theme=style11" style="color: #fff; text-decoration: none; padding: 4px 8px;">11</a>
-        <a href="/?theme=style12" style="color: #fff; text-decoration: none; padding: 4px 8px;">12</a>
-        <a href="/?theme=style13" style="color: #fff; text-decoration: none; padding: 4px 8px;">13</a>
-        <a href="/?theme=style14" style="color: #fff; text-decoration: none; padding: 4px 8px;">14</a>
-        <a href="/?theme=style15" style="color: #fff; text-decoration: none; padding: 4px 8px;">15</a>
-        <a href="/?theme=style16" style="color: #fff; text-decoration: none; padding: 4px 8px;">16</a>
-    </div>
     <div class="filter-buttons" id="filter-buttons">
         <button class="filter-btn active" data-filter="all">全部</button>
     </div>
@@ -257,7 +249,7 @@
             card.dataset.tagKeys = tagModels.map(t => t.key).join(',');
 
             const img = document.createElement('img');
-            img.src = `/static/photos/${photo.url}`;
+            img.src = `/static/photos/${encodeURI(photo.url)}`;
             img.alt = photo.url || '照片';
             img.loading = 'lazy';
             img.decoding = 'async';
@@ -368,7 +360,7 @@
                 if (!Array.isArray(photos) || photos.length === 0) {
                     const container = document.getElementById('waterfall-container');
                     if (container) {
-                        container.innerHTML = '<div class="empty-state">暂无照片，请先上传并添加标签。</div>';
+                        container.innerHTML = '<div class="curation-empty-state">暂无照片，请先上传并添加标签。</div>';
                     }
                     return;
                 }

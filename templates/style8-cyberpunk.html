@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>数字相册 - 样式 8：赛博朋克</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -13,13 +13,19 @@
         }
 
         body {
-            width: 100vw;
+            width: 100%;
             min-height: 100vh;
+            min-height: 100dvh;
             margin: 0;
             font-family: 'Orbitron', monospace;
             background: #0A0E27;
             overflow: hidden;
             position: relative;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            color-scheme: dark;
+            padding-right: env(safe-area-inset-right);
         }
 
         /* 网格背景 - 优化动画频率 */
@@ -41,6 +47,8 @@
         /* 扫描线动画 - 优化为 6 秒循环 */
         .scan-line {
             position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 3px;
             background: linear-gradient(90deg, 
@@ -50,13 +58,15 @@
                 transparent);
             animation: scanDown 6s linear infinite;
             box-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
+            will-change: transform;
+            mix-blend-mode: screen;
         }
 
         @keyframes scanDown {
-            0% { top: -5%; opacity: 0; }
+            0% { transform: translateY(-5vh); opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
-            100% { top: 105%; opacity: 0; }
+            100% { transform: translateY(105vh); opacity: 0; }
         }
 
         /* 斜角照片框 - 优化尺寸 */
@@ -67,15 +77,14 @@
             transform: translate(-50%, -50%);
             width: 50%;
             height: 60%;
-            clip-path: polygon(
-                8% 0, 92% 0, 100% 8%, 100% 92%, 
-                92% 100%, 8% 100%, 0 92%, 0 8%
-            );
+            border-radius: 8px;
             border: 3px solid #00F0FF;
             box-shadow: 
                 0 0 30px rgba(0, 240, 255, 0.6),
                 inset 0 0 40px rgba(0, 240, 255, 0.3);
             overflow: hidden;
+            /* 照片加载失败兜底 */
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         }
 
         .photo-frame img {
@@ -131,7 +140,7 @@
         /* 时间 - 霓虹粉 */
         .time {
             position: absolute;
-            top: 50px;
+            top: 5%;
             left: 50px;
             font-size: clamp(64px, 4.2vw, 124px);
             font-weight: 900;
@@ -146,7 +155,7 @@
         /* 日期 - 霓虹青 */
         .date {
             position: absolute;
-            top: 140px;
+            top: calc(5% + clamp(64px, 4.2vw, 124px) + 8px);
             left: 50px;
             font-size: clamp(16px, 1.2vw, 28px);
             color: #00F0FF;
@@ -157,7 +166,7 @@
         /* 天气 - 霓虹黄 */
         .weather {
             position: absolute;
-            top: 50px;
+            top: 5%;
             right: 50px;
             font-size: clamp(24px, 1.6vw, 42px);
             color: #FFE600;
@@ -258,27 +267,43 @@
             text-overflow: ellipsis;
         }
 
+        @media (orientation: landscape) and (max-height: 500px) {
+            .time {
+                font-size: clamp(36px, 6vw, 72px);
+            }
+            .date {
+                font-size: clamp(12px, 1.2vw, 20px);
+            }
+            .photo-frame {
+                height: 70%;
+                width: 40%;
+            }
+            .daily-quote-panel {
+                display: none;
+            }
+        }
+
         @media (max-width: 600px) {
             body {
                 overflow-x: hidden;
             }
 
             .time {
-                top: 64px;
+                top: 5%;
                 left: 16px;
                 font-size: clamp(54px, 18vw, 78px);
                 letter-spacing: 2px;
             }
 
             .date {
-                top: 142px;
+                top: calc(5% + clamp(54px, 18vw, 78px) + 6px);
                 left: 20px;
                 font-size: 14px;
                 letter-spacing: 3px;
             }
 
             .weather {
-                top: 58px;
+                top: 5%;
                 right: 18px;
                 gap: 6px;
                 font-size: 20px;
@@ -288,7 +313,7 @@
                 top: 47%;
                 width: min(62vw, 260px);
                 height: min(60vh, 506px);
-                min-height: 420px;
+                min-height: min(60vh, 420px);
                 border-width: 2px;
             }
 

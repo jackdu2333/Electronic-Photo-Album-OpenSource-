@@ -43,9 +43,17 @@ USER appuser
 # 暴露端口
 EXPOSE 5000
 
+# Gunicorn 配置（通过环境变量覆盖，适配不同规格部署环境）
+# 2核2G 推荐：workers=3, threads=4, worker_class=gthread
+ENV GUNICORN_WORKERS=3
+ENV GUNICORN_THREADS=4
+ENV GUNICORN_TIMEOUT=120
+ENV GUNICORN_WORKER_CLASS=gthread
+ENV GUNICORN_BIND=0.0.0.0:5000
+
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
 
 # 使用 gunicorn 运行
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "app:app"]
+CMD ["sh", "-c", "gunicorn --bind ${GUNICORN_BIND} --workers ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --worker-class ${GUNICORN_WORKER_CLASS} --timeout ${GUNICORN_TIMEOUT} app:app"]

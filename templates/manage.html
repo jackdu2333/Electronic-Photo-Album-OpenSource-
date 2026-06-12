@@ -3,12 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>照片管理 - OneTwo Photo Frame</title>
     <!-- Google Font 'Inter' -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
         :root {
             --bg-color: #f5f7fa;
             --card-bg: #fff;
@@ -80,19 +82,26 @@
         .search-input {
             width: 100%;
             padding: 10px 15px;
-
+            min-width: 0;
             border: 1px solid var(--border);
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 16px;
             outline: none;
             transition: all 0.2s;
-            box-sizing: border-box;
-            /* Prevent padding from breaking 100% width */
         }
 
         .search-input:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .tags-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--app-border, #d2d2d7);
+            border-radius: var(--app-radius-sm, 8px);
+            font-size: 14px;
+            outline: none;
         }
 
 
@@ -101,6 +110,10 @@
             font-size: 12px;
             color: #888;
             margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .filter-tips { margin-left: 0; }
         }
 
         /* --- Grid Layout --- */
@@ -123,9 +136,11 @@
             flex-direction: column;
         }
 
-        .photo-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        @media (hover: hover) {
+            .photo-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
         }
 
         .img-container {
@@ -138,9 +153,9 @@
         .img-container img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            background: #f0f0f0;
             cursor: pointer;
-            /* Hint that it might be clickable/viewable */
         }
 
         .card-body {
@@ -195,6 +210,8 @@
         }
 
         .date-part {
+            flex: 1;
+            min-width: 0;
             padding: 8px 5px;
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -209,18 +226,6 @@
             border-color: var(--primary);
         }
 
-        .date-part.year {
-            width: 40px;
-        }
-
-        .date-part.month {
-            width: 35px;
-        }
-
-        .date-part.day {
-            width: 35px;
-        }
-
         .date-label {
             font-size: 14px;
             color: var(--text-sub);
@@ -228,9 +233,10 @@
 
         .action-row {
             margin-top: auto;
-            padding-top: 10px;
+            padding-top: 12px;
             display: flex;
             justify-content: flex-end;
+            border-top: 1px solid var(--app-border, #e5e5e5);
         }
 
         .save-btn {
@@ -275,13 +281,18 @@
             color: var(--primary);
         }
 
+        .load-more-btn:focus {
+            outline: 2px solid var(--app-primary, #007AFF);
+            outline-offset: 2px;
+        }
+
         /* --- Toast --- */
         #toast-container {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1000;
+            z-index: 10000;
         }
 
         .toast {
@@ -326,7 +337,7 @@
 
             .header-actions {
                 width: 100%;
-                text-align: right;
+                justify-content: flex-end;
             }
 
             .filter-toolbar {
@@ -364,15 +375,6 @@
                 gap: 8px;
             }
 
-            .date-part.year {
-                width: 50px;
-            }
-
-            .date-part.month,
-            .date-part.day {
-                width: 40px;
-            }
-
             .save-btn {
                 padding: 12px 20px;
                 font-size: 15px;
@@ -392,7 +394,7 @@
 <body>
 
     <header>
-        <h1>💎 照片管理</h1>
+        <h1><span aria-hidden="true">💎</span> 照片管理</h1>
         <div class="header-actions">
             <a href="/admin" class="back-link">← 返回控制台</a>
             <a href="/logout" class="back-link">退出登录</a>

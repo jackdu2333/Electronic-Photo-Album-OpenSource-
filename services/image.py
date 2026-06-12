@@ -155,8 +155,8 @@ class ImageProcessor:
 
                 # 初始尺寸限制（在 with 块内完成，保证 raw_img 可用）
                 current_img = resize_to_limit(img, max_resolution_px)
-                # 保存一份 original-source 尺寸用于第二轮降级（resize_to_limit 返回新对象）
-                original_for_round2 = resize_to_limit(img, max_resolution_px)
+                # 延迟创建第二轮降级用副本（仅在第一轮失败时才实际使用）
+                _round2_source = current_img  # 引用而非拷贝，第一轮 quality 循环不修改 current_img 本身
 
             output_buffer = io.BytesIO()
 
@@ -187,7 +187,7 @@ class ImageProcessor:
             # 4. 第二轮：第一轮失败 (即 quality=75 仍 > target_size)
             # 分辨率降级 -> 2560px
             logger.warning(f"Compress: High quality failed, resizing to 2560px...")
-            current_img = resize_to_limit(original_for_round2, 2560)
+            current_img = resize_to_limit(_round2_source, 2560)
 
             quality = 90
             while quality >= 70:

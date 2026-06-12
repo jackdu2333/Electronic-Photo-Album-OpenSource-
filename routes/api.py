@@ -38,8 +38,9 @@ LOCAL_DAILY_QUOTES = [
 def _fetch_json(url, timeout=4, headers=None):
     """通用 JSON 拉取（服务端，避免前端跨域问题）"""
     req = urllib.request.Request(url, headers=headers or {})
-    request_context = ssl._create_unverified_context()
-    with urllib.request.urlopen(req, timeout=timeout, context=request_context) as response:
+    # 使用系统默认证书链，生产环境不禁用 SSL 验证
+    ssl_context = ssl.create_default_context() if not os.environ.get('FLASK_DEBUG', '').lower() == 'true' else ssl._create_unverified_context()
+    with urllib.request.urlopen(req, timeout=timeout, context=ssl_context) as response:
         return json.loads(response.read().decode('utf-8'))
 
 
@@ -142,13 +143,25 @@ def _resolve_daily_quote(force_refresh=False):
     return payload, False
 
 
+# 元数据 mtime 缓存，避免每次请求都重新加载 JSON 文件
+_metadata_mtime = None
+
 def _merge_note_fields(photos):
     """
     将 JSON 元数据里的便签字段合并到照片列表响应中
+    使用 mtime 缓存，仅在文件变化时重新加载
     """
-    from services.metadata import PhotoMetadataService
+    global _metadata_mtime
+    from services.metadata import PhotoMetadataService, METADATA_FILE
 
-    PhotoMetadataService.load()
+    current_mtime = None
+    if os.path.exists(METADATA_FILE):
+        current_mtime = os.path.getmtime(METADATA_FILE)
+
+    if current_mtime != _metadata_mtime:
+        PhotoMetadataService.load()
+        _metadata_mtime = current_mtime
+
     metadata = PhotoMetadataService.all()
     merged = []
     for photo in photos:
@@ -263,7 +276,7 @@ def get_images():
     photo_index = get_photo_index()
     sorted_index = sorted(
         photo_index,
-        key=lambda x: x['date'] or x['url'],
+        key=lambda x: (x['date'] or '0000-00-00', x['url']),
         reverse=True
     )
     resp = jsonify(_merge_note_fields(sorted_index))
@@ -321,8 +334,8 @@ def weather_config():
     try:
         # 调用 Open-Meteo API 获取天气
         url = f'https://api.open-meteo.com/v1/forecast?latitude={config.WEATHER_LAT}&longitude={config.WEATHER_LON}&current=temperature_2m,weather_code&timezone=auto'
-        request_context = ssl._create_unverified_context()
-        with urllib.request.urlopen(url, timeout=5, context=request_context) as response:
+        ssl_context = ssl.create_default_context() if not os.environ.get('FLASK_DEBUG', '').lower() == 'true' else ssl._create_unverified_context()
+        with urllib.request.urlopen(url, timeout=5, context=ssl_context) as response:
             data = json.loads(response.read().decode())
 
         result = {

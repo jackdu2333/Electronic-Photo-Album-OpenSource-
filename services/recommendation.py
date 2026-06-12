@@ -79,11 +79,16 @@ class RecommendationService:
         """
         获取下一张推荐照片
 
+        仅在入口处调用一次 get_photo_index()，后续传递引用，
+        避免单次推荐多次全量查库。
+
         Returns:
             照片字典 {url, date, month, tags, weight, view_count, is_salvaged}
             或 None（无可用照片）
         """
         import time
+
+        photo_index = None  # 延迟加载，仅在需要时查询
 
         # ── 0. 强制展示逻辑（优先级最高）──────────────
         cur_force_img, cur_force_expiry = get_force_show_state()
@@ -101,7 +106,8 @@ class RecommendationService:
             clear_force_show()
 
         # ── 保险：若内存索引为空则返回 ───────────────────
-        photo_index = get_photo_index()
+        if photo_index is None:
+            photo_index = get_photo_index()
         if not photo_index:
             logger.warning("Photo index is empty")
             return None
@@ -124,7 +130,7 @@ class RecommendationService:
         # ════════════════════════════════════════════════════
         # 轨道 2：常规加权模式
         # ════════════════════════════════════════════════════
-        return RecommendationService._regular_selection()
+        return RecommendationService._regular_selection(photo_index)
 
     @staticmethod
     def _deep_sea_salvage() -> Optional[Dict[str, Any]]:
@@ -152,16 +158,20 @@ class RecommendationService:
         return None
 
     @staticmethod
-    def _regular_selection() -> Optional[Dict[str, Any]]:
+    def _regular_selection(photo_index: Optional[list] = None) -> Optional[Dict[str, Any]]:
         """
         常规加权选择：标签权重 × 季节权重
 
         最终权重 = 静态标签权重 × 动态季节权重
 
+        Args:
+            photo_index: 可选的照片索引列表，传入则不再重新查询
+
         Returns:
             照片字典，包含 is_salvaged=False
         """
-        photo_index = get_photo_index()
+        if photo_index is None:
+            photo_index = get_photo_index()
         if not photo_index:
             return None
 

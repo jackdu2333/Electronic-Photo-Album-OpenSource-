@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let isForceMode = false;
         let currentDisplayedUrl = null;
 
-        setInterval(checkForceShow, 10000); // Check every 10s
+        const forceShowTimer = setInterval(checkForceShow, 10000); // Check every 10s
 
         function checkForceShow() {
             fetch('/api/status', { credentials: 'same-origin' })
@@ -255,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Foreground (Contain)
             const fg = document.createElement('img');
             fg.className = 'slide';
+            fg.alt = photoData.tags || '照片';  // 无障碍 alt 属性
             fg.onload = () => {
                 const isPortrait = fg.naturalHeight > fg.naturalWidth;
                 fg.classList.toggle('is-portrait', isPortrait);
@@ -262,6 +263,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 group.classList.toggle('is-portrait', isPortrait);
                 group.classList.toggle('is-landscape', !isPortrait);
                 applyAmbientPanelTheme(fg);
+            };
+            fg.onerror = () => {
+                // 前景图加载失败时跳过当前照片
+                console.warn('Foreground image load failed:', url);
+                setTimeout(() => { if (!isNavigating) nextImage(); }, 3000);
             };
             fg.src = url;
             if (fg.complete && fg.naturalWidth > 0) {
@@ -278,19 +284,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dateEl = document.createElement('div');
                 dateEl.className = 'slide-date';
 
-                // Default date text
-                let htmlContent = `拍摄于: ${date}`;
+                // 使用 textContent 防止 XSS
+                dateEl.textContent = `拍摄于: ${date}`;
 
                 // Baby Age Logic (Only if name matches or any tag exists if name is generic)
                 const targetName = window.BABY_CONFIG.name || "宝宝";
                 if (photoData.tags && (photoData.tags.indexOf(targetName) !== -1)) {
                     const ageText = getBabyAge(date);
                     if (ageText) {
-                        htmlContent += `<br><span style="font-size: 0.9em; opacity: 0.9;">${ageText}</span>`;
+                        const ageSpan = document.createElement('span');
+                        ageSpan.style.fontSize = '0.9em';
+                        ageSpan.style.opacity = '0.9';
+                        ageSpan.textContent = ageText;
+                        dateEl.appendChild(document.createElement('br'));
+                        dateEl.appendChild(ageSpan);
                     }
                 }
 
-                dateEl.innerHTML = htmlContent;
                 group.appendChild(dateEl);
             }
 
@@ -513,19 +523,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 resetTimer();
             };
         }
-        // Expose functions globally for Android TV remote control
-        window.prevImage = function () {
+        // Expose functions globally for Android TV remote control (use namespace)
+        window.PhotoFrame = window.PhotoFrame || {};
+        window.PhotoFrame.prevImage = function () {
             if (isNavigating) return;
             isNavigating = true;
             prevImage();
             resetTimer();
         };
-        window.nextImage = function () {
+        window.PhotoFrame.nextImage = function () {
             if (isNavigating) return;
             isNavigating = true;
             nextImage();
             resetTimer();
         };
+        // 向后兼容：保留全局引用
+        window.prevImage = window.PhotoFrame.prevImage;
+        window.nextImage = window.PhotoFrame.nextImage;
 
         // Keyboard event listener for TV remote D-Pad keys (with debounce)
         document.addEventListener('keydown', function (e) {
@@ -642,8 +656,31 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Poll for messages
-        setInterval(fetchMessages, 30000);
+        // Poll for messages (with exponential backoff on failure)
+        let pollInterval = 30000;
+        let pollFailures = 0;
+        let messageTimer = null;
+
+        function schedulePoll() {
+            messageTimer = setTimeout(() => {
+                fetch('/api/messages?limit=50', { credentials: 'same-origin' })
+                    .then(res => {
+                        if (!res.ok) throw new Error('messages auth/network error');
+                        pollFailures = 0;
+                        pollInterval = 30000;  // 成功后重置间隔
+                        return res.json();
+                    })
+                    .then(data => renderMessages(data))
+                    .catch(err => {
+                        console.error('Chat error:', err);
+                        pollFailures++;
+                        // 指数退避：30s → 60s → 120s → 240s → 最大 300s
+                        pollInterval = Math.min(30000 * Math.pow(2, pollFailures), 300000);
+                    })
+                    .finally(() => schedulePoll());
+            }, pollInterval);
+        }
+        schedulePoll();
         fetchMessages();
     }
 
@@ -722,13 +759,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 reader.onload = (e) => {
                     const card = document.createElement('div');
                     card.className = 'preview-card';
-                    card.innerHTML = `
-                        <div class="preview-image" style="background-image: url('${e.target.result}')"></div>
-                        <div class="preview-info">
-                            <span class="file-name">${file.name}</span>
-                            <button class="remove-btn" data-index="${index}">&times;</button>
-                        </div>
-                    `;
+
+                    // 使用 textContent 防止文件名 XSS
+                    const previewImage = document.createElement('div');
+                    previewImage.className = 'preview-image';
+                    previewImage.style.backgroundImage = `url('${e.target.result}')`;
+
+                    const previewInfo = document.createElement('div');
+                    previewInfo.className = 'preview-info';
+
+                    const fileNameSpan = document.createElement('span');
+                    fileNameSpan.className = 'file-name';
+                    fileNameSpan.textContent = file.name;  // textContent 防 XSS
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.dataset.index = index;
+                    removeBtn.innerHTML = '&times;';
+
+                    previewInfo.appendChild(fileNameSpan);
+                    previewInfo.appendChild(removeBtn);
+                    card.appendChild(previewImage);
+                    card.appendChild(previewInfo);
+
                     card.querySelector('.remove-btn').addEventListener('click', (ev) => {
                         ev.stopPropagation();
                         removeFile(index);
@@ -965,7 +1018,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// ========== 样式 4: 照片比例检测 ==========
+// ========== 样式 4: 照片比例检测（已整合进 initSlideshow 的 fg.onload） ==========
+// 保留 updateSlideClass 供外部主题页调用
 function updateSlideClass(img) {
     if (!img || !img.naturalWidth) return;
     
@@ -979,34 +1033,4 @@ function updateSlideClass(img) {
     } else {
         img.classList.add('is-square');
     }
-}
-
-// 在照片加载时调用
-function initSlideClassObserver() {
-    const slideshow = document.getElementById('slideshow-container');
-    if (!slideshow) return;
-    
-    const observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            if (mutation.type === 'childList') {
-                const img = slideshow.querySelector('img.slide');
-                if (img && img.src) {
-                    updateSlideClass(img);
-                }
-            }
-        });
-    });
-    
-    observer.observe(slideshow, { childList: true, subtree: true });
-    
-    // 初始调用
-    setTimeout(() => {
-        const img = slideshow.querySelector('img.slide');
-        if (img) updateSlideClass(img);
-    }, 500);
-}
-
-// 页面加载时初始化
-if (document.getElementById('slideshow-container')) {
-    document.addEventListener('DOMContentLoaded', initSlideClassObserver);
 }

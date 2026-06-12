@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>和风电子相框 - Japanese Zen</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Yuji+Syuku&display=swap" rel="stylesheet">
     <style>
@@ -24,7 +24,13 @@
             font-family: 'Noto Serif JP', 'Yuji Syuku', serif;
             background-color: var(--shoji-white);
             min-height: 100vh;
+            min-height: 100dvh;
             overflow: hidden;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            color-scheme: light;
+            padding-right: env(safe-area-inset-right);
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(255, 183, 197, 0.1) 0%, transparent 20%),
                 radial-gradient(circle at 90% 80%, rgba(122, 155, 118, 0.1) 0%, transparent 20%),
@@ -54,9 +60,10 @@
         }
 
         .container {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-rows: 1fr auto;
             min-height: 100vh;
+            min-height: 100dvh;
             padding: 20px;
             position: relative;
             z-index: 1;
@@ -213,6 +220,14 @@
             opacity: 1;
         }
 
+        .theme-switcher:focus-within {
+            opacity: 1;
+        }
+
+        @media (hover: none) {
+            .theme-switcher { opacity: 1; visibility: visible; }
+        }
+
         .theme-switcher::before {
             content: '🎨';
             position: absolute;
@@ -245,7 +260,7 @@
             border: 2px solid var(--wood-color);
             opacity: 0;
             transform: translateY(-10px);
-            transition: all 0.3s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         .theme-switcher:hover .theme-buttons {
@@ -262,7 +277,7 @@
             cursor: pointer;
             font-family: 'Noto Serif JP', serif;
             font-size: 14px;
-            transition: all 0.3s ease;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
             text-align: center;
             min-width: 120px;
         }
@@ -359,17 +374,11 @@
         @keyframes woodBreath {
             0%, 100% {
                 transform: translateY(0);
-                box-shadow:
-                    inset 0 2px 4px rgba(255, 255, 255, 0.3),
-                    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
-                    0 8px 20px rgba(0, 0, 0, 0.15);
+                filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.15));
             }
             50% {
                 transform: translateY(-2px);
-                box-shadow:
-                    inset 0 2px 4px rgba(255, 255, 255, 0.3),
-                    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
-                    0 14px 26px rgba(0, 0, 0, 0.19);
+                filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.19));
             }
         }
 
@@ -379,6 +388,26 @@
             }
             100% {
                 transform: scale(1.1) translate3d(1.2%, 1.2%, 0);
+            }
+        }
+
+        /* 照片加载失败兜底 */
+        .photo-stage {
+            background-color: #d4c5a9;
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            .container {
+                padding: 10px;
+            }
+            .photo-stage {
+                height: min(50vh, 360px);
+            }
+            .current-time {
+                font-size: 28px;
+            }
+            .info-panel {
+                padding: 10px;
             }
         }
 
@@ -502,7 +531,7 @@
                 if (!photo || !photo.url) return;
                 const img = document.getElementById('main-photo');
                 const bg = document.getElementById('main-photo-bg');
-                const photoUrl = `/static/photos/${photo.url}`;
+                const photoUrl = `/static/photos/${encodeURI(photo.url)}`;
                 const needsSwitch = img.src !== window.location.origin + photoUrl;
 
                 img.classList.remove('is-landscape', 'is-portrait', 'is-square');
@@ -535,7 +564,11 @@
         function initSakuraPetals() {
             const layer = document.getElementById('sakura-layer');
             if (!layer) return;
-            const count = window.innerWidth >= 2400 ? 24 : 16;
+            const count = window.innerWidth >= 2400 ? 12 : 10;
+            // 清理旧花瓣，防止 DOM 累积
+            while (layer.children.length > 12) {
+                layer.removeChild(layer.firstChild);
+            }
             for (let i = 0; i < count; i++) {
                 const petal = document.createElement('span');
                 petal.className = 'petal';

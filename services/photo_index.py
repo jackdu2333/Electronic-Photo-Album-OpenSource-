@@ -35,7 +35,7 @@ except ImportError:  # pragma: no cover - Windows fallback
 def _background_rebuild_lock_path(upload_folder: str) -> str:
     """为当前部署实例生成稳定的跨进程锁文件路径。"""
     identity = f"{os.path.abspath(upload_folder)}::{os.path.abspath(config.DATABASE_FILE)}"
-    digest = hashlib.sha1(identity.encode('utf-8')).hexdigest()[:12]
+    digest = hashlib.sha256(identity.encode('utf-8')).hexdigest()[:12]
     return os.path.join(
         tempfile.gettempdir(),
         f"photo-index-rebuilder-{digest}.lock"
@@ -273,6 +273,8 @@ class PhotoIndexService:
         """
         添加单张照片到索引
 
+        先写 DB，成功后再更新内存，保证一致性。
+
         Args:
             url: 照片相对路径
             date: 拍摄日期
@@ -280,6 +282,8 @@ class PhotoIndexService:
             tags: 标签字符串
             weight: 权重
         """
+        global _photo_index
+
         entry = {
             'url': url,
             'date': date,
@@ -287,12 +291,16 @@ class PhotoIndexService:
             'tags': tags,
             'weight': weight
         }
-        with _index_lock:
-            _photo_index.append(entry)
 
-        # 同时插入数据库
+        # 先写数据库
         PhotoDAO.insert_or_ignore([(url, date, month, tags, weight)])
         PhotoDAO.update_metadata(url, date, month, tags, weight)
+
+        # DB 写入成功后再更新内存索引
+        with _index_lock:
+            # 去重：先移除同 URL 旧条目，再追加
+            _photo_index = [p for p in _photo_index if p['url'] != url]
+            _photo_index.append(entry)
 
     @staticmethod
     def remove_photo(url: str):

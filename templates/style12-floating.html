@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>悬浮画框</title>
     <style>
         * {
@@ -14,16 +14,23 @@
         body {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
             font-family: 'Segoe UI', system-ui, sans-serif;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            color-scheme: dark;
+            padding-right: env(safe-area-inset-right);
         }
 
         .container {
             width: 100%;
             height: 100vh;
+            height: 100dvh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -86,18 +93,15 @@
         .photo-frame::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 20px solid transparent;
-            border-image: linear-gradient(145deg, rgba(255,255,255,0.8), rgba(200,200,200,0.4)) 1;
+            inset: 0;
+            border-radius: 8px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
             pointer-events: none;
             z-index: 2;
         }
 
-        .photo-frame::after {
-            content: '';
+        /* 阴影层 - 替代 ::after 在 3D 上下文中 z-index:-1 的不确定行为 */
+        .frame-shadow {
             position: absolute;
             top: -10px;
             left: -10px;
@@ -110,6 +114,7 @@
             z-index: -1;
             border-radius: 12px;
             transform: translateZ(-50px);
+            pointer-events: none;
         }
 
         .photo-frame:hover {
@@ -120,6 +125,7 @@
                 0 32px 64px rgba(0,0,0,0.2),
                 0 64px 128px rgba(0,0,0,0.25),
                 0 0 0 1px rgba(255,255,255,0.2) inset;
+            animation-play-state: paused;
         }
 
         .photo-frame img {
@@ -177,8 +183,27 @@
             }
         }
 
-        /* 响应式适配 */
-        @media (max-width: 2560px) {
+        /* 照片加载失败兜底 */
+        .photo-frame {
+            background-color: #2a2a3e;
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            .container {
+                padding: clamp(8px, 1vw, 16px);
+            }
+            .photo-frame {
+                width: min(80vw, calc(80vh * 1.6));
+                height: min(80vh, calc(80vw / 1.6));
+            }
+            .floating-meta-chip {
+                font-size: 11px;
+                padding: 8px 12px;
+            }
+        }
+
+        /* 响应式适配 - min-width 升序排列，大断点覆盖小断点 */
+        @media (min-width: 1921px) {
             .container {
                 padding: clamp(12px, 1.5vw, 30px);
             }
@@ -188,13 +213,13 @@
             }
         }
 
-        @media (max-width: 1920px) {
+        @media (min-width: 2561px) {
             .container {
-                padding: clamp(10px, 1.2vw, 24px);
+                padding: clamp(12px, 1.5vw, 30px);
             }
             .photo-frame {
-                width: min(92vw, calc(92vh * 1.6));
-                height: min(92vh, calc(92vw / 1.6));
+                width: min(90vw, calc(90vh * 1.6));
+                height: min(90vh, calc(90vw / 1.6));
             }
             .photo-frame::before {
                 border-width: 15px;
@@ -218,7 +243,8 @@
     </div>
     <div class="container">
         <div class="photo-frame">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="风景照片" loading="lazy">
+            <div class="frame-shadow"></div>
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="风景照片" loading="eager">
             <div class="inner-shadow"></div>
             <div class="floating-meta-chip" data-photo-date-target>拍摄日期未记录</div>
             <div class="floating-salvage-chip" data-salvage-target hidden>记忆打捞</div>
@@ -236,7 +262,7 @@
                 if (!photo || !photo.url) return;
                 const img = document.querySelector('.photo-frame img');
                 img.onerror = null;
-                img.src = `/static/photos/${photo.url}`;
+                img.src = `/static/photos/${encodeURI(photo.url)}`;
                 img.alt = photo.url;
                 img.loading = 'eager';
                 if (typeof window.__applyUnifiedPhotoMeta === 'function') {
@@ -257,19 +283,24 @@
             fetchMainPhoto();
             setInterval(fetchMainPhoto, PHOTO_REFRESH_MS);
             
-            // 添加鼠标移动视差效果
+            // 添加鼠标移动视差效果（使用 rAF 节流）
+            let parallaxRafId = null;
             frame.addEventListener('mousemove', (e) => {
-                const rect = frame.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                
-                const rotateX = (y - centerY) / 20;
-                const rotateY = (centerX - x) / 20;
-                
-                frame.style.transform = `translateY(-15px) scale(1.02) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                if (parallaxRafId) return;
+                parallaxRafId = requestAnimationFrame(function() {
+                    const rect = frame.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const rotateX = (y - centerY) / 20;
+                    const rotateY = (centerX - x) / 20;
+
+                    frame.style.transform = `translateY(-15px) scale(1.02) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                    parallaxRafId = null;
+                });
             });
             
             frame.addEventListener('mouseleave', () => {
