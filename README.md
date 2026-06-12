@@ -7,7 +7,7 @@
 
 一个开源的智能电子相框系统，支持照片幻灯片展示、留言板、智能推荐、多主题切换等功能。适合家庭使用，可将旧平板、电视或显示器改造成智能相框。
 
-> **最新版本**: v2.0.3 (2026-03-31) — 安卓端地址入口并入设置菜单，修复移动端入口重叠
+> **最新版本**: v3.0.0 (2026-06-12) — Memory Curator 推荐引擎 + 本地桌面客户端
 
 ![Digital Photo Frame Demo](docs/images/preview.png)
 ![User Photo Frame Demo](docs/images/user_preview.png)
@@ -18,7 +18,7 @@
 
 ### 🖼️ 照片展示
 
-- **智能推荐算法 V2.0**: 95% 标签 + 季节加权推荐，5% 老照片"深海打捞"
+- **智能推荐算法 V3.0**: Memory Curator 多频道策展引擎（今日回忆 / 好久不见 / 小故事 / 高光时刻 / 随缘漫游），播放冷却池避免重复，可解释推荐理由
 - **多格式支持**: JPG, PNG, WebP, HEIC (iOS)
 - **自动压缩**: 上传时智能压缩至指定大小，4K 分辨率上限
 - **EXIF 保留**: 自动提取拍摄日期，保留照片元数据
@@ -44,6 +44,7 @@
 
 ### 📱 客户端
 
+- **桌面客户端 (Electron)**: macOS / Windows 原生应用，内嵌 Flask 后端，支持本地文件夹直接读取
 - **响应式设计**: 适配各种屏幕尺寸（桌面/手机/平板）
 - **Android TV 支持**: 遥控器方向键切换照片
 - **全屏展示**: 支持沉浸式全屏模式
@@ -111,6 +112,27 @@ python app.py
 
 ![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)
 
+### 方式四：桌面客户端（macOS / Windows）
+
+1. 克隆项目并安装前端依赖：
+
+```bash
+cd desktop
+npm install
+```
+
+2. 打包应用：
+
+```bash
+# macOS
+npm run build
+
+# Windows
+npm run build:win
+```
+
+3. 首次启动会自动创建 Python 环境并安装后端依赖，无需手动配置。
+
 ---
 
 ## ⚙️ 配置说明
@@ -159,26 +181,35 @@ SLIDE_DURATION_SECONDS=300  # 每张展示时长（秒）
 digital-photo-frame/
 ├── app.py                    # Flask 主应用
 ├── config.py                 # 配置管理模块
-├── auth.py                   # 认证与 Session 管理（v2.0 修复 SSL）
+├── auth.py                   # 认证与 Session 管理
 ├── requirements.txt          # Python 依赖
 ├── Dockerfile                # Docker 镜像构建
 ├── docker-compose.yml        # Docker Compose 配置
 ├── .env.example              # 环境变量模板
+├── desktop/                  # Electron 桌面客户端
+│   ├── main.js               # 主进程（Flask 服务管理 + IPC）
+│   ├── preload.js             # 预加载脚本
+│   ├── renderer/              # 渲染进程页面
+│   └── package.json           # Electron 构建配置
 ├── routes/                   # API 路由模块
 │   ├── api.py                # 核心 API（天气、照片、状态）
 │   ├── health.py             # 健康检查接口
 │   ├── messages.py           # 留言板 API
+│   ├── photos_v3.py          # v3 照片源 API（CRUD + 图片读取）
+│   ├── recommendation.py     # 推荐算法路由
 │   └── upload.py             # 上传 API
 ├── services/                 # 业务逻辑层
-│   ├── database.py           # 数据库服务
+│   ├── database.py           # 数据库服务（含播放历史）
 │   ├── image.py              # 图片处理服务
 │   ├── metadata.py           # 元数据服务
-│   ├── photo_index.py        # 照片索引服务
-│   └── recommendation.py     # 智能推荐算法
+│   ├── photo_index.py        # 照片索引服务（兼容层）
+│   ├── photo_service.py      # v3 统一照片服务
+│   ├── photo_source.py       # 照片源抽象层（桌面/上传/iOS）
+│   └── recommendation.py     # Memory Curator 推荐引擎
 ├── templates/
 │   ├── index.html           # 主页面（相框展示，支持多主题）
 │   ├── admin.html           # 后台管理
-│   ├── login.html           # 登录页面（v2.0 重设计）
+│   ├── login.html           # 登录页面
 │   └── manage.html          # 管理页面
 ├── static/
 │   ├── script.js            # 前端 JavaScript（环境色提取）
@@ -186,35 +217,31 @@ digital-photo-frame/
 │   └── photos/              # 照片存储目录
 ├── data/                    # 数据持久化目录（Docker）
 └── docs/                    # 文档目录
-    ├── README.md            # 本文档
-    ├── deployment.md        # 部署指南
-    ├── configuration.md     # 配置说明
-    └── auth.md              # 认证配置
 ```
 
 ---
 
 ## 🎯 核心功能详解
 
-### 智能推荐算法 V2.0
+### 智能推荐算法 V3.0 — Memory Curator
 
-#### 常规模式（95% 概率）
+多频道策展引擎，让相册像"懂回忆的人"：
 
 ```
-最终权重 = 标签权重（静态）× 季节权重（动态）
-
-季节权重：
-- 当月照片：1.8
-- 相邻月份：1.4
-- 其他月份：0.85
-- 无日期照片：0.5
+频道配比（默认）：
+  今日回忆 20%  — 往年今天、同月季节照片加权
+  好久不见 20%  — 低 view_count 老照片优先
+  小故事   20%  — 延续上一张的标签/月份故事（2-4 张一组）
+  高光时刻 25%  — 高权重标签照片优先
+  随缘漫游 15%  — 随机 + 低曝光补偿
 ```
 
-#### 深海打捞模式（5% 概率）
-
-- 筛选条件：拍摄日期 > 2 年（可配置）
-- 排序策略：展示次数少优先 + 随机
-- 视觉效果：复古滤镜 + "记忆偶然被打捞"提示
+核心机制：
+- **播放冷却池**：最近 30 张不重复推荐
+- **缺失过滤**：`missing=true` 的照片自动排除
+- **可解释推荐**：每次返回 `recommend_channel` + `recommend_reason`
+- **播放历史**：`photo_play_history` 表记录频道、理由、时间
+- **向后兼容**：旧数据自动迁移 v3 字段，前端无感切换
 
 ### 环境色自适应主题
 
@@ -284,8 +311,8 @@ pip install -r requirements.txt
 export FLASK_DEBUG=true
 python app.py
 
-# 运行测试
-pytest
+# 运行测试（94 tests）
+pytest -v
 ```
 
 ### 代码格式化
@@ -304,6 +331,30 @@ ruff check .
 ## 📝 更新日志
 
 详见 [CHANGELOG.md](CHANGELOG.md)
+
+### v3.0.0 (2026-06-12)
+
+**Memory Curator 推荐引擎**：
+- ✨ 新增：v3.0 多频道推荐（今日回忆 / 好久不见 / 小故事 / 高光时刻 / 随缘漫游）
+- ✨ 新增：播放冷却池，最近 30 张不重复
+- ✨ 新增：`recommend_channel` + `recommend_reason` 可解释推荐
+- ✨ 新增：`photo_play_history` 播放历史表
+- ✨ 新增：低曝光补偿、故事连续性、往年今天加权
+- ✨ 优化：`view_count` 按 photo id 自增（兼容旧 url 模式）
+
+**本地桌面客户端 (Electron)**：
+- ✨ 新增：macOS / Windows 原生桌面应用
+- ✨ 新增：内嵌 Flask 后端，首次启动自动创建 Python venv
+- ✨ 新增：本地文件夹直接读取（无需上传到服务器）
+- ✨ 新增：v3 照片源抽象层（DesktopFolder / ImportedCopy）
+- ✨ 新增：温馨相框风格 app 图标
+
+**v3 照片模型**：
+- ✨ 新增：`id`、`display_url`、`source_type`、`missing` 等 v3 字段
+- ✨ 新增：`PhotoService` 统一照片服务（替代旧 `PhotoIndexService`）
+- ✨ 新增：`/api/photos/<id>/image` 图片读取路由
+- ✨ 新增：旧数据自动迁移（`migrate_v3_records`）
+- 🐛 修复：云端部署完全向后兼容，零配置升级
 
 ### v2.0.3 (2026-03-31)
 
