@@ -493,6 +493,12 @@
     </div>
 
     <script>
+        function getPhotoDisplayUrl(photo) {
+            if (photo && photo.display_url) return photo.display_url;
+            return '/static/photos/' + String(photo ? photo.url || '' : '')
+                .split('/').map(p => encodeURIComponent(p)).join('/');
+        }
+
         // 时间日期更新
         function updateDateTime() {
             const now = new Date();
@@ -531,7 +537,7 @@
                 if (!photo || !photo.url) return;
                 const img = document.getElementById('main-photo');
                 const bg = document.getElementById('main-photo-bg');
-                const photoUrl = `/static/photos/${encodeURI(photo.url)}`;
+                const photoUrl = getPhotoDisplayUrl(photo);
                 const needsSwitch = img.src !== window.location.origin + photoUrl;
 
                 img.classList.remove('is-landscape', 'is-portrait', 'is-square');

@@ -81,6 +81,7 @@ def get_photo_index() -> List[Dict[str, Any]]:
         normalized = [
             {
                 'url': row['url'],
+                'display_url': row.get('display_url', ''),
                 'date': row.get('date'),
                 'month': row.get('month'),
                 'tags': row.get('tags', ''),

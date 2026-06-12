@@ -23,6 +23,7 @@ from services.metadata import PhotoMetadataService, set_metadata_file
 from services.photo_index import PhotoIndexService, set_photo_index
 from services.recommendation import set_recommendation_config, set_force_show, get_force_show_state
 from services.image import ImageValidator
+from services.photo_service import PhotoService
 
 
 def setup_logging(app: Flask):
@@ -125,7 +126,14 @@ def create_app(config_obj=None):
         # 初始化数据库
         init_database()
 
-        # 构建照片索引
+        # v3.0: 初始化照片源并构建索引
+        PhotoService.init_sources(
+            upload_folder=app.config['UPLOAD_FOLDER'],
+            desktop_folders=config.DESKTOP_PHOTO_FOLDERS,
+        )
+        scan_stats = PhotoService.rescan(tag_weights=config.TAG_WEIGHTS)
+
+        # 兼容旧逻辑：同步构建旧的 PhotoIndexService 索引
         PhotoIndexService.build(
             upload_folder=app.config['UPLOAD_FOLDER'],
             tag_weights=config.TAG_WEIGHTS
@@ -137,7 +145,10 @@ def create_app(config_obj=None):
             app_logger=app.logger
         )
 
-        app.logger.info(f"Startup complete. Indexed {PhotoIndexService.get_count()} photos.")
+        app.logger.info(
+            f"Startup complete. v3.0 scan: {scan_stats}. "
+            f"Legacy index: {PhotoIndexService.get_count()} photos."
+        )
 
     # --- 错误处理器 ---
 

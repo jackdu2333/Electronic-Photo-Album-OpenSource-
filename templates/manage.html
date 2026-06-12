@@ -231,12 +231,51 @@
             color: var(--text-sub);
         }
 
+        /* --- Source Badge --- */
+        .source-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .source-badge.desktop_folder {
+            background: rgba(52, 152, 219, 0.12);
+            color: #2980b9;
+        }
+        .source-badge.imported_copy {
+            background: rgba(155, 89, 182, 0.12);
+            color: #8e44ad;
+        }
+        .source-badge.missing {
+            background: rgba(231, 76, 60, 0.12);
+            color: #c0392b;
+        }
+
         .action-row {
             margin-top: auto;
             padding-top: 12px;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             border-top: 1px solid var(--app-border, #e5e5e5);
+        }
+
+        .remove-btn {
+            background: none;
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .remove-btn:hover {
+            background: #e74c3c;
+            color: #fff;
         }
 
         .save-btn {
@@ -442,6 +481,12 @@
                 .join('/');
         }
 
+        // v3.0: 统一 display_url 入口
+        function getPhotoDisplayUrl(photo) {
+            if (photo && photo.display_url) return photo.display_url;
+            return photoStaticUrl(photo ? photo.url : '');
+        }
+
         // Init
         document.addEventListener('DOMContentLoaded', () => {
             fetchPhotos();
@@ -450,12 +495,24 @@
             searchInput.addEventListener('input', debounce(applyFilters, 300));
         });
 
-        // 1. Fetch backend list
+        // v3.0: 来源类型显示名称
+        function sourceLabel(type) {
+            const map = { desktop_folder: '本地引用', imported_copy: '导入副本', ios_photokit: 'iOS 相册' };
+            return map[type] || type || '未知';
+        }
+
+        // 1. Fetch backend list (v3.0 API)
         async function fetchPhotos() {
             try {
-                const res = await fetch('/api/all_photos');
-                if (!res.ok) throw new Error('Failed to load photos');
-                allPhotos = await res.json();
+                // 优先使用 v3 API，回退到旧 API
+                let res = await fetch('/api/photos?include_missing=1');
+                if (res.ok) {
+                    allPhotos = await res.json();
+                } else {
+                    res = await fetch('/api/all_photos');
+                    if (!res.ok) throw new Error('Failed to load photos');
+                    allPhotos = await res.json();
+                }
 
                 // Init filtered list
                 filteredPhotos = [...allPhotos];
@@ -627,15 +684,32 @@
             }
 
             const tagsValue = photo.tags ? photo.tags : '';
-            const thumbUrl = photoStaticUrl(photo.url);
+            const thumbUrl = getPhotoDisplayUrl(photo);
+            const isMissing = photo.missing === true;
+            const sourceType = photo.source_type || 'imported_copy';
 
             const imageContainer = document.createElement('div');
             imageContainer.className = 'img-container';
+
+            // v3.0: 来源标识徽章 + 缺失遮罩
+            if (isMissing) {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:2;color:#fff;font-size:13px;';
+                overlay.textContent = '⚠️ 原图缺失';
+                imageContainer.appendChild(overlay);
+            }
+
+            const badge = document.createElement('span');
+            badge.className = `source-badge ${isMissing ? 'missing' : sourceType}`;
+            badge.style.cssText = 'position:absolute;top:8px;left:8px;z-index:3;';
+            badge.textContent = isMissing ? '缺失' : sourceLabel(sourceType);
+            imageContainer.appendChild(badge);
 
             const image = document.createElement('img');
             image.src = thumbUrl;
             image.loading = 'lazy';
             image.alt = photo.url;
+            if (isMissing) image.style.opacity = '0.3';
             imageContainer.appendChild(image);
 
             const cardBody = document.createElement('div');
@@ -698,14 +772,24 @@
             const actionRow = document.createElement('div');
             actionRow.className = 'action-row';
 
+            // v3.0: 从电子相册移除按钮
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'remove-btn';
+            removeBtn.textContent = '从电子相册移除';
+            removeBtn.addEventListener('click', () => {
+                window.removePhoto(photo, removeBtn);
+            });
+
             const saveBtn = document.createElement('button');
             saveBtn.type = 'button';
             saveBtn.className = 'save-btn';
             saveBtn.textContent = '保存';
             saveBtn.addEventListener('click', () => {
-                window.savePhoto(photo.url, saveBtn);
+                window.savePhoto(photo, saveBtn);
             });
 
+            actionRow.appendChild(removeBtn);
             actionRow.appendChild(saveBtn);
 
             cardBody.appendChild(fileName);
@@ -719,59 +803,62 @@
             grid.appendChild(div);
         }
 
-        // 4. Save Logic
-        window.savePhoto = async function (filename, btn) {
+        // 4. Save Logic (v3.0: 使用 /api/photos/<id>/metadata)
+        window.savePhoto = async function (photo, btn) {
             const card = btn.closest('.card-body');
-
+            const photoId = photo.id || null;
+            const filename = photo.url;
+        
             const yy = card.querySelector('.date-part.year').value.trim();
             const mm = card.querySelector('.date-part.month').value.trim();
             const dd = card.querySelector('.date-part.day').value.trim();
             const tagsInput = card.querySelector('.tags-input');
-
+        
             // Reconstruct YYYY-MM-DD
             let newDate = null;
             if (yy && mm && dd) {
-                // Pad with 20 if logic implies current century
                 const fullYear = '20' + yy;
-                // Pad months/days
                 const fullMonth = mm.padStart(2, '0');
                 const fullDay = dd.padStart(2, '0');
                 newDate = `${fullYear}-${fullMonth}-${fullDay}`;
             }
-
+        
             const newTags = tagsInput.value;
-
-            // Simple UI feedback
             const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = '...';
-
+        
             try {
-                const res = await fetch('/api/update_photo', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({
-                        filename: filename,
-                        date: newDate,
-                        tags: newTags
-                    })
-                });
-
-                const data = await res.json();
-
+                let res, data;
+        
+                if (photoId) {
+                    // v3.0 API: 不修改原图 EXIF，只写 SQLite
+                    res = await fetch(`/api/photos/${photoId}/metadata`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ date: newDate, tags: newTags })
+                    });
+                } else {
+                    // 旧 API 回退
+                    res = await fetch('/api/update_photo', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ filename, date: newDate, tags: newTags })
+                    });
+                }
+        
+                data = await res.json();
+        
                 if (res.ok) {
-                    showToast('保存成功', 'success');
-
-                    // Update the local data to reflect changes immediately in specific card (optional but good UX)
-                    const pIndex = allPhotos.findIndex(p => p.url === filename);
+                    showToast('保存成功（不修改原图）', 'success');
+                    const pIndex = allPhotos.findIndex(p => (p.id ? p.id === photoId : p.url === filename));
                     if (pIndex !== -1) {
                         allPhotos[pIndex].date = newDate;
                         allPhotos[pIndex].tags = newTags;
                     }
-
                 } else {
                     throw new Error(data.error || 'Unknown error');
                 }
@@ -781,6 +868,43 @@
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
+            }
+        };
+        
+        // v3.0: 从电子相册移除（不删原图）
+        window.removePhoto = async function (photo, btn) {
+            const photoId = photo.id;
+            if (!photoId) {
+                showToast('旧数据不支持移除，请先重新扫描', 'error');
+                return;
+            }
+        
+            if (!confirm(`确定从电子相册中移除此照片？\n\n原文件不会被删除。`)) return;
+        
+            btn.disabled = true;
+            btn.textContent = '...';
+        
+            try {
+                const res = await fetch(`/api/photos/${photoId}`, { method: 'DELETE' });
+                const data = await res.json();
+        
+                if (res.ok) {
+                    showToast(data.message || '已移除', 'success');
+                    // 从列表中移除
+                    allPhotos = allPhotos.filter(p => p.id !== photoId);
+                    filteredPhotos = filteredPhotos.filter(p => p.id !== photoId);
+                    // 重新渲染
+                    displayCount = 0;
+                    grid.innerHTML = '';
+                    renderBatch();
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('移除失败: ' + err.message, 'error');
+                btn.disabled = false;
+                btn.textContent = '从电子相册移除';
             }
         };
 

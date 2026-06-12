@@ -119,6 +119,12 @@ class Config:
         # 上传文件夹
         self.UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'static/photos')
 
+        # v3.0 桌面端本地相册文件夹（逗号分隔多个路径）
+        desktop_folders_raw = os.environ.get('DESKTOP_PHOTO_FOLDERS', '')
+        self.DESKTOP_PHOTO_FOLDERS = [
+            f.strip() for f in desktop_folders_raw.split(',') if f.strip()
+        ] if desktop_folders_raw else []
+
     def _get_bool(self, key: str, default: bool) -> bool:
         """获取布尔值配置"""
         value = os.environ.get(key, '').lower()

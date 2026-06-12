@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电子相框 - 欢迎</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .container {
+    text-align: center;
+    max-width: 560px;
+    padding: 40px;
+  }
+  .logo {
+    font-size: 72px;
+    margin-bottom: 24px;
+    filter: drop-shadow(0 0 20px rgba(255,200,100,0.3));
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #fff;
+  }
+  .subtitle {
+    font-size: 15px;
+    color: #888;
+    margin-bottom: 40px;
+    line-height: 1.6;
+  }
+  .folder-list {
+    text-align: left;
+    margin: 24px 0;
+    padding: 16px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .folder-list:empty {
+    display: none;
+  }
+  .folder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    margin: 4px 0;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .folder-item .path {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 12px;
+  }
+  .folder-item .remove {
+    cursor: pointer;
+    color: #666;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.15s;
+  }
+  .folder-item .remove:hover {
+    color: #ff6b6b;
+    background: rgba(255,107,107,0.1);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 6px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #4a90d9, #357abd);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(74,144,217,0.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(74,144,217,0.4);
+  }
+  .btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: #ccc;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .btn-secondary:hover {
+    background: rgba(255,255,255,0.12);
+  }
+  .btn-start {
+    background: linear-gradient(135deg, #27ae60, #219a52);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(39,174,96,0.3);
+    padding: 16px 48px;
+    font-size: 17px;
+  }
+  .btn-start:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(39,174,96,0.4);
+  }
+  .btn-start:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .actions {
+    margin-top: 32px;
+  }
+  .status {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #666;
+    min-height: 20px;
+  }
+  .status.scanning {
+    color: #4a90d9;
+  }
+  .status.success {
+    color: #27ae60;
+  }
+  .status.error {
+    color: #e74c3c;
+  }
+  .hint {
+    margin-top: 40px;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.8;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #4a90d9;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🖼️</div>
+    <h1>欢迎使用电子相框</h1>
+    <p class="subtitle">
+      选择你的本地相册文件夹，<br>
+      照片只在你设备上展示，不上传任何服务器。
+    </p>
+
+    <div class="folder-list" id="folderList"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="btnAdd" onclick="addFolders()">
+        📂 选择文件夹
+      </button>
+      <button class="btn btn-start" id="btnStart" onclick="startApp()" disabled>
+        开始使用
+      </button>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="hint">
+      支持 JPG / PNG / WebP / HEIC 格式<br>
+      原图只读引用，不会复制或修改你的照片<br>
+      可随时添加或移除文件夹
+    </div>
+  </div>
+
+<script>
+  let folders = [];
+
+  async function init() {
+    if (window.desktopAPI) {
+      const config = await window.desktopAPI.getConfig();
+      folders = config.folders || [];
+      renderFolders();
+    }
+  }
+
+  function renderFolders() {
+    const list = document.getElementById('folderList');
+    list.innerHTML = '';
+
+    folders.forEach(f => {
+      const item = document.createElement('div');
+      item.className = 'folder-item';
+
+      const pathSpan = document.createElement('span');
+      pathSpan.className = 'path';
+      pathSpan.title = f;
+      pathSpan.textContent = '\uD83D\uDCC1 ' + f;
+
+      const removeBtn = document.createElement('span');
+      removeBtn.className = 'remove';
+      removeBtn.textContent = '\u00D7';
+      removeBtn.addEventListener('click', () => removeFolder(f));
+
+      item.appendChild(pathSpan);
+      item.appendChild(removeBtn);
+      list.appendChild(item);
+    });
+
+    document.getElementById('btnStart').disabled = folders.length === 0;
+  }
+
+  async function addFolders() {
+    if (!window.desktopAPI) {
+      setStatus('桌面端 API 不可用', 'error');
+      return;
+    }
+
+    const newFolders = await window.desktopAPI.selectFolders();
+    if (newFolders && newFolders.length > 0) {
+      folders = newFolders;
+      renderFolders();
+      setStatus(`已选择 ${folders.length} 个文件夹`, 'success');
+    }
+  }
+
+  async function removeFolder(folderPath) {
+    if (!window.desktopAPI) return;
+
+    folders = await window.desktopAPI.removeFolder(folderPath);
+    renderFolders();
+  }
+
+  async function startApp() {
+    if (folders.length === 0) return;
+
+    const btn = document.getElementById('btnStart');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> 正在扫描照片...';
+    setStatus('正在扫描你的文件夹，请稍候...', 'scanning');
+
+    if (window.desktopAPI) {
+      const result = await window.desktopAPI.rescan();
+      if (result) {
+        try {
+          const data = JSON.parse(result);
+          setStatus(`扫描完成！找到 ${data.total || 0} 张照片`, 'success');
+        } catch (_) {
+          setStatus('扫描完成', 'success');
+        }
+
+        // 延迟跳转到主页（Auth 由 Electron webRequest 拦截器自动注入）
+        setTimeout(async () => {
+          const port = await window.desktopAPI.getPort();
+          // 使用 replace 避免用户回退到引导页
+          window.location.replace(`http://127.0.0.1:${port}/`);
+        }, 1200);
+      } else {
+        setStatus('扫描失败，请重试', 'error');
+        btn.disabled = false;
+        btn.textContent = '开始使用';
+      }
+    }
+  }
+
+  function setStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status ' + (type || '');
+  }
+
+  init();
+</script>
+</body>
+</html>

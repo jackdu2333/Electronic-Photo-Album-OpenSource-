@@ -252,6 +252,12 @@
     </div>
 
     <script>
+        function getPhotoDisplayUrl(photo) {
+            if (photo && photo.display_url) return photo.display_url;
+            return '/static/photos/' + String(photo ? photo.url || '' : '')
+                .split('/').map(p => encodeURIComponent(p)).join('/');
+        }
+
         const PHOTO_REFRESH_MS = 5 * 60 * 1000;
 
         async function fetchMainPhoto() {
@@ -262,7 +268,7 @@
                 if (!photo || !photo.url) return;
                 const img = document.querySelector('.photo-frame img');
                 img.onerror = null;
-                img.src = `/static/photos/${encodeURI(photo.url)}`;
+                img.src = getPhotoDisplayUrl(photo);
                 img.alt = photo.url;
                 img.loading = 'eager';
                 if (typeof window.__applyUnifiedPhotoMeta === 'function') {

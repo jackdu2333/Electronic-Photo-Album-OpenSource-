@@ -1,0 +1,59 @@
+{
+  "name": "digital-photo-frame-desktop",
+  "version": "3.0.0",
+  "description": "Digital Photo Frame - Local Desktop Client",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux"
+  },
+  "author": "jackdu",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^36.5.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.photoframe.desktop",
+    "productName": "电子相框",
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "category": "public.app-category.photography",
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../",
+        "to": "flask-server",
+        "filter": [
+          "app.py",
+          "config.py",
+          "auth.py",
+          "extensions.py",
+          "requirements.txt",
+          "routes/**/*",
+          "services/**/*",
+          "templates/**/*",
+          "static/**/*",
+          "models/**/*",
+          ".env.example"
+        ]
+      }
+    ]
+  }
+}

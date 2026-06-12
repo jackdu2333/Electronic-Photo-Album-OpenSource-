@@ -206,6 +206,12 @@
     </div>
 
     <script>
+        function getPhotoDisplayUrl(photo) {
+            if (photo && photo.display_url) return photo.display_url;
+            return '/static/photos/' + String(photo ? photo.url || '' : '')
+                .split('/').map(p => encodeURIComponent(p)).join('/');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const photoStrip = document.getElementById('photoStrip');
             const scrollContainer = document.getElementById('scrollContainer');
@@ -305,7 +311,7 @@
 
                         allPhotos = source.map((item, index) => ({
                             title: item.date ? `拍摄于 ${item.date}` : `作品 ${index + 1}`,
-                            url: `/static/photos/${encodeURI(item.url)}`
+                            url: getPhotoDisplayUrl(item)
                         }));
                         photoStrip.innerHTML = '';
                         renderedCount = 0;

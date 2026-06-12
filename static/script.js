@@ -53,6 +53,13 @@ document.addEventListener('DOMContentLoaded', () => {
             .join('/');
     }
 
+    // v3.0: 统一 display_url 入口。优先使用后端返回的 display_url，
+    // 旧接口没有该字段时回退到 /static/photos/ 拼接。
+    function getPhotoDisplayUrl(photo) {
+        if (photo && photo.display_url) return photo.display_url;
+        return photoStaticUrl(photo ? photo.url : '');
+    }
+
     // ==========================================
     // PAGE DETECTION
     // ==========================================
@@ -240,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             currentDisplayedUrl = photoData.url;
 
-            const url = photoStaticUrl(photoData.url);
+            const url = getPhotoDisplayUrl(photoData);
             const date = photoData.date;
 
             // Create Slide Group (starts invisible, opacity:0 via CSS)
@@ -387,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(photo => {
                     preloadedPhoto = photo;
                     // Pre-fetch both bg and fg into browser cache
-                    const url = photoStaticUrl(photo.url);
+                    const url = getPhotoDisplayUrl(photo);
                     preloadedImgEl = new Image();
                     preloadedImgEl.src = url;
                 })
@@ -948,7 +955,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = document.createElement('div');
                 card.className = 'gallery-card-item';
                 const filename = img.url; // Relative path from backend
-                const url = photoStaticUrl(filename);
+                const url = getPhotoDisplayUrl(img);
                 const dateInfo = img.date ? `\n拍摄时间: ${img.date}` : '';
 
                 const imageDiv = document.createElement('div');

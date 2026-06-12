@@ -34,13 +34,33 @@
 
     <main class="admin-main-ios">
 
-        <!-- Upload Card -->
+        <!-- v3.0: 本地相册文件夹管理 -->
         <section class="ios-section">
             <div class="ios-section-header">
-                <span class="ios-section-label">上传照片</span>
+                <span class="ios-section-label">本地相册文件夹</span>
+                <div style="display:flex;gap:8px;">
+                    <button id="add-folder-btn" class="ios-link-btn" onclick="addFolder()">添加文件夹</button>
+                    <button id="rescan-btn" class="ios-link-btn" onclick="rescanSources()">重新扫描</button>
+                </div>
+            </div>
+            <div class="ios-card" style="padding: 16px;">
+                <div id="folder-list" style="margin-bottom: 12px;">
+                    <div style="color: #888; font-size: 13px;">加载中...</div>
+                </div>
+                <div id="scan-status" style="font-size: 12px; color: #666; display: none;"></div>
+                <p style="font-size: 12px; color: #999; margin: 8px 0 0; line-height: 1.6;">
+                    引用本地文件夹中的照片，原图不会被复制或修改。<br>
+                    桌面客户端可通过系统托盘选择文件夹，也可在此处管理。
+                </p>
+            </div>
+        </section>
+
+        <!-- Upload Card (v3.0: 改为“导入副本”) -->
+        <section class="ios-section">
+            <div class="ios-section-header">
+                <span class="ios-section-label">导入照片副本</span>
             </div>
             <div class="ios-card upload-card-ios">
-                <!-- Drop Zone (Refactored to Label for native click support) -->
                 <label id="drop-zone" for="file-input" class="drop-zone-ios">
                     <div class="drop-zone-prompt">
                         <div class="upload-icon-circle">
@@ -51,8 +71,8 @@
                                 <line x1="12" y1="3" x2="12" y2="15" />
                             </svg>
                         </div>
-                        <p class="drop-zone-title">点击或拖拽上传</p>
-                        <p class="drop-zone-sub">支持 JPG、PNG、HEIC 等格式</p>
+                        <p class="drop-zone-title">点击或拖拽导入</p>
+                        <p class="drop-zone-sub">导入副本：照片会被复制到服务器存储</p>
                     </div>
                     <input type="file" id="file-input" name="files" multiple accept="image/*" class="file-input-hidden">
                 </label>
@@ -98,6 +118,7 @@
         <section class="ios-section">
             <div class="ios-section-header">
                 <span class="ios-section-label">相册</span>
+                <span id="gallery-count" style="font-size: 12px; color: #888;"></span>
                 <button id="refresh-gallery-btn" class="ios-link-btn">刷新</button>
             </div>
             <div class="ios-card gallery-outer-card">
@@ -111,6 +132,122 @@
 
     <div id="toast-container"></div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+    // ── v3.0: 本地文件夹管理 ──────────────────────────
+    (function() {
+        const folderList = document.getElementById('folder-list');
+        const scanStatus = document.getElementById('scan-status');
+        const galleryCount = document.getElementById('gallery-count');
+
+        async function loadSources() {
+            try {
+                const res = await fetch('/api/photo-sources');
+                const data = await res.json();
+
+                // 渲染文件夹列表
+                let html = '';
+                for (const src of data.sources) {
+                    if (src.type === 'desktop_folder' && src.folders) {
+                        for (const f of src.folders) {
+                            const escapedF = f.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                            html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;background:rgba(0,0,0,0.03);border-radius:8px;font-size:13px;">
+                                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${f}</span>
+                                <span style="display:flex;align-items:center;gap:8px;">
+                                    <span style="color:${src.authorized ? '#27ae60' : '#e74c3c'};font-size:11px;">${src.authorized ? '已授权' : '未授权'}</span>
+                                    <button class="ios-link-btn" style="font-size:11px;padding:2px 8px;color:#e74c3c;" onclick="removeFolder('${escapedF}')">移除</button>
+                                </span>
+                            </div>`;
+                        }
+                    }
+                    if (src.type === 'imported_copy') {
+                        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;background:rgba(0,0,0,0.03);border-radius:8px;font-size:13px;">
+                            <span>📦 导入副本存储</span>
+                            <span style="color:#27ae60;font-size:11px;">已启用</span>
+                        </div>`;
+                    }
+                }
+                if (!html) {
+                    html = '<div style="color:#888;font-size:13px;">暂未配置本地文件夹。桌面客户端可通过系统托盘选择，或点击上方"添加文件夹"。</div>';
+                }
+                folderList.innerHTML = html;
+
+                // 照片总数
+                if (galleryCount) {
+                    galleryCount.textContent = `${data.photo_count} 张照片`;
+                }
+            } catch (e) {
+                folderList.innerHTML = '<div style="color:#e74c3c;font-size:13px;">加载失败</div>';
+            }
+        }
+
+        window.addFolder = async function() {
+            const folder = prompt('请输入文件夹的绝对路径：\n例如: /Users/jackdu/Photos');
+            if (!folder || !folder.trim()) return;
+
+            try {
+                const res = await fetch('/api/photo-sources/folders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder: folder.trim() }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    loadSources();
+                } else {
+                    alert(data.error || '添加失败');
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            }
+        };
+
+        window.removeFolder = async function(folderPath) {
+            if (!confirm(`确定移除文件夹？\n${folderPath}\n\n仅从电子相册中移除引用，不会删除原文件。`)) return;
+
+            try {
+                const res = await fetch('/api/photo-sources/folders', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder: folderPath }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    loadSources();
+                } else {
+                    alert(data.error || '移除失败');
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            }
+        };
+
+        window.rescanSources = async function() {
+            const btn = document.getElementById('rescan-btn');
+            btn.disabled = true;
+            btn.textContent = '扫描中...';
+            scanStatus.style.display = 'block';
+            scanStatus.textContent = '正在扫描文件夹...';
+
+            try {
+                const res = await fetch('/api/photo-sources/rescan', { method: 'POST' });
+                const data = await res.json();
+                scanStatus.textContent = `扫描完成：共 ${data.total} 张照片`;
+                if (data.missing_marked > 0) {
+                    scanStatus.textContent += `，标记 ${data.missing_marked} 张缺失`;
+                }
+                loadSources();
+            } catch (e) {
+                scanStatus.textContent = '扫描失败: ' + e.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '重新扫描';
+            }
+        };
+
+        // 页面加载时获取源状态
+        if (folderList) loadSources();
+    })();
+    </script>
 </body>
 
 </html>

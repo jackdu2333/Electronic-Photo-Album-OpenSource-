@@ -473,10 +473,11 @@
         }
 
         const url = typeof input.url === 'string' ? input.url.trim() : '';
-        if (!url) return null;
+        if (!url && !input.display_url) return null;
 
         return {
             url: url,
+            display_url: input.display_url || '',  // v3.0: 保留 display_url
             date: input.date || '',
             tags: input.tags || '',
             note_title: input.note_title || '',
@@ -496,6 +497,12 @@
                 return encodeURIComponent(part);
             })
             .join('/');
+    }
+
+    // v3.0: 统一 display_url 入口
+    function getPhotoDisplayUrl(photo) {
+        if (photo && photo.display_url) return photo.display_url;
+        return photoStaticUrl(photo ? photo.url : '');
     }
 
     function applyPhotoMetaToDom(input) {
@@ -560,7 +567,7 @@
     function applyPhotoUrlToDom(input) {
         const photo = normalizePhotoEntry(input);
         if (!photo || !photo.url) return;
-        const targetUrl = photoStaticUrl(photo.url);
+        const targetUrl = getPhotoDisplayUrl(photo);
 
         const display = document.getElementById('photo-display');
         if (display) {

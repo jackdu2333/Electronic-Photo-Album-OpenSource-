@@ -715,6 +715,12 @@
     </div>
 
     <script>
+        function getPhotoDisplayUrl(photo) {
+            if (photo && photo.display_url) return photo.display_url;
+            return '/static/photos/' + String(photo ? photo.url || '' : '')
+                .split('/').map(p => encodeURIComponent(p)).join('/');
+        }
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
         function getCsrfHeaders(extraHeaders = {}) {
@@ -859,7 +865,7 @@
                 const polaroid = templateCard.cloneNode(true);
                 const img = polaroid.querySelector('.polaroid-front img');
                 if (img) {
-                    img.src = `/static/photos/${encodeURI(String(photo.url || ''))}`;
+                    img.src = getPhotoDisplayUrl(photo);
                     img.alt = photo.url;
                 }
                 cardPhotoMap.set(polaroid, photo);
@@ -1005,7 +1011,7 @@
 
                 activeCard = card;
                 card.classList.add('is-editing');
-                const photoUrl = `/static/photos/${encodeURI(String(photo.url || ''))}`;
+                const photoUrl = getPhotoDisplayUrl(photo);
                 if (editorPhoto) {
                     editorPhoto.removeAttribute('src');
                     editorPhoto.onerror = () => {

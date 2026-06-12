@@ -199,6 +199,12 @@
         <button class="load-more-btn" id="load-more-btn" type="button">加载更多照片</button>
     </div>
     <script>
+        function getPhotoDisplayUrl(photo) {
+            if (photo && photo.display_url) return photo.display_url;
+            return '/static/photos/' + String(photo ? photo.url || '' : '')
+                .split('/').map(p => encodeURIComponent(p)).join('/');
+        }
+
         const UNTAGGED_KEY = '__untagged__';
         let activeFilter = 'all';
         let allPhotos = [];
@@ -249,7 +255,7 @@
             card.dataset.tagKeys = tagModels.map(t => t.key).join(',');
 
             const img = document.createElement('img');
-            img.src = `/static/photos/${encodeURI(photo.url)}`;
+            img.src = getPhotoDisplayUrl(photo);
             img.alt = photo.url || '照片';
             img.loading = 'lazy';
             img.decoding = 'async';

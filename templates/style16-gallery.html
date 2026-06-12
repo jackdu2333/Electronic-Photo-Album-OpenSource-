@@ -418,6 +418,12 @@
     </template>
 
     <script>
+        function getPhotoDisplayUrl(photo) {
+            if (photo && photo.display_url) return photo.display_url;
+            return '/static/photos/' + String(photo ? photo.url || '' : '')
+                .split('/').map(p => encodeURIComponent(p)).join('/');
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const gallery = document.getElementById('gallery');
             const template = document.getElementById('artworkTemplate');
@@ -557,7 +563,7 @@
                 const descEl = card.querySelector('.artwork-description');
 
                 const safeUrl = String(photo.url || '').trim();
-                const photoSrc = '/static/photos/' + encodeURI(safeUrl);
+                const photoSrc = getPhotoDisplayUrl(photo);
                 const title = buildTitle(photo, index);
                 const tags = parseTags(photo.tags);
 

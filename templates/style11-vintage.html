@@ -482,6 +482,12 @@
     </div>
 
     <script>
+        function getPhotoDisplayUrl(photo) {
+            if (photo && photo.display_url) return photo.display_url;
+            return '/static/photos/' + String(photo ? photo.url || '' : '')
+                .split('/').map(p => encodeURIComponent(p)).join('/');
+        }
+
         // 时间日期更新
         function updateDateTime() {
             const now = new Date();
@@ -519,7 +525,7 @@
                 const photo = await response.json();
                 if (!photo || !photo.url) return;
                 const img = document.getElementById('main-photo');
-                img.src = `/static/photos/${encodeURI(photo.url)}`;
+                img.src = getPhotoDisplayUrl(photo);
                 img.alt = photo.url;
                 if (typeof window.__applyUnifiedPhotoMeta === 'function') {
                     window.__applyUnifiedPhotoMeta(photo);

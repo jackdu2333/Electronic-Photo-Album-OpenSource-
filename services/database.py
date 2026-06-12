@@ -83,9 +83,36 @@ def init_database(db_file: Optional[str] = None):
         if 'duplicate column' not in str(e).lower():
             raise  # 非列重复错误（如磁盘满、权限不足）应上抛
 
+    # ── v3.0 Migration: 新增照片源适配层字段 ──────────────────────
+    _v3_columns = [
+        ("id",          "TEXT"),           # 稳定 photo id（source_type + source_ref 哈希）
+        ("source_type", "TEXT"),           # desktop_folder / imported_copy / ios_photokit
+        ("source_ref",  "TEXT"),           # 原始引用（绝对路径 / 相对路径 / PHAsset id）
+        ("display_url", "TEXT"),           # 前端展示 URL（/api/photos/{id}/image）
+        ("note_title",  "TEXT"),           # 便签标题（从 JSON 迁入）
+        ("note_body",   "TEXT"),           # 便签正文（从 JSON 迁入）
+        ("width",       "INTEGER"),        # 图片宽度
+        ("height",      "INTEGER"),        # 图片高度
+        ("missing",     "INTEGER"),        # 原图是否缺失（0=正常，1=缺失）
+        ("created_at",  "TEXT"),           # 入库时间
+        ("updated_at",  "TEXT"),           # 更新时间
+    ]
+    for col_name, col_def in _v3_columns:
+        try:
+            c.execute(f"ALTER TABLE photos ADD COLUMN {col_name} {col_def}")
+            logger.info(f"v3.0 migration: added column '{col_name}'")
+        except sqlite3.OperationalError as e:
+            if 'duplicate column' not in str(e).lower():
+                raise
+
     # 复合索引：加速深海打捞查询（WHERE date <= ? ORDER BY view_count ASC）
     c.execute("CREATE INDEX IF NOT EXISTS idx_photos_date_viewcount ON photos(date, view_count)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at, id)")
+
+    # v3.0 索引
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_photos_id ON photos(id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_photos_source_type ON photos(source_type)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_photos_missing ON photos(missing)")
 
     conn.commit()
     conn.close()
@@ -330,11 +357,16 @@ class PhotoDAO:
                 current_urls = tuple(r[0] for r in records)
                 placeholders = ','.join('?' * len(current_urls))
                 c.execute(
-                    f"DELETE FROM photos WHERE url NOT IN ({placeholders})",
+                    f"""DELETE FROM photos
+                        WHERE url NOT IN ({placeholders})
+                          AND (source_type = 'imported_copy' OR source_type IS NULL)
+                    """,
                     current_urls
                 )
             else:
-                c.execute("DELETE FROM photos")
+                c.execute(
+                    "DELETE FROM photos WHERE source_type = 'imported_copy' OR source_type IS NULL"
+                )
 
             deleted = c.rowcount
             conn.commit()
@@ -383,6 +415,367 @@ class PhotoDAO:
             c = conn.cursor()
             c.execute("BEGIN IMMEDIATE")
             c.execute("DELETE FROM photos WHERE url = ?", (url,))
+            conn.commit()
+            return c.rowcount > 0
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    @staticmethod
+    def migrate_v3_records() -> int:
+        """
+        v3.0 数据迁移：为旧记录补充 id / source_type / source_ref / display_url。
+
+        幂等操作，已迁移的记录不会重复处理。
+
+        Returns:
+            迁移的记录数
+        """
+        import hashlib
+
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
+
+            # 找出还没有 id 的记录
+            c.execute("SELECT url FROM photos WHERE id IS NULL OR id = ''")
+            rows = c.fetchall()
+
+            count = 0
+            for row in rows:
+                url = row['url']
+                source_type = 'imported_copy'
+                source_ref = url  # 旧记录的 source_ref 就是相对路径
+                raw = f"{source_type}::{source_ref}"
+                digest = hashlib.sha256(raw.encode('utf-8')).hexdigest()[:16]
+                photo_id = f"{source_type}_{digest}"
+                display_url = f"/api/photos/{photo_id}/image"
+
+                c.execute(
+                    """
+                    UPDATE photos
+                    SET id=?, source_type=?, source_ref=?, display_url=?
+                    WHERE url=?
+                    """,
+                    (photo_id, source_type, source_ref, display_url, url)
+                )
+                count += 1
+
+            conn.commit()
+            if count > 0:
+                logger.info(f"v3.0 migration: backfilled {count} records")
+            return count
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"v3.0 migration error: {e}")
+            raise
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_by_id(photo_id: str) -> Optional[Dict[str, Any]]:
+        """根据 photo id 获取照片记录"""
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT * FROM photos WHERE id = ?", (photo_id,))
+            row = c.fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_all_v3(source_type: Optional[str] = None, include_missing: bool = False,
+                   limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
+        """
+        v3.0 照片列表查询。
+
+        Args:
+            source_type: 可选，按源类型过滤
+            include_missing: 是否包含缺失照片
+            limit: 分页大小（None 表示不限制）
+            offset: 分页偏移量
+
+        Returns:
+            照片记录列表
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            conditions = []
+            params: list = []
+
+            if not include_missing:
+                conditions.append("(missing = 0 OR missing IS NULL)")
+            if source_type:
+                conditions.append("source_type = ?")
+                params.append(source_type)
+
+            where = ""
+            if conditions:
+                where = "WHERE " + " AND ".join(conditions)
+
+            sql = f"SELECT * FROM photos {where} ORDER BY date DESC, url DESC"
+            if limit is not None:
+                sql += " LIMIT ? OFFSET ?"
+                params.extend([limit, offset])
+
+            c.execute(sql, params)
+            return [dict(row) for row in c.fetchall()]
+        finally:
+            conn.close()
+
+    @staticmethod
+    def upsert_v3(photo: Dict[str, Any]) -> bool:
+        """
+        v3.0 插入或更新照片记录。
+
+        以 id 为唯一键，存在则更新，不存在则插入。
+
+        Args:
+            photo: 照片字典，必须包含 id, url, source_type, source_ref, display_url
+
+        Returns:
+            是否为新增记录
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
+            c.execute(
+                """
+                INSERT INTO photos (id, url, source_type, source_ref, display_url,
+                                   date, month, tags, weight, view_count,
+                                   note_title, note_body, width, height, missing,
+                                   created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT(url) DO UPDATE SET
+                    id = CASE WHEN photos.id IS NULL OR photos.id = '' THEN excluded.id ELSE photos.id END,
+                    source_type = COALESCE(excluded.source_type, photos.source_type),
+                    source_ref = COALESCE(excluded.source_ref, photos.source_ref),
+                    display_url = COALESCE(excluded.display_url, photos.display_url),
+                    date = excluded.date,
+                    month = excluded.month,
+                    tags = excluded.tags,
+                    weight = excluded.weight,
+                    note_title = excluded.note_title,
+                    note_body = excluded.note_body,
+                    width = excluded.width,
+                    height = excluded.height,
+                    missing = excluded.missing,
+                    updated_at = CURRENT_TIMESTAMP
+                    -- 不覆盖 view_count，保留推荐算法累计值
+                """,
+                (
+                    photo.get('id'), photo.get('url'), photo.get('source_type'),
+                    photo.get('source_ref'), photo.get('display_url'),
+                    photo.get('date'), photo.get('month'), photo.get('tags', ''),
+                    photo.get('weight', 1.0), photo.get('view_count', 0),
+                    photo.get('note_title', ''), photo.get('note_body', ''),
+                    photo.get('width'), photo.get('height'),
+                    1 if photo.get('missing') else 0,
+                )
+            )
+            conn.commit()
+            # rowcount: INSERT=1, UPDATE=1, 但用 total_changes 判断更可靠
+            return True
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    @staticmethod
+    def bulk_upsert_v3(photos: List[Dict[str, Any]], batch_size: int = 200) -> int:
+        """
+        v3.0 批量插入或更新照片记录（单事务 executemany）。
+
+        替代逐条 upsert_v3 调用，大幅减少连接创建/销毁开销。
+        ON CONFLICT 不覆盖 view_count，保留推荐算法累计值。
+
+        Args:
+            photos: 照片字典列表
+            batch_size: 每批大小
+
+        Returns:
+            处理的记录总数
+        """
+        if not photos:
+            return 0
+
+        conn = get_db_connection()
+        total = 0
+        try:
+            c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
+
+            sql = """
+                INSERT INTO photos (id, url, source_type, source_ref, display_url,
+                                   date, month, tags, weight, view_count,
+                                   note_title, note_body, width, height, missing,
+                                   created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT(url) DO UPDATE SET
+                    id = CASE WHEN photos.id IS NULL OR photos.id = '' THEN excluded.id ELSE photos.id END,
+                    source_type = COALESCE(excluded.source_type, photos.source_type),
+                    source_ref = COALESCE(excluded.source_ref, photos.source_ref),
+                    display_url = COALESCE(excluded.display_url, photos.display_url),
+                    date = excluded.date,
+                    month = excluded.month,
+                    tags = excluded.tags,
+                    weight = excluded.weight,
+                    note_title = excluded.note_title,
+                    note_body = excluded.note_body,
+                    width = excluded.width,
+                    height = excluded.height,
+                    missing = excluded.missing,
+                    updated_at = CURRENT_TIMESTAMP
+            """
+
+            for i in range(0, len(photos), batch_size):
+                batch = photos[i:i + batch_size]
+                rows = [
+                    (
+                        p.get('id'), p.get('url'), p.get('source_type'),
+                        p.get('source_ref'), p.get('display_url'),
+                        p.get('date'), p.get('month'), p.get('tags', ''),
+                        p.get('weight', 1.0), p.get('view_count', 0),
+                        p.get('note_title', ''), p.get('note_body', ''),
+                        p.get('width'), p.get('height'),
+                        1 if p.get('missing') else 0,
+                    )
+                    for p in batch
+                ]
+                c.executemany(sql, rows)
+                total += len(batch)
+
+            conn.commit()
+            return total
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    @staticmethod
+    def mark_missing_by_source(source_type: str, valid_source_refs: set) -> int:
+        """
+        标记指定源中不在 valid_source_refs 中的照片为 missing=1。
+
+        Args:
+            source_type: 源类型
+            valid_source_refs: 当前有效的 source_ref 集合
+
+        Returns:
+            标记为缺失的记录数
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
+
+            if valid_source_refs:
+                placeholders = ','.join('?' * len(valid_source_refs))
+                params = [source_type] + list(valid_source_refs)
+                c.execute(
+                    f"""
+                    UPDATE photos SET missing = 1, updated_at = CURRENT_TIMESTAMP
+                    WHERE source_type = ? AND source_ref NOT IN ({placeholders})
+                      AND (missing = 0 OR missing IS NULL)
+                    """,
+                    params
+                )
+            else:
+                c.execute(
+                    """
+                    UPDATE photos SET missing = 1, updated_at = CURRENT_TIMESTAMP
+                    WHERE source_type = ? AND (missing = 0 OR missing IS NULL)
+                    """,
+                    (source_type,)
+                )
+
+            count = c.rowcount
+            conn.commit()
+            return count
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    @staticmethod
+    def delete_by_id(photo_id: str) -> bool:
+        """根据 photo id 删除照片记录（只删索引，不删原图）"""
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
+            c.execute("DELETE FROM photos WHERE id = ?", (photo_id,))
+            conn.commit()
+            return c.rowcount > 0
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    @staticmethod
+    def update_note(photo_id: str, note_title: str, note_body: str) -> bool:
+        """更新便签字段（不修改原图）"""
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
+            c.execute(
+                """
+                UPDATE photos
+                SET note_title=?, note_body=?, updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
+                """,
+                (note_title, note_body, photo_id)
+            )
+            conn.commit()
+            return c.rowcount > 0
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    @staticmethod
+    def update_metadata_and_note(photo_id: str, url: str,
+                                  date: Optional[str], month: Optional[int],
+                                  tags: str, weight: float,
+                                  note_title: str, note_body: str) -> bool:
+        """
+        在单个事务中更新照片元数据 + 便签（原子操作）。
+
+        Args:
+            photo_id: 照片 id
+            url: 照片 url（用于旧 metadata 兼容）
+            date, month, tags, weight: 元数据字段
+            note_title, note_body: 便签字段
+
+        Returns:
+            是否更新成功
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
+            # 更新元数据
+            c.execute(
+                """UPDATE photos SET date=?, month=?, tags=?, weight=? WHERE url=?""",
+                (date, month, tags, weight, url)
+            )
+            # 更新便签
+            c.execute(
+                """UPDATE photos SET note_title=?, note_body=?, updated_at=CURRENT_TIMESTAMP WHERE id=?""",
+                (note_title, note_body, photo_id)
+            )
             conn.commit()
             return c.rowcount > 0
         except Exception as e:

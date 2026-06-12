@@ -439,6 +439,11 @@
                 .join('/');
         }
 
+        function getPhotoDisplayUrl(photo) {
+            if (photo && photo.display_url) return photo.display_url;
+            return photoStaticUrl(photo ? photo.url : '');
+        }
+
         function updateDateTime() {
             const now = new Date();
             document.getElementById('current-time').textContent =
@@ -456,7 +461,7 @@
 
                 const img = document.getElementById('main-photo');
                 img.onerror = null;
-                img.src = photoStaticUrl(photo.url);
+                img.src = getPhotoDisplayUrl(photo);
                 img.alt = photo.url;
                 if (typeof window.__applyUnifiedPhotoMeta === 'function') {
                     window.__applyUnifiedPhotoMeta(photo);

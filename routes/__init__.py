@@ -4,6 +4,7 @@
 """
 from flask import Flask
 
+from extensions import csrf
 from .api import api_bp
 from .admin import admin_bp
 from .upload import upload_bp
@@ -11,6 +12,7 @@ from .messages import messages_bp
 from .main import main_bp
 from .health import health_bp
 from .recommendation import recommendation_bp
+from .photos_v3 import photos_v3_bp
 
 __all__ = [
     'api_bp',
@@ -20,6 +22,7 @@ __all__ = [
     'main_bp',
     'health_bp',
     'recommendation_bp',
+    'photos_v3_bp',
 ]
 
 
@@ -30,23 +33,19 @@ def register_blueprints(app: Flask):
     Args:
         app: Flask 应用实例
     """
-    # 注册主页面路由
+    # 基础页面
     app.register_blueprint(main_bp)
-
-    # 注册健康检查路由（无需认证）
     app.register_blueprint(health_bp)
 
-    # 注册推荐算法路由（需要认证）
+    # v3.0 统一照片 API（Basic Auth + JSON，不需要 CSRF）
+    csrf.exempt(photos_v3_bp)
+    app.register_blueprint(photos_v3_bp)
+
+    # 推荐算法
     app.register_blueprint(recommendation_bp)
 
-    # 注册通用 API 路由（需要认证）
+    # 旧 API（保留兼容）
     app.register_blueprint(api_bp)
-
-    # 注册留言路由（需要认证）
     app.register_blueprint(messages_bp)
-
-    # 注册上传路由（需要认证）
     app.register_blueprint(upload_bp)
-
-    # 注册管理后台路由（需要认证）
     app.register_blueprint(admin_bp)
