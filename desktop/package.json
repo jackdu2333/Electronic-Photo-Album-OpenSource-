@@ -18,6 +18,7 @@
   "build": {
     "appId": "com.photoframe.desktop",
     "productName": "电子相框",
+    "icon": "icon.icns",
     "directories": {
       "output": "dist"
     },

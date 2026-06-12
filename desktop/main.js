@@ -87,6 +87,12 @@ function findPython() {
     if (fs.existsSync(venvUnix)) candidates.push(venvUnix);
   }
 
+  // 打包模式：检查 USER_DATA_DIR 下的 venv（首次启动时自动创建）
+  const userDataVenvPython = path.join(USER_DATA_DIR, 'venv', 'bin', 'python');
+  if (fs.existsSync(userDataVenvPython)) {
+    candidates.unshift(userDataVenvPython);  // 最高优先级
+  }
+
   // 系统 Python
   if (process.platform === 'win32') {
     candidates.push('python', 'python3', 'py');
@@ -116,6 +122,76 @@ function findPython() {
   return null;
 }
 
+/**
+ * 确保 USER_DATA_DIR 下存在可用的 Python venv（打包模式首次启动时调用）。
+ *
+ * 流程：
+ * 1. 如果 venv 已存在且有效，直接跳过
+ * 2. 用系统 Python 创建 venv
+ * 3. pip install -r requirements.txt
+ *
+ * @returns {string|null} venv Python 路径，失败返回 null
+ */
+function ensureUserDataVenv() {
+  const { execSync } = require('child_process');
+  const venvDir = path.join(USER_DATA_DIR, 'venv');
+  const venvPython = path.join(venvDir, 'bin', 'python');
+
+  // 已存在且可用
+  if (fs.existsSync(venvPython)) {
+    try {
+      execSync(`"${venvPython}" -c "import flask"`, { stdio: 'pipe', timeout: 5000 });
+      console.log(`[venv] existing venv OK: ${venvPython}`);
+      return venvPython;
+    } catch (_) {
+      console.log('[venv] existing venv broken, recreating...');
+      fs.rmSync(venvDir, { recursive: true, force: true });
+    }
+  }
+
+  // 找系统 Python 用于创建 venv
+  const sysPythonCandidates = process.platform === 'win32'
+    ? ['python', 'python3', 'py']
+    : ['python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3', '/opt/homebrew/bin/python3'];
+
+  let sysPython = null;
+  for (const cmd of sysPythonCandidates) {
+    try {
+      execSync(`"${cmd}" --version`, { stdio: 'pipe', timeout: 5000 });
+      sysPython = cmd;
+      break;
+    } catch (_) {}
+  }
+
+  if (!sysPython) {
+    console.error('[venv] no system Python found');
+    return null;
+  }
+
+  // 找 requirements.txt
+  const serverDir = getFlaskServerDir();
+  const reqFile = path.join(serverDir, 'requirements.txt');
+  if (!fs.existsSync(reqFile)) {
+    console.error(`[venv] requirements.txt not found at ${reqFile}`);
+    return null;
+  }
+
+  try {
+    console.log(`[venv] creating venv with ${sysPython} at ${venvDir}...`);
+    execSync(`"${sysPython}" -m venv "${venvDir}"`, { stdio: 'pipe', timeout: 60000 });
+
+    console.log(`[venv] installing dependencies from ${reqFile}...`);
+    execSync(`"${venvPython}" -m pip install --upgrade pip`, { stdio: 'pipe', timeout: 60000 });
+    execSync(`"${venvPython}" -m pip install -r "${reqFile}"`, { stdio: 'pipe', timeout: 300000 });
+
+    console.log(`[venv] setup complete: ${venvPython}`);
+    return venvPython;
+  } catch (err) {
+    console.error(`[venv] setup failed: ${err.message}`);
+    return null;
+  }
+}
+
 // ─── Flask 服务管理 ────────────────────────────────────
 
 function getFlaskServerDir() {
@@ -136,7 +212,20 @@ function getFlaskServerDir() {
 
 function startFlaskServer(port) {
   return new Promise((resolve, reject) => {
-    const python = findPython();
+    // 打包模式：确保 USER_DATA_DIR 有可用的 venv
+    let python = findPython();
+
+    // 如果是系统 Python（非 venv），尝试确保 USER_DATA_DIR venv
+    const isVenvPython = python && (
+      python.includes('venv') || python.includes('.venv')
+    );
+    if (!isVenvPython) {
+      const venvPython = ensureUserDataVenv();
+      if (venvPython) {
+        python = venvPython;
+      }
+    }
+
     if (!python) {
       reject(new Error(
         '未找到 Python 环境。\n\n' +
