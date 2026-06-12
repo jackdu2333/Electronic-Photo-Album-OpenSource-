@@ -35,6 +35,9 @@ Thumbs.db
 # Node.js
 node_modules/
 
+# Electron build output
+desktop/dist/
+
 # Project Specific
 backups/
 static/photos/

@@ -114,6 +114,19 @@ def init_database(db_file: Optional[str] = None):
     c.execute("CREATE INDEX IF NOT EXISTS idx_photos_source_type ON photos(source_type)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_photos_missing ON photos(missing)")
 
+    # ── v3.0 播放历史表（推荐算法冷却池 + 故事连续性） ──────────────
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS photo_play_history (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            photo_id  TEXT NOT NULL,
+            played_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            channel   TEXT,
+            reason    TEXT
+        )
+    """)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_play_history_played_at ON photo_play_history(played_at)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_play_history_photo_id ON photo_play_history(photo_id)")
+
     conn.commit()
     conn.close()
     logger.info("Database initialized successfully")
@@ -384,7 +397,7 @@ class PhotoDAO:
     @staticmethod
     def increment_view_count(url: str) -> bool:
         """
-        增加照片展示次数
+        增加照片展示次数（按 url，兼容旧调用）
 
         Args:
             url: 照片相对路径
@@ -398,6 +411,32 @@ class PhotoDAO:
             c.execute(
                 "UPDATE photos SET view_count = view_count + 1 WHERE url = ?",
                 (url,)
+            )
+            conn.commit()
+            return c.rowcount > 0
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+    @staticmethod
+    def increment_view_count_by_id(photo_id: str) -> bool:
+        """
+        增加照片展示次数（按 photo id，v3 推荐）
+
+        Args:
+            photo_id: 照片唯一标识
+
+        Returns:
+            是否更新成功
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute(
+                "UPDATE photos SET view_count = view_count + 1 WHERE id = ?",
+                (photo_id,)
             )
             conn.commit()
             return c.rowcount > 0
@@ -843,6 +882,111 @@ class PhotoDAO:
             c = conn.cursor()
             c.execute("SELECT COUNT(*) FROM photos")
             return c.fetchone()[0]
+        finally:
+            conn.close()
+
+    # ── 播放历史（推荐算法冷却池） ────────────────────────
+
+    @staticmethod
+    def record_play(photo_id: str, channel: str = '', reason: str = '') -> None:
+        """
+        记录一次照片播放（用于冷却池和故事连续性判断）
+
+        Args:
+            photo_id: 照片标识（优先用 id，无 id 时用 url）
+            channel: 推荐频道
+            reason: 推荐理由
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO photo_play_history (photo_id, channel, reason) VALUES (?, ?, ?)",
+                (photo_id, channel, reason)
+            )
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.warning(f"record_play failed (non-fatal): {e}")
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_recent_played_ids(limit: int = 30) -> List[str]:
+        """
+        获取最近播放过的照片 ID 列表（用于冷却池过滤）
+
+        Args:
+            limit: 返回最近 N 条
+
+        Returns:
+            photo_id 列表，按播放时间倒序
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute(
+                "SELECT photo_id, MAX(played_at) AS last_played "
+                "FROM photo_play_history "
+                "GROUP BY photo_id "
+                "ORDER BY last_played DESC LIMIT ?",
+                (limit,)
+            )
+            return [row['photo_id'] for row in c.fetchall()]
+        except Exception:
+            return []
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_last_played() -> Optional[Dict[str, Any]]:
+        """
+        获取最近一次播放记录（用于故事连续性判断）
+
+        Returns:
+            {photo_id, channel, reason} 或 None
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute(
+                "SELECT photo_id, channel, reason FROM photo_play_history "
+                "ORDER BY played_at DESC LIMIT 1"
+            )
+            row = c.fetchone()
+            return dict(row) if row else None
+        except Exception:
+            return None
+        finally:
+            conn.close()
+
+    @staticmethod
+    def cleanup_play_history(keep_days: int = 30) -> int:
+        """
+        清理超过 keep_days 天的旧播放记录
+
+        Args:
+            keep_days: 保留天数
+
+        Returns:
+            删除的记录数
+        """
+        conn = get_db_connection()
+        try:
+            c = conn.cursor()
+            c.execute("BEGIN IMMEDIATE")
+            c.execute(
+                "DELETE FROM photo_play_history "
+                "WHERE played_at < datetime('now', ? || ' days')",
+                (f"-{keep_days}",)
+            )
+            deleted = c.rowcount
+            conn.commit()
+            return deleted
+        except Exception as e:
+            conn.rollback()
+            logger.warning(f"cleanup_play_history failed: {e}")
+            return 0
         finally:
             conn.close()
 

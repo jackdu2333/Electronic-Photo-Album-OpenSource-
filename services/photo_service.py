@@ -380,8 +380,10 @@ class PhotoService:
             rows = PhotoDAO.get_all_v3(include_missing=False)
             return [
                 {
+                    'id': row.get('id', ''),
                     'url': row['url'],
                     'display_url': row.get('display_url', ''),
+                    'source_type': row.get('source_type', 'imported_copy'),
                     'date': row.get('date'),
                     'month': row.get('month'),
                     'tags': row.get('tags', ''),
