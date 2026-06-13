@@ -702,3 +702,60 @@ class TestPlayHistory:
 
         recent = PhotoDAO.get_recent_played_ids(100)
         assert 'old_photo' not in recent
+
+
+class TestChannelFallback:
+    """频道降级时 recommend_channel 应同步更新"""
+
+    @pytest.fixture
+    def setup_db(self):
+        from services.database import set_db_file, init_database, get_db_connection
+        from services.recommendation import set_recommendation_config
+
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+        temp_db.close()
+        set_db_file(temp_db.name)
+        init_database(temp_db.name)
+
+        conn = get_db_connection(timeout=10)
+        c = conn.cursor()
+        c.executemany(
+            '''INSERT OR REPLACE INTO photos
+               (id, url, source_type, source_ref, display_url,
+                date, month, tags, weight, view_count, missing)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            [
+                ('fb_001', 'fallback1.jpg', 'imported_copy', 'fallback1.jpg',
+                 '/api/photos/fb_001/image', '2024-05-10', 5, '风景', 1.0, 5, 0),
+                ('fb_002', 'fallback2.jpg', 'imported_copy', 'fallback2.jpg',
+                 '/api/photos/fb_002/image', '2024-07-20', 7, '人物', 1.5, 3, 0),
+            ]
+        )
+        conn.commit()
+        conn.close()
+
+        set_recommendation_config(
+            seasonal_weights={"current": 2.0, "adjacent": 1.5, "other": 1.0, "none": 0.5},
+            deep_sea_probability=0.05,
+            deep_sea_years_threshold=2
+        )
+
+        yield temp_db.name
+        os.unlink(temp_db.name)
+
+    def test_fallback_updates_channel_to_random(self, setup_db):
+        """频道选不出照片降级到随机漫游时，recommend_channel 应为 random"""
+        from services.recommendation import RecommendationService, CHANNEL_STORY, CHANNEL_RANDOM
+        from services.photo_service import PhotoService
+        from services.photo_index import clear_photo_index
+
+        clear_photo_index()
+
+        # 强制选中 story 频道，但 story 返回 None（无播放历史）
+        with patch.object(RecommendationService, '_pick_channel', return_value=CHANNEL_STORY):
+            with patch.object(RecommendationService, '_story_continuity', return_value=(None, '')):
+                result = RecommendationService.get_next_photo()
+
+        assert result is not None
+        assert result['recommend_channel'] == CHANNEL_RANDOM, \
+            f"Expected channel '{CHANNEL_RANDOM}' after fallback, got '{result['recommend_channel']}'"

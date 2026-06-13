@@ -75,6 +75,13 @@ function ensureStableSecrets(config) {
 
 // ─── Python 环境检测 ──────────────────────────────────
 
+/** 返回 venv 目录下的 Python 可执行文件路径（跨平台） */
+function getVenvPython(venvDir) {
+  return process.platform === 'win32'
+    ? path.join(venvDir, 'Scripts', 'python.exe')
+    : path.join(venvDir, 'bin', 'python');
+}
+
 function findPython() {
   const candidates = [];
 
@@ -88,7 +95,7 @@ function findPython() {
   }
 
   // 打包模式：检查 USER_DATA_DIR 下的 venv（首次启动时自动创建）
-  const userDataVenvPython = path.join(USER_DATA_DIR, 'venv', 'bin', 'python');
+  const userDataVenvPython = getVenvPython(path.join(USER_DATA_DIR, 'venv'));
   if (fs.existsSync(userDataVenvPython)) {
     candidates.unshift(userDataVenvPython);  // 最高优先级
   }
@@ -135,7 +142,7 @@ function findPython() {
 function ensureUserDataVenv() {
   const { execSync } = require('child_process');
   const venvDir = path.join(USER_DATA_DIR, 'venv');
-  const venvPython = path.join(venvDir, 'bin', 'python');
+  const venvPython = getVenvPython(venvDir);
 
   // 已存在且可用
   if (fs.existsSync(venvPython)) {

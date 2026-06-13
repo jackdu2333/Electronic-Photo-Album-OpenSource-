@@ -12,8 +12,8 @@
   "author": "jackdu",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^36.5.0",
-    "electron-builder": "^25.1.8"
+    "electron": "^42.4.0",
+    "electron-builder": "^26.15.2"
   },
   "build": {
     "appId": "com.photoframe.desktop",

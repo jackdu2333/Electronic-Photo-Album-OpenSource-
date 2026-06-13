@@ -186,6 +186,7 @@ class RecommendationService:
         # 频道失败或未匹配，降级到随缘漫游
         if not photo:
             photo, reason = RecommendationService._random_roam(pool)
+            channel = CHANNEL_RANDOM  # 同步频道标记，避免 record_play / result 标错频道
 
         if photo:
             pid = RecommendationService._photo_key(photo)

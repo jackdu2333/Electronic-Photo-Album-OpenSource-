@@ -37,6 +37,7 @@ node_modules/
 
 # Electron build output
 desktop/dist/
+output/
 
 # Project Specific
 backups/
