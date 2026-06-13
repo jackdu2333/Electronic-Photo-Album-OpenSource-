@@ -7,7 +7,7 @@
 
 一个开源的智能电子相框系统，支持照片幻灯片展示、留言板、智能推荐、多主题切换等功能。适合家庭使用，可将旧平板、电视或显示器改造成智能相框。
 
-> **最新版本**: v3.0.0 (2026-06-12) — Memory Curator 推荐引擎 + 本地桌面客户端
+> **最新版本**: v3.0.1 (2026-06-13) — Memory Curator 推荐引擎 + 本地桌面客户端
 
 ![Digital Photo Frame Demo](docs/images/preview.png)
 ![User Photo Frame Demo](docs/images/user_preview.png)
@@ -311,7 +311,7 @@ pip install -r requirements.txt
 export FLASK_DEBUG=true
 python app.py
 
-# 运行测试（94 tests）
+# 运行测试（95 tests）
 pytest -v
 ```
 
@@ -331,6 +331,15 @@ ruff check .
 ## 📝 更新日志
 
 详见 [CHANGELOG.md](CHANGELOG.md)
+
+### v3.0.1 (2026-06-13)
+
+**验收评审修复**：
+- 🐛 修复：推荐频道降级到随机漫游时 `recommend_channel` 未同步更新为 `random`
+- 🐛 修复：`desktop/package.json` 依赖版本与 `package-lock.json` 不一致（对齐 electron ^42.4.0, electron-builder ^26.15.2）
+- 🐛 修复：Windows 下 venv Python 路径硬编码 `bin/python`（新增 `getVenvPython()` 跨平台 helper）
+- ♻️ 重构：`findPython()` 项目 venv 检测统一使用 `getVenvPython()`
+- 📦 补充：`.gitignore` 新增 `output/` 规则
 
 ### v3.0.0 (2026-06-12)
 
