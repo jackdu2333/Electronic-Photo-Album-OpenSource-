@@ -86,13 +86,8 @@ function findPython() {
   const candidates = [];
 
   // 检查项目虚拟环境（优先级最高）
-  if (process.platform === 'win32') {
-    const venvWin = path.join(__dirname, '..', 'venv', 'Scripts', 'python.exe');
-    if (fs.existsSync(venvWin)) candidates.push(venvWin);
-  } else {
-    const venvUnix = path.join(__dirname, '..', 'venv', 'bin', 'python');
-    if (fs.existsSync(venvUnix)) candidates.push(venvUnix);
-  }
+  const projectVenvPython = getVenvPython(path.join(__dirname, '..', 'venv'));
+  if (fs.existsSync(projectVenvPython)) candidates.push(projectVenvPython);
 
   // 打包模式：检查 USER_DATA_DIR 下的 venv（首次启动时自动创建）
   const userDataVenvPython = getVenvPython(path.join(USER_DATA_DIR, 'venv'));
