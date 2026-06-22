@@ -2103,6 +2103,9 @@
                 top: 12px;
                 left: 12px;
                 width: min(220px, calc(100vw - 24px));
+                max-height: calc(100dvh - 24px);
+                overflow-y: auto;
+                overscroll-behavior: contain;
             }
 
             #admin-toggle-btn {
@@ -2410,6 +2413,51 @@
                 height: 46px;
             }
         }
+        /* Style-2: tablet landscape — shrink panel so photo area isn't cramped */
+        @media screen and (max-width: 1180px) and (orientation: landscape) {
+            html[data-home-style="style-2"] body {
+                --style2-panel-width: clamp(300px, 34vw, 380px);
+                --style2-panel-offset: calc(var(--style2-panel-width) + (var(--style2-frame-gap) * 2) + 8px);
+                --style2-frame-gap: 12px;
+            }
+
+            html[data-home-style="style-2"] .info-panel {
+                padding: 24px 24px 22px;
+                border-radius: 24px;
+            }
+
+            html[data-home-style="style-2"] .slide {
+                padding-left: 32px;
+            }
+        }
+
+        /* Mobile landscape small-height — hide chat, simplify info panel */
+        @media screen and (max-width: 900px) and (orientation: landscape) and (max-height: 480px) {
+            html[data-home-style="style-2"] #chat-container,
+            html[data-home-style="style-3"] #chat-container,
+            html[data-home-style="style-6"] #chat-container,
+            html[data-home-style="style-2"] #chat-input-area,
+            html[data-home-style="style-3"] #chat-input-area,
+            html[data-home-style="style-6"] #chat-input-area {
+                display: none !important;
+            }
+
+            html[data-home-style="style-2"] .info-panel,
+            html[data-home-style="style-3"] .info-panel,
+            html[data-home-style="style-6"] .info-panel {
+                width: 30%;
+                min-width: 220px;
+                padding: 18px 16px;
+                overflow: hidden;
+            }
+
+            html[data-home-style="style-2"] .time,
+            html[data-home-style="style-3"] .time,
+            html[data-home-style="style-6"] .time {
+                font-size: clamp(34px, 7vw, 58px);
+            }
+        }
+
         /* ============================================================
            深海打捞彩蛋 — 岁月沉淀视觉效果
            ============================================================ */

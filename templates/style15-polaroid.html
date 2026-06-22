@@ -440,6 +440,34 @@
                 height: 42vh;
             }
         }
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+            }
+
+            .title {
+                font-size: 2.2rem;
+                margin: 24px 0;
+            }
+
+            .wall-toolbar {
+                padding: 0;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+                font-size: 13px;
+            }
+
+            .polaroid-wall {
+                grid-template-columns: 1fr;
+                gap: 22px;
+                padding: 18px 4px;
+            }
+
+            .polaroid {
+                height: min(330px, 82vw);
+            }
+        }
     </style>
 </head>
 <body>
