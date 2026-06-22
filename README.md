@@ -59,8 +59,8 @@
 1. 克隆项目：
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/digital-photo-frame.git
-cd digital-photo-frame
+git clone https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-.git
+cd Electronic-Photo-Album-OpenSource-
 ```
 
 2. 配置环境变量：
@@ -80,7 +80,13 @@ docker-compose up -d
 
 打开浏览器访问 `http://localhost:5000`
 
-默认管理员账户：`admin / password`（请在 .env 中修改）
+首次运行前必须在 `.env` 中设置 `ADMIN_USERS`，例如：
+
+```text
+ADMIN_USERS=admin:ChangeMe123!
+```
+
+生产环境请改为自己的强密码。
 
 ### 方式二：本地运行
 
@@ -482,7 +488,7 @@ ruff check .
 ## 📧 联系方式
 
 - 作者：[jackdu](https://github.com/jackdu2333)
-- 项目地址：[GitHub Repository](https://github.com/jackdu2333/Electronic-Photo-Album-)
+- 项目地址：[GitHub Repository](https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-)
 
 ---
 

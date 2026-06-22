@@ -6,6 +6,7 @@ venv/
 .env
 *.pyc
 .pytest_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 
@@ -88,3 +89,7 @@ downloaded_script.js
 
 # Private local notes
 .private-docs/
+
+# Misc artifacts
+Gemini_Generated_Image_*
+test_route.py

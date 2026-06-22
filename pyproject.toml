@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "digital-photo-frame"
-version = "2.0.1"
+version = "3.0.1"
 description = "A smart digital photo frame system for home and family use"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "jackdu", email = "jackdu0120@gmail.com"}
 ]
 keywords = ["photo-frame", "flask", "digital-signage", "smart-home"]
 classifiers = [
@@ -46,11 +46,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/YOUR_USERNAME/digital-photo-frame"
-Documentation = "https://github.com/YOUR_USERNAME/digital-photo-frame#readme"
-Repository = "https://github.com/YOUR_USERNAME/digital-photo-frame.git"
-Issues = "https://github.com/YOUR_USERNAME/digital-photo-frame/issues"
-Changelog = "https://github.com/YOUR_USERNAME/digital-photo-frame/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-"
+Documentation = "https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-#readme"
+Repository = "https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-.git"
+Issues = "https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-/issues"
+Changelog = "https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 py-modules = ["app", "config"]

@@ -19,9 +19,10 @@ services:
       # 日志持久化
       - ./logs:/app/logs
     environment:
-      # 必需配置（不设默认值，缺少 SECRET_KEY 时容器启动失败）
+      # 必需配置（不设默认值，缺少时容器启动失败）
       - SECRET_KEY=${SECRET_KEY:?请在 .env 中设置 SECRET_KEY}
-      - ADMIN_USERS=${ADMIN_USERS:-admin:password}
+      # 必需配置（不设默认值，缺少 ADMIN_USERS 时容器启动失败）
+      - ADMIN_USERS=${ADMIN_USERS:?请在 .env 中设置 ADMIN_USERS，例如 admin:ChangeMe123!}
       # 可选配置
       - FLASK_DEBUG=${FLASK_DEBUG:-false}
       - BABY_NAME=${BABY_NAME:-}

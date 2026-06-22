@@ -2,6 +2,21 @@
 
 > 审查时间：2026-06-02
 > 审查版本：v2.0.3 + 最新提交 (63be7e4)
+> 最后更新：2026-06-22（v3.0.1 开源准备）
+
+---
+
+## Critical 修复状态
+
+| # | 问题 | 状态 | 说明 |
+|---|------|------|------|
+| 1 | SSL 证书验证被禁用 | ✅ 已修复 | `routes/api.py` 默认使用系统证书链，仅 debug 下跳过 |
+| 2 | Jinja2 XSS 漏洞 | ✅ 已修复 | 使用 `tojson` 过滤器 |
+| 3 | innerHTML XSS（文件名） | ✅ 已修复 | 改用 DOM API + textContent |
+| 4 | innerHTML XSS（日期） | ✅ 已修复 | 改用 textContent + DOM API |
+| 5 | 明文密码时序攻击 | ✅ 已修复 | 使用 `hmac.compare_digest` |
+| 6 | Python CI 缺失 | ✅ 已修复 | 新增 `.github/workflows/python-ci.yml`（ruff + pytest） |
+| 7 | SECRET_KEY 不安全默认值 | ✅ 已修复 | docker-compose 使用 `?` 语法，缺少时启动失败 |
 
 ---
 
@@ -142,7 +157,7 @@ SECRET_KEY=${SECRET_KEY:-change-me-in-production}
 
 | 问题 | 位置 | 描述 | 建议 |
 |------|------|------|------|
-| 全量 COPY 无 .dockerignore | `Dockerfile:34` | `.git/`、`.env`、`*.db` 全部打入镜像 | 创建 `.dockerignore` |
+| 全量 COPY 无 .dockerignore | `Dockerfile:34` | ~~`.git/`、`.env`、`*.db` 全部打入镜像~~ ✅ 已修复（已创建 `.dockerignore`） |
 | 无锁文件，依赖版本约束过宽 | `requirements.txt` | 不同环境安装可能得到不同版本 | 生成 `requirements.lock` |
 
 ---
@@ -198,8 +213,8 @@ SECRET_KEY=${SECRET_KEY:-change-me-in-production}
 | 动态创建的图片缺少 alt 属性 | `script.js:260` | 对屏幕阅读器不友好 |
 | 手动版本号 cache busting | `index.html:2757` | 建议使用文件哈希自动 busting |
 | Gunicorn worker 数硬编码 | `Dockerfile:51` | 通过环境变量配置 |
-| 项目 URL 为占位符 | `pyproject.toml:49` | 替换为实际仓库地址 |
-| 根目录存在孤儿测试文件 | `test_route.py` | 调试残留，建议删除 |
+| 项目 URL 为占位符 | `pyproject.toml:49` | ~~替换为实际仓库地址~~ ✅ 已修复 |
+| 根目录存在孤儿测试文件 | `test_route.py` | ~~调试残留，建议删除~~ ✅ 已从仓库移除 |
 | manage.html 独立完整内联样式 | `manage.html` | 设计风格与其他页面不一致 |
 
 ---

@@ -1,6 +1,6 @@
 {
   "name": "digital-photo-frame-desktop",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Digital Photo Frame - Local Desktop Client",
   "main": "main.js",
   "scripts": {
