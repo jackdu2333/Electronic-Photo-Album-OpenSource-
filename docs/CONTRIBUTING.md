@@ -21,14 +21,14 @@
 ### 2. 克隆仓库
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/digital-photo-frame.git
-cd digital-photo-frame
+git clone https://github.com/<your-username>/Electronic-Photo-Album-OpenSource-.git
+cd Electronic-Photo-Album-OpenSource-
 ```
 
 ### 3. 添加上游仓库
 
 ```bash
-git remote add upstream https://github.com/ORIGINAL_USERNAME/digital-photo-frame.git
+git remote add upstream https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-.git
 git fetch upstream
 ```
 

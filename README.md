@@ -312,6 +312,7 @@ A: 备份以下文件：
 ```bash
 # 安装依赖
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 # 开发模式运行
 export FLASK_DEBUG=true
@@ -324,9 +325,6 @@ pytest -v
 ### 代码格式化
 
 ```bash
-# 安装开发依赖
-pip install black ruff
-
 # 格式化代码
 black .
 ruff check .
