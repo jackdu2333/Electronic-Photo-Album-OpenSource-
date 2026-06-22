@@ -264,7 +264,6 @@ digital-photo-frame/
 **支持主题**：
 - `style-2`: 沉浸全屏相框风（默认）
 - `style-4`: Floating Glass 浮空玻璃卡片
-- `style-5`: Edge 边缘 accent 风格
 - `style-6`: Poster 海报风格
 
 ### 图片处理流程

@@ -167,6 +167,14 @@ def update_photo_metadata(photo_id):
     note_title = data.get('note_title')
     note_body = data.get('note_body')
 
+    # 输入长度限制
+    if tags is not None and len(str(tags)) > 500:
+        return jsonify({'error': '标签长度不能超过 500 个字符'}), 400
+    if note_title is not None and len(str(note_title)) > 200:
+        return jsonify({'error': '便签标题长度不能超过 200 个字符'}), 400
+    if note_body is not None and len(str(note_body)) > 2000:
+        return jsonify({'error': '便签正文长度不能超过 2000 个字符'}), 400
+
     # 日期格式校验
     if date:
         from datetime import datetime as dt
@@ -285,10 +293,21 @@ def add_folder():
         JSON: {message: str} 或 {error: str}
     """
     data = request.get_json()
+    if not data:
+        return jsonify({'error': '请求体不能为空'}), 400
     folder = data.get('folder', '').strip()
 
     if not folder:
         return jsonify({'error': '文件夹路径不能为空'}), 400
+
+    # 路径安全：仅允许用户主目录及常见媒体目录下的文件夹
+    resolved = os.path.realpath(folder)
+    allowed_prefixes = [
+        os.path.realpath(os.path.expanduser('~')),
+        '/media', '/mnt', '/Volumes',
+    ]
+    if not any(resolved.startswith(p) for p in allowed_prefixes):
+        return jsonify({'error': f'不允许添加该路径，仅允许用户目录及外部存储目录'}), 403
 
     if not os.path.isdir(folder):
         return jsonify({'error': f'文件夹不存在: {folder}'}), 400

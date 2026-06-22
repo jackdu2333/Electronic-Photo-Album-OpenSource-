@@ -194,10 +194,10 @@ def create_app(config_obj=None):
         from flask import request, render_template, jsonify
         app.logger.error(f'Unhandled exception: {error}')
         if request.path.startswith('/api/'):
-            return jsonify({'error': str(error)}), 500
+            return jsonify({'error': '服务器内部错误'}), 500
         # 渲染首页模板
         from config import config
-        return render_template('index.html', error=f'发生错误：{str(error)}',
+        return render_template('index.html', error='服务器内部错误，请稍后重试',
                               username='Guest', baby_name=config.BABY_NAME,
                               baby_birthday=config.BABY_BIRTHDAY), 500
 

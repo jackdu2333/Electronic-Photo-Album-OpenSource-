@@ -38,8 +38,8 @@ LOCAL_DAILY_QUOTES = [
 def _fetch_json(url, timeout=4, headers=None):
     """通用 JSON 拉取（服务端，避免前端跨域问题）"""
     req = urllib.request.Request(url, headers=headers or {})
-    # 使用系统默认证书链，生产环境不禁用 SSL 验证
-    ssl_context = ssl.create_default_context() if not os.environ.get('FLASK_DEBUG', '').lower() == 'true' else ssl._create_unverified_context()
+    # 始终使用系统默认证书链进行 SSL 验证
+    ssl_context = ssl.create_default_context()
     with urllib.request.urlopen(req, timeout=timeout, context=ssl_context) as response:
         return json.loads(response.read().decode('utf-8'))
 
@@ -230,6 +230,8 @@ def update_photo():
     from services.photo_index import PhotoIndexService
 
     data = request.get_json()
+    if not data:
+        return jsonify({'error': '请求体不能为空'}), 400
     filename = data.get('filename')
     new_date = data.get('date')
     new_tags = data.get('tags', '')
@@ -238,6 +240,14 @@ def update_photo():
 
     if not filename:
         return jsonify({'error': 'Missing filename'}), 400
+
+    # 输入长度限制
+    if new_tags and len(str(new_tags)) > 500:
+        return jsonify({'error': '标签长度不能超过 500 个字符'}), 400
+    if note_title and len(str(note_title)) > 200:
+        return jsonify({'error': '便签标题长度不能超过 200 个字符'}), 400
+    if note_body and len(str(note_body)) > 2000:
+        return jsonify({'error': '便签正文长度不能超过 2000 个字符'}), 400
 
     # 更新元数据
     PhotoMetadataService.update(
@@ -315,7 +325,8 @@ def delete_image(filename):
             PhotoIndexService.remove_photo(filename)
             return jsonify({'message': 'File deleted successfully'})
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            logger.error(f'Failed to delete file: {e}')
+            return jsonify({'error': '删除文件失败'}), 500
     else:
         return jsonify({'error': 'File not found'}), 404
 
@@ -347,7 +358,7 @@ def weather_config():
         return resp
     except Exception as e:
         logger.error(f'Weather API error: {e}')
-        return jsonify({'enabled': True, 'error': str(e)})
+        return jsonify({'enabled': True, 'error': '天气服务暂时不可用'})
 
 
 @api_bp.route('/daily-quote')
@@ -380,6 +391,8 @@ def set_theme():
         JSON: {success: bool, theme: str}
     """
     data = request.get_json()
+    if not data:
+        return jsonify({'error': '请求体不能为空'}), 400
     theme = data.get('theme', 'default')
     if theme == 'style5':
         theme = 'style4'

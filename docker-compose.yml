@@ -11,11 +11,7 @@ services:
       # 照片数据持久化
       - ./data/photos:/app/static/photos
       # 数据库持久化
-      - ./data/photos.db:/app/photos.db
-      # 元数据持久化
-      - ./data/photo_metadata.json:/app/photo_metadata.json
-      # 留言板数据持久化
-      - ./data/messages.json:/app/messages.json
+      - ./data/db:/app/data
       # 日志持久化
       - ./logs:/app/logs
     environment:
@@ -25,6 +21,9 @@ services:
       - ADMIN_USERS=${ADMIN_USERS:?请在 .env 中设置 ADMIN_USERS，例如 admin:ChangeMe123!}
       # 可选配置
       - FLASK_DEBUG=${FLASK_DEBUG:-false}
+      - DATABASE_FILE=/app/data/photos.db
+      - METADATA_FILE=/app/data/photo_metadata.json
+      - MESSAGES_FILE=/app/data/messages.json
       - BABY_NAME=${BABY_NAME:-}
       - BABY_BIRTHDAY=${BABY_BIRTHDAY:-}
       - WEATHER_LAT=${WEATHER_LAT:-31.3041}
@@ -33,7 +32,7 @@ services:
       - TAG_WEIGHTS=${TAG_WEIGHTS:-宝宝：1.8，露营：1.5，旅行：1.3}
       - SLIDE_DURATION_SECONDS=${SLIDE_DURATION_SECONDS:-300}
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health/ready')"]
       interval: 30s
       timeout: 10s
       retries: 3

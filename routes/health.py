@@ -28,7 +28,7 @@ def health_check():
     """
     health = {
         'status': 'healthy',
-        'version': '2.0.1',
+        'version': '3.0.1',
         'timestamp': datetime.now().isoformat(),
         'checks': {}
     }

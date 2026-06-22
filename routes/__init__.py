@@ -6,7 +6,6 @@ from flask import Flask
 
 from extensions import csrf
 from .api import api_bp
-from .admin import admin_bp
 from .upload import upload_bp
 from .messages import messages_bp
 from .main import main_bp
@@ -16,7 +15,6 @@ from .photos_v3 import photos_v3_bp
 
 __all__ = [
     'api_bp',
-    'admin_bp',
     'upload_bp',
     'messages_bp',
     'main_bp',
@@ -48,4 +46,3 @@ def register_blueprints(app: Flask):
     app.register_blueprint(api_bp)
     app.register_blueprint(messages_bp)
     app.register_blueprint(upload_bp)
-    app.register_blueprint(admin_bp)

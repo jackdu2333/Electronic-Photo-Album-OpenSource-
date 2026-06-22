@@ -48,8 +48,8 @@
 
 #### 1. 克隆项目
 ```bash
-git clone https://github.com/YOUR_USERNAME/digital-photo-frame.git
-cd digital-photo-frame
+git clone https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-.git
+cd Electronic-Photo-Album-OpenSource-
 ```
 
 #### 2. 配置环境变量
@@ -105,8 +105,8 @@ docker-compose logs -f
 
 #### 1. 克隆项目
 ```bash
-git clone https://github.com/YOUR_USERNAME/digital-photo-frame.git
-cd digital-photo-frame
+git clone https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-.git
+cd Electronic-Photo-Album-OpenSource-
 ```
 
 #### 2. 创建虚拟环境（推荐）

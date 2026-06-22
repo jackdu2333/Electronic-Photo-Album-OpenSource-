@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyAmbientPanelTheme(sourceImage) {
         const root = document.documentElement;
         const activeStyle = root.getAttribute('data-home-style');
-        if (!['style-2', 'style-4', 'style-5', 'style-6'].includes(activeStyle) || !sourceImage || !sourceImage.naturalWidth) {
+        if (!['style-2', 'style-4', 'style-6'].includes(activeStyle) || !sourceImage || !sourceImage.naturalWidth) {
             return;
         }
 
@@ -171,9 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
             root.style.setProperty('--style4-card-color-a', colorToCss(glassA));
             root.style.setProperty('--style4-card-color-b', colorToCss(glassB));
             root.style.setProperty('--style4-card-color-c', colorToCss(glassC));
-
-            const edgeAccent = mixColor(brightColor, [120, 190, 225], 0.26);
-            root.style.setProperty('--style5-accent', colorToCss(edgeAccent));
 
             const posterA = mixColor(averageColor, [245, 241, 236], 0.72);
             const posterB = mixColor(averageColor, [231, 234, 237], 0.58);

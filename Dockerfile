@@ -53,7 +53,7 @@ ENV GUNICORN_BIND=0.0.0.0:5000
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health/ready')" || exit 1
 
 # 使用 gunicorn 运行
 CMD ["sh", "-c", "gunicorn --bind ${GUNICORN_BIND} --workers ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --worker-class ${GUNICORN_WORKER_CLASS} --timeout ${GUNICORN_TIMEOUT} app:app"]

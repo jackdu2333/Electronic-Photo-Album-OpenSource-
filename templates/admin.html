@@ -139,6 +139,12 @@
         const scanStatus = document.getElementById('scan-status');
         const galleryCount = document.getElementById('gallery-count');
 
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
         async function loadSources() {
             try {
                 const res = await fetch('/api/photo-sources');
@@ -150,8 +156,9 @@
                     if (src.type === 'desktop_folder' && src.folders) {
                         for (const f of src.folders) {
                             const escapedF = f.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                            const safeF = escapeHtml(f);
                             html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;background:rgba(0,0,0,0.03);border-radius:8px;font-size:13px;gap:8px;">
-                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${f}</span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${safeF}</span>
                                 <span style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                                     <span style="color:${src.authorized ? '#27ae60' : '#e74c3c'};font-size:11px;">${src.authorized ? '已授权' : '未授权'}</span>
                                     <button class="ios-link-btn" style="font-size:11px;padding:2px 8px;color:#e74c3c;" onclick="removeFolder('${escapedF}')">移除</button>
