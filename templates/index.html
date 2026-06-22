@@ -590,6 +590,21 @@
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
         }
 
+        .style-group-label {
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.42);
+            padding: 10px 6px 4px;
+            margin-top: 2px;
+        }
+
+        .style-group-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+            margin: 6px 0;
+        }
+
         .style-option span {
             font-size: 12px;
             font-weight: 400;
@@ -2506,65 +2521,70 @@
     <div id="home-style-switcher" aria-label="首页样式切换">
         <div class="style-switcher-title">Display Mode</div>
         <div class="style-switcher-subtitle">首页左上角唤出，随时切换相框呈现方式。</div>
-        <button class="style-option" data-style="style-1">
-            样式一
-            <span>当前经典分栏布局，信息区与照片区并列展示。</span>
-        </button>
+
+        <div class="style-group-label">主推</div>
         <button class="style-option" data-style="style-2">
-            样式二
-            <span>沉浸全屏相框，照片更强势，信息以悬浮面板出现。</span>
+            沉浸全屏
+            <span>照片更强势，信息以悬浮面板出现。客厅电视首选。</span>
         </button>
         <button class="style-option" data-style="style-3">
-            样式三
-            <span>画廊展签风，更柔和、更像展厅里的作品陈列。</span>
-        </button>
-        <button class="style-option" data-style="style-4">
-            样式四
-            <span>悬浮玻璃卡风格，信息区像漂浮在照片上的一块轻薄玻璃。</span>
-        </button>
-        <button class="style-option" data-style="style-6">
-            样式六
-            <span>浅色编辑海报风，像展签与海报结合的杂志化版式。</span>
+            画廊展签
+            <span>更柔和、更像展厅里的作品陈列。</span>
         </button>
         <button class="style-option" data-style="theme-style7">
-            样式七
-            <span>日式禅意（独立主题页）。</span>
-        </button>
-        <button class="style-option" data-style="theme-style8">
-            样式八
-            <span>赛博朋克（独立主题页）。</span>
-        </button>
-        <button class="style-option" data-style="theme-style9">
-            样式九
-            <span>和风木质（独立主题页）。</span>
-        </button>
-        <button class="style-option" data-style="theme-style10">
-            样式十
-            <span>北欧极简（独立主题页）。</span>
-        </button>
-        <button class="style-option" data-style="theme-style11">
-            样式十一
-            <span>复古胶片（独立主题页）。</span>
-        </button>
-        <button class="style-option" data-style="theme-style12">
-            样式十二
-            <span>悬浮画框（独立主题页）。</span>
+            日式禅意
+            <span>圆框 + 题签 + 印章，东方展示感。</span>
         </button>
         <button class="style-option" data-style="theme-style13">
-            样式十三
-            <span>瀑布流（独立主题页）。</span>
+            瀑布流
+            <span>策展式瀑布布局，适合大屏浏览。</span>
+        </button>
+
+        <div class="style-group-divider"></div>
+        <div class="style-group-label">更多主题</div>
+        <button class="style-option" data-style="style-1">
+            经典分栏
+            <span>信息区与照片区并列展示。</span>
+        </button>
+        <button class="style-option" data-style="style-4">
+            悬浮玻璃
+            <span>信息区像漂浮在照片上的轻薄玻璃。</span>
+        </button>
+        <button class="style-option" data-style="style-6">
+            浅色海报
+            <span>展签与海报结合的杂志化版式。</span>
+        </button>
+        <button class="style-option" data-style="theme-style8">
+            赛博朋克
+            <span>独立主题页。</span>
+        </button>
+        <button class="style-option" data-style="theme-style9">
+            和风木质
+            <span>独立主题页。</span>
+        </button>
+        <button class="style-option" data-style="theme-style10">
+            北欧极简
+            <span>独立主题页。</span>
+        </button>
+        <button class="style-option" data-style="theme-style11">
+            复古胶片
+            <span>独立主题页。</span>
+        </button>
+        <button class="style-option" data-style="theme-style12">
+            悬浮画框
+            <span>独立主题页。</span>
         </button>
         <button class="style-option" data-style="theme-style14">
-            样式十四
-            <span>全景卷轴（独立主题页）。</span>
+            全景卷轴
+            <span>独立主题页。</span>
         </button>
         <button class="style-option" data-style="theme-style15">
-            样式十五
-            <span>拍立得墙（独立主题页）。</span>
+            拍立得墙
+            <span>独立主题页。</span>
         </button>
         <button class="style-option" data-style="theme-style16">
-            样式十六
-            <span>艺术画廊（独立主题页）。</span>
+            艺术画廊
+            <span>独立主题页。</span>
         </button>
     </div>
 

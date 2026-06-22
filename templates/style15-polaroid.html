@@ -63,7 +63,7 @@
             height: 100%;
             backface-visibility: hidden;
             border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.14);
             overflow: hidden;
         }
         
@@ -96,12 +96,12 @@
             position: absolute;
             width: 80px;
             height: 30px;
-            background: rgba(255, 255, 200, 0.7);
-            border: 1px dashed rgba(200, 200, 150, 0.8);
+            background: rgba(255, 255, 200, 0.5);
+            border: 1px dashed rgba(200, 200, 150, 0.6);
             top: -15px;
             left: 50%;
             transform: translateX(-50%) rotate(5deg);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
         }
         
         .polaroid-front .pin {
@@ -873,11 +873,11 @@
             function decoratePolaroid(polaroid) {
                 const tape = polaroid.querySelector('.tape');
                 const pin = polaroid.querySelector('.pin');
-                const randomPolaroidRotation = (Math.random() * 8 - 4).toFixed(2);
+                const randomPolaroidRotation = (Math.random() * 4 - 2).toFixed(2);
                 polaroid.style.transform = `rotate(${randomPolaroidRotation}deg)`;
 
                 if (tape) {
-                    const randomRotation = (Math.random() * 10 - 5).toFixed(2);
+                    const randomRotation = (Math.random() * 6 - 3).toFixed(2);
                     const randomLeft = (Math.random() * 40 + 30).toFixed(2);
                     tape.style.transform = `translateX(-50%) rotate(${randomRotation}deg)`;
                     tape.style.left = `${randomLeft}%`;

@@ -131,9 +131,18 @@
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, outline-color 0.2s;
             display: flex;
             flex-direction: column;
+        }
+
+        .photo-card.is-dirty {
+            outline: 2px solid rgba(0, 122, 255, 0.35);
+        }
+
+        .photo-card.is-dirty .save-btn {
+            background-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
         }
 
         @media (hover: hover) {
@@ -144,7 +153,7 @@
         }
 
         .img-container {
-            height: 200px;
+            aspect-ratio: 4 / 3;
             background-color: #eee;
             position: relative;
             overflow: hidden;
@@ -807,6 +816,27 @@
             div.appendChild(imageContainer);
             div.appendChild(cardBody);
 
+            // ── dirty state tracking ──
+            const origDate = (yy && mm && dd) ? `20${yy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}` : '';
+            div.dataset.originalDate = origDate;
+            div.dataset.originalTags = tagsValue;
+
+            const checkDirty = () => {
+                const curYy = div.querySelector('.date-part.year').value.trim();
+                const curMm = div.querySelector('.date-part.month').value.trim();
+                const curDd = div.querySelector('.date-part.day').value.trim();
+                let curDate = '';
+                if (curYy && curMm && curDd) {
+                    curDate = `20${curYy}-${curMm.padStart(2,'0')}-${curDd.padStart(2,'0')}`;
+                }
+                const curTags = div.querySelector('.tags-input').value;
+                const dirty = curDate !== div.dataset.originalDate || curTags !== div.dataset.originalTags;
+                div.classList.toggle('is-dirty', dirty);
+            };
+
+            div.querySelectorAll('.date-part').forEach(inp => inp.addEventListener('input', checkDirty));
+            div.querySelector('.tags-input').addEventListener('input', checkDirty);
+
             grid.appendChild(div);
         }
 
@@ -865,6 +895,13 @@
                     if (pIndex !== -1) {
                         allPhotos[pIndex].date = newDate;
                         allPhotos[pIndex].tags = newTags;
+                    }
+                    // clear dirty state
+                    const photoCard = btn.closest('.photo-card');
+                    if (photoCard) {
+                        photoCard.dataset.originalDate = newDate || '';
+                        photoCard.dataset.originalTags = newTags;
+                        photoCard.classList.remove('is-dirty');
                     }
                 } else {
                     throw new Error(data.error || 'Unknown error');
