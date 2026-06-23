@@ -1,0 +1,127 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  # ─── Android APK ────────────────────────────────────────────────────────────
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.4'
+
+      - name: Build APK
+        working-directory: ./android_project
+        run: gradle assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android_project/app/build/outputs/apk/debug/app-debug.apk
+
+  # ─── Electron Desktop (macOS / Windows / Linux) ────────────────────────────
+  build-electron:
+    name: Build Electron (${{ matrix.os-name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            os-name: macOS
+            build-cmd: npm run build
+          - os: windows-latest
+            os-name: Windows
+            build-cmd: npm run build:win
+          - os: ubuntu-latest
+            os-name: Linux
+            build-cmd: npm run build:linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./desktop
+        run: npm ci
+
+      - name: Build Electron app
+        working-directory: ./desktop
+        run: ${{ matrix.build-cmd }}
+
+      - name: Upload Electron artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: electron-${{ matrix.os }}
+          path: |
+            desktop/dist/*.dmg
+            desktop/dist/*.exe
+            desktop/dist/*.AppImage
+          if-no-files-found: warn
+
+  # ─── Create GitHub Release ─────────────────────────────────────────────────
+  release:
+    name: Create Release
+    needs: [build-android, build-electron]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+
+          # Android APK
+          find artifacts/android-apk -name "*.apk" \
+            -exec cp {} release-assets/OneTwo-TV-Frame-APK.apk \; 2>/dev/null || true
+
+          # Electron macOS
+          find artifacts/electron-macos-latest -name "*.dmg" \
+            -exec cp {} "release-assets/" \; 2>/dev/null || true
+
+          # Electron Windows
+          find artifacts/electron-windows-latest -name "*.exe" \
+            -exec cp {} "release-assets/" \; 2>/dev/null || true
+
+          # Electron Linux
+          find artifacts/electron-ubuntu-latest -name "*.AppImage" \
+            -exec cp {} "release-assets/" \; 2>/dev/null || true
+
+          echo "=== Release assets ==="
+          ls -lh release-assets/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-${{ github.sha }}
+          name: "Latest Build - ${{ github.sha }}"
+          prerelease: true
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

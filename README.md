@@ -44,7 +44,7 @@
 
 ### 📱 客户端
 
-- **桌面客户端 (Electron)**: macOS / Windows 原生应用，内嵌 Flask 后端，支持本地文件夹直接读取
+- **桌面客户端 (Electron)**: macOS / Windows / Linux 原生应用，内嵌 Flask 后端，支持本地文件夹直接读取（首次启动需系统已安装 Python 3.11+）
 - **响应式设计**: 适配各种屏幕尺寸（桌面/手机/平板）
 - **Android TV 支持**: 遥控器方向键切换照片
 - **全屏展示**: 支持沉浸式全屏模式
@@ -120,7 +120,15 @@ python app.py
 
 ### 方式四：桌面客户端（macOS / Windows）
 
-1. 克隆项目并安装前端依赖：
+> **⚠️ 前置要求：系统需已安装 Python 3.11+**
+>
+> 桌面客户端采用 Electron 外壳 + 内嵌 Flask 后端的架构。首次启动时会自动检测系统 Python 并创建虚拟环境（venv）、安装后端依赖。
+> 如果系统未安装 Python，启动时会提示用户手动安装。
+>
+> - **macOS**: `brew install python@3.11` 或从 [python.org](https://www.python.org/downloads/) 下载
+> - **Windows**: 从 [python.org](https://www.python.org/downloads/) 下载安装，安装时勾选 "Add Python to PATH"
+
+1. 从 [Releases](https://github.com/jackdu2333/Electronic-Photo-Album-OpenSource-/releases) 下载对应平台的安装包，或克隆项目自行构建：
 
 ```bash
 cd desktop
@@ -135,9 +143,12 @@ npm run build
 
 # Windows
 npm run build:win
+
+# Linux
+npm run build:linux
 ```
 
-3. 首次启动会自动创建 Python 环境并安装后端依赖，无需手动配置。
+3. 首次启动时，应用会自动创建 Python 虚拟环境并安装后端依赖（需联网，耗时约 1-3 分钟）。
 
 ---
 
@@ -292,6 +303,14 @@ A: 修改 `SLIDE_DURATION_SECONDS` 配置项（单位：秒）。
 ### Q: 照片存储在哪个目录？
 
 A: Docker 部署时为 `./data/photos`，本地运行为 `./static/photos`。
+
+### Q: 桌面客户端启动后提示找不到 Python？
+
+A: 桌面客户端内嵌 Flask 后端，首次启动需要系统已安装 Python 3.11+。请按提示安装 Python：
+- **macOS**: `brew install python@3.11`
+- **Windows**: 从 [python.org](https://www.python.org/downloads/) 下载，安装时务必勾选 **"Add Python to PATH"**
+
+安装完成后重启应用即可，环境会自动创建。
 
 ### Q: 如何备份数据？
 
