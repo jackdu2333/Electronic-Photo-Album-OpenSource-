@@ -479,6 +479,11 @@ function createMainWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // 安全加固：渲染进程沙箱化。preload 仅使用 contextBridge + ipcRenderer，
+      // 二者在 sandbox 模式下仍可用，故不影响现有 IPC 能力。
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
     },
     show: false,
   });

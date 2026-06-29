@@ -15,6 +15,7 @@ v3.0 照片 API 路由
 """
 import os
 import logging
+from pathlib import Path
 from flask import Blueprint, jsonify, request, send_file, abort
 
 from auth import auth
@@ -300,13 +301,20 @@ def add_folder():
     if not folder:
         return jsonify({'error': '文件夹路径不能为空'}), 400
 
-    # 路径安全：仅允许用户主目录及常见媒体目录下的文件夹
+    # 路径安全：仅允许用户主目录及常见媒体目录下的文件夹。
+    # 使用 pathlib 做路径边界判定，避免 startswith 的兄弟前缀漏洞
+    # （例如允许 /Users/jack 会误放行 /Users/jackevil）。
     resolved = os.path.realpath(folder)
-    allowed_prefixes = [
+    resolved_path = Path(resolved)
+    allowed_parents = [
         os.path.realpath(os.path.expanduser('~')),
         '/media', '/mnt', '/Volumes',
     ]
-    if not any(resolved.startswith(p) for p in allowed_prefixes):
+    allowed_parent_paths = [Path(p) for p in allowed_parents]
+    if not any(
+        resolved_path == parent or parent in resolved_path.parents
+        for parent in allowed_parent_paths
+    ):
         return jsonify({'error': f'不允许添加该路径，仅允许用户目录及外部存储目录'}), 403
 
     if not os.path.isdir(folder):

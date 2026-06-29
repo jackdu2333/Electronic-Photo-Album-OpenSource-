@@ -1,8 +1,9 @@
 # Digital Photo Frame - 数字电子相框
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
 ![Docker](https://img.shields.io/badge/Docker-Available-2496ED.svg)
+<!-- 后端服务兼容 Python 3.9+（与 pyproject.toml 的 requires-python 一致）；桌面客户端推荐 3.11+ -->
 ![Flask](https://img.shields.io/badge/Flask-3.0+-red.svg)
 
 一个开源的智能电子相框系统，支持照片幻灯片展示、留言板、智能推荐、多主题切换等功能。适合家庭使用，可将旧平板、电视或显示器改造成智能相框。
@@ -44,7 +45,7 @@
 
 ### 📱 客户端
 
-- **桌面客户端 (Electron)**: macOS / Windows / Linux 原生应用，内嵌 Flask 后端，支持本地文件夹直接读取（首次启动需系统已安装 Python 3.11+）
+- **桌面客户端 (Electron)**: macOS / Windows / Linux 原生应用，内嵌 Flask 后端，支持本地文件夹直接读取（推荐系统已安装 Python 3.11+，最低支持 3.9；后端服务本身兼容 3.9+）
 - **响应式设计**: 适配各种屏幕尺寸（桌面/手机/平板）
 - **Android TV 支持**: 遥控器方向键切换照片
 - **全屏展示**: 支持沉浸式全屏模式
@@ -120,7 +121,7 @@ python app.py
 
 ### 方式四：桌面客户端（macOS / Windows）
 
-> **⚠️ 前置要求：系统需已安装 Python 3.11+**
+> **⚠️ 前置要求：系统需已安装 Python 3.9+（推荐 3.11+）**
 >
 > 桌面客户端采用 Electron 外壳 + 内嵌 Flask 后端的架构。首次启动时会自动检测系统 Python 并创建虚拟环境（venv）、安装后端依赖。
 > 如果系统未安装 Python，启动时会提示用户手动安装。
@@ -306,7 +307,7 @@ A: Docker 部署时为 `./data/photos`，本地运行为 `./static/photos`。
 
 ### Q: 桌面客户端启动后提示找不到 Python？
 
-A: 桌面客户端内嵌 Flask 后端，首次启动需要系统已安装 Python 3.11+。请按提示安装 Python：
+A: 桌面客户端内嵌 Flask 后端，首次启动需要系统已安装 Python（最低 3.9，推荐 3.11+）。请按提示安装 Python：
 - **macOS**: `brew install python@3.11`
 - **Windows**: 从 [python.org](https://www.python.org/downloads/) 下载，安装时务必勾选 **"Add Python to PATH"**
 
