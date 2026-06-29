@@ -15,7 +15,8 @@
             --panel-border: rgba(255, 255, 255, 0.74);
             --text-primary: #111827;
             --text-secondary: #5f6c7d;
-            --accent: #121821;
+            --accent: #6d5dfc;
+            --accent-blue: #2f80ed;
             --accent-soft: rgba(18, 24, 33, 0.06);
             --danger-bg: rgba(182, 41, 59, 0.08);
             --danger-border: rgba(182, 41, 59, 0.18);
@@ -33,8 +34,9 @@
             padding: 32px 18px;
             background:
                 radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.96), transparent 24%),
-                radial-gradient(circle at 82% 22%, rgba(177, 194, 214, 0.38), transparent 23%),
-                radial-gradient(circle at 50% 100%, rgba(142, 164, 190, 0.22), transparent 34%),
+                radial-gradient(circle at 78% 12%, rgba(238, 224, 255, 0.5), transparent 26%),
+                radial-gradient(circle at 16% 90%, rgba(206, 227, 255, 0.44), transparent 30%),
+                radial-gradient(circle at 50% 100%, rgba(170, 184, 220, 0.2), transparent 34%),
                 linear-gradient(180deg, var(--bg-top), var(--bg-mid) 52%, var(--bg-bottom));
             color: var(--text-primary);
             font-family: "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
@@ -57,6 +59,7 @@
             left: -110px;
             top: -120px;
             background: rgba(255, 255, 255, 0.42);
+            animation: drift-bg 16s ease-in-out infinite;
         }
         body::after {
             width: 360px;
@@ -64,12 +67,13 @@
             right: -60px;
             bottom: -100px;
             background: rgba(100, 123, 151, 0.12);
+            animation: drift-bg 13s ease-in-out infinite reverse;
         }
         .login-shell {
-            width: min(100%, 1080px);
+            width: min(100%, 1120px);
             display: grid;
-            grid-template-columns: 1.14fr 0.86fr;
-            gap: 24px;
+            grid-template-columns: 1.08fr 0.92fr;
+            gap: 18px;
             align-items: stretch;
         }
         .brand-panel,
@@ -85,12 +89,16 @@
         }
         .brand-panel {
             position: relative;
-            padding: 56px 50px;
+            padding: 42px 48px 34px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 640px;
+            min-height: 680px;
+            animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+            background:
+                linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(241, 239, 255, 0.66)),
+                var(--panel);
         }
         .brand-panel::before {
             content: "";
@@ -101,6 +109,59 @@
             top: -60px;
             border-radius: 999px;
             background: radial-gradient(circle, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.02) 72%);
+        }
+        .brand-header {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 34px;
+        }
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 13px;
+            color: #fff;
+            background: linear-gradient(145deg, #7c5cff, #3f7cff);
+            box-shadow: 0 14px 30px rgba(93, 92, 255, 0.26);
+            flex: 0 0 auto;
+        }
+        .brand-logo svg {
+            width: 28px;
+            height: 28px;
+        }
+        .brand-identity {
+            min-width: 0;
+        }
+        .brand-name-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .brand-name {
+            margin: 0;
+            font-size: 23px;
+            line-height: 1.2;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+        .version-pill {
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: rgba(80, 114, 255, 0.1);
+            color: #4d66e8;
+            font-size: 12px;
+            line-height: 1;
+            font-weight: 700;
+        }
+        .brand-subname {
+            margin: 3px 0 0;
+            color: #4d596b;
+            font-size: 15px;
         }
         .brand-kicker {
             display: inline-flex;
@@ -117,52 +178,157 @@
             font-weight: 600;
         }
         .brand-title {
-            margin: 30px 0 18px;
+            margin: 0 0 18px;
             font-family: "PingFang SC", "SF Pro Display", "Helvetica Neue", sans-serif;
-            font-size: clamp(42px, 5.2vw, 74px);
-            line-height: 0.98;
-            letter-spacing: -0.05em;
-            font-weight: 600;
-            max-width: 560px;
+            font-size: clamp(34px, 3.2vw, 42px);
+            line-height: 1.18;
+            letter-spacing: -0.035em;
+            font-weight: 800;
+            max-width: 500px;
+        }
+        .brand-title .accent-line {
+            display: block;
+            color: var(--accent);
         }
         .brand-copy {
-            max-width: 520px;
+            max-width: 420px;
             margin: 0;
             color: var(--text-secondary);
-            font-size: 18px;
-            line-height: 1.9;
+            font-size: 16px;
+            line-height: 1.85;
         }
         .brand-footer {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 14px;
             padding-top: 28px;
+            margin-bottom: 18px;
             color: var(--text-secondary);
             font-size: 14px;
         }
         .brand-stat {
-            padding: 18px 18px 16px;
-            border-radius: 24px;
-            background: rgba(255, 255, 255, 0.42);
-            border: 1px solid rgba(255, 255, 255, 0.52);
+            padding: 16px 16px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.62);
+            border: 1px solid rgba(255, 255, 255, 0.66);
+            box-shadow: 0 16px 34px rgba(82, 95, 125, 0.08);
         }
         .brand-stat strong {
             display: block;
-            color: var(--text-primary);
-            font-size: 20px;
+            color: #101936;
+            font-size: 22px;
             margin-bottom: 4px;
             letter-spacing: -0.03em;
         }
+        .metric-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1d2740;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .metric-icon {
+            width: 24px;
+            height: 24px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            color: var(--accent);
+            background: rgba(109, 93, 252, 0.1);
+            font-size: 15px;
+        }
+        /* ─── 照片相框预览区：纯渐变模拟记忆卡片 ─── */
+        .photo-preview {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 230px;
+            margin: 0 auto 0;
+        }
+        .photo-card {
+            position: absolute;
+            width: 204px;
+            height: 152px;
+            border: 7px solid rgba(255, 255, 255, 0.96);
+            border-radius: 12px;
+            background-size: cover;
+            background-position: center;
+            box-shadow:
+                0 18px 42px rgba(34, 47, 66, 0.18),
+                0 4px 12px rgba(34, 47, 66, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        }
+        /* 相纸高光，增加质感 */
+        .photo-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(155deg, rgba(255, 255, 255, 0.32), transparent 46%);
+            pointer-events: none;
+        }
+        .photo-card--1 {
+            left: 14px;
+            top: 52px;
+            transform: rotate(-16deg);
+            background-image: url("{{ url_for('static', filename='login-preview/sunset.webp') }}");
+            animation: float-a 6s ease-in-out infinite;
+            z-index: 1;
+        }
+        .photo-card--2 {
+            left: 50%;
+            top: 12px;
+            width: 190px;
+            height: 184px;
+            transform: translateX(-50%) rotate(0deg);
+            background-image: url("{{ url_for('static', filename='login-preview/family.webp') }}");
+            animation: float-b 7s ease-in-out infinite;
+            z-index: 3;
+        }
+        .photo-card--3 {
+            right: 14px;
+            top: 60px;
+            transform: rotate(16deg);
+            background-image: url("{{ url_for('static', filename='login-preview/dog.webp') }}");
+            animation: float-c 6.5s ease-in-out infinite;
+            z-index: 2;
+        }
+        /* ─── 轻量 keyframes ─── */
+        @keyframes drift-bg {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(22px, 14px); }
+            66% { transform: translate(-14px, 24px); }
+        }
+        @keyframes float-a {
+            0%, 100% { transform: rotate(-16deg) translateY(0); }
+            50% { transform: rotate(-16deg) translateY(-3px); }
+        }
+        @keyframes float-b {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-3.5px); }
+        }
+        @keyframes float-c {
+            0%, 100% { transform: rotate(16deg) translateY(0); }
+            50% { transform: rotate(16deg) translateY(-2.5px); }
+        }
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .login-container {
             position: relative;
-            padding: 46px 38px 34px;
-            max-width: 460px;
+            padding: 56px 48px 42px;
+            max-width: 500px;
             width: 100%;
             margin-left: auto;
-            min-height: 640px;
+            min-height: 680px;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+            background: rgba(255, 255, 255, 0.78);
         }
         .login-badge {
             display: inline-flex;
@@ -178,11 +344,11 @@
             text-transform: uppercase;
         }
         .login-container h2 {
-            margin: 22px 0 10px;
+            margin: 42px 0 12px;
             color: var(--text-primary);
-            font-size: 42px;
+            font-size: 34px;
             line-height: 1.15;
-            letter-spacing: -0.045em;
+            letter-spacing: -0.035em;
         }
         .login-subtitle {
             margin: 0 0 30px;
@@ -203,17 +369,17 @@
         .form-group input {
             width: 100%;
             padding: 16px 18px;
-            border: 1px solid rgba(129, 146, 167, 0.18);
-            border-radius: 18px;
+            border: 1px solid rgba(129, 146, 167, 0.24);
+            border-radius: 8px;
             font-size: 16px;
-            background: rgba(255, 255, 255, 0.82);
+            background: rgba(255, 255, 255, 0.78);
             color: var(--text-primary);
             transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
         .form-group input:focus {
             outline: none;
-            border-color: rgba(75, 92, 113, 0.34);
-            box-shadow: 0 0 0 4px rgba(136, 149, 166, 0.12);
+            border-color: rgba(109, 93, 252, 0.42);
+            box-shadow: 0 0 0 4px rgba(109, 93, 252, 0.1);
             transform: translateY(-1px);
         }
         .form-group input::placeholder {
@@ -258,7 +424,7 @@
         .remember-option input {
             width: 18px;
             height: 18px;
-            accent-color: #121821;
+            accent-color: var(--accent);
             margin: 0;
         }
         .remember-hint {
@@ -270,17 +436,17 @@
         button {
             width: 100%;
             padding: 16px;
-            margin-top: 6px;
-            background: var(--app-primary, #007AFF);
+            margin-top: 20px;
+            background: linear-gradient(90deg, #7c4dff, #1f83ff);
             color: white;
             border: none;
-            border-radius: 999px;
+            border-radius: 8px;
             font-size: 17px;
             font-weight: 700;
-            letter-spacing: 0.04em;
+            letter-spacing: 0;
             cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-            box-shadow: 0 20px 32px rgba(0, 122, 255, 0.18);
+            box-shadow: 0 18px 30px rgba(70, 110, 255, 0.18);
         }
         button:hover {
             transform: translateY(-1px);
@@ -293,13 +459,14 @@
             transform: none;
         }
         .login-note {
-            margin-top: 26px;
+            margin-top: 34px;
             padding: 16px 18px;
-            border-radius: 22px;
-            background: rgba(255, 255, 255, 0.44);
+            border-radius: 10px;
+            background: rgba(246, 248, 253, 0.78);
             color: var(--text-secondary);
             font-size: 14px;
             line-height: 1.8;
+            box-shadow: inset 3px 0 0 rgba(109, 93, 252, 0.38);
         }
         .login-note strong {
             color: var(--text-primary);
@@ -332,12 +499,15 @@
                 order: 1;
             }
         }
-        @media (max-width: 640px) {
-            body {
-                padding: 14px;
-            }
-            .login-shell {
-                gap: 14px;
+       @media (max-width: 640px) {
+           body {
+               padding: 14px;
+           }
+           .login-shell {
+               gap: 14px;
+           }
+            .photo-preview {
+                display: none;
             }
             .brand-panel {
                 padding: 26px 22px;
@@ -407,6 +577,17 @@
                 font-size: 14px;
             }
         }
+        /* ─── 无障碍：用户关闭动效时全局降级 ─── */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .photo-card--2 { transform: translateX(-50%) rotate(2.5deg); }
+            .photo-card--1 { transform: rotate(-7deg); }
+            .photo-card--3 { transform: rotate(8deg); }
+        }
     </style>
 </head>
 
@@ -414,33 +595,54 @@
     <div class="login-shell">
         <section class="brand-panel">
             <div>
-                <div class="brand-kicker">Photo Frame Portal</div>
-                <h1 class="brand-title">把生活里最重要的画面，留在视线中央。</h1>
+                <div class="brand-header">
+                    <div class="brand-logo" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" role="img" focusable="false">
+                            <path fill="currentColor" d="M7 8.5A3.5 3.5 0 0 1 10.5 5h11A3.5 3.5 0 0 1 25 8.5v15A3.5 3.5 0 0 1 21.5 27h-11A3.5 3.5 0 0 1 7 23.5v-15Zm3.5-1A1.5 1.5 0 0 0 9 9v10.8l4.1-4.55a1.6 1.6 0 0 1 2.32-.06l2.74 2.73 1.45-1.73a1.6 1.6 0 0 1 2.39-.06L23 17.15V9a1.5 1.5 0 0 0-1.5-1.5h-11ZM9 23.5c0 .83.67 1.5 1.5 1.5h11c.83 0 1.5-.67 1.5-1.5v-3.2l-2.08-2.2-1.43 1.72a1.6 1.6 0 0 1-2.35.1l-2.82-2.8L9 22.9v.6ZM20.7 10.8a2.2 2.2 0 1 1-4.4 0 2.2 2.2 0 0 1 4.4 0Z"/>
+                        </svg>
+                    </div>
+                    <div class="brand-identity">
+                        <div class="brand-name-row">
+                            <h2 class="brand-name">电子相册</h2>
+                            <span class="version-pill">v3.0.1</span>
+                        </div>
+                        <p class="brand-subname">Digital Photo Frame</p>
+                    </div>
+                </div>
+                <h1 class="brand-title">把生活里最重要的画面，<span class="accent-line">留在视线中央。</span></h1>
                 <p class="brand-copy">
-                    一个更安静、更高级的家庭相框入口。
+                    智能整理，美好回忆，永久珍藏。打造属于你和家人的专属回忆空间。
                 </p>
             </div>
             <div class="brand-footer">
                 <div class="brand-stat">
-                    <strong>Immersive</strong>
-                    像展览一样展示家庭记忆
+                    <div class="metric-top"><span class="metric-icon">▧</span>照片管理</div>
+                    <strong>3,456+</strong>
+                    珍贵瞬间
                 </div>
                 <div class="brand-stat">
-                    <strong>Quiet</strong>
-                    管理逻辑退后，画面始终在前
+                    <div class="metric-top"><span class="metric-icon">♡</span>温暖回忆</div>
+                    <strong>1,234+</strong>
+                    美好时刻
                 </div>
                 <div class="brand-stat">
-                    <strong>Always On</strong>
-                    为客厅与电视长时间运行而设计
+                    <div class="metric-top"><span class="metric-icon">⌾</span>家庭成员</div>
+                    <strong>12+</strong>
+                    重要的人
                 </div>
+            </div>
+            <div class="photo-preview" aria-hidden="true">
+                <div class="photo-card photo-card--1"></div>
+                <div class="photo-card photo-card--2"></div>
+                <div class="photo-card photo-card--3"></div>
             </div>
         </section>
 
         <div class="login-container">
             <div class="login-badge">安全登录</div>
-            <h2>进入电子相框</h2>
+            <h2>欢迎回来</h2>
             <p class="login-subtitle">
-                使用管理员账号登录，先进入相框首页浏览当前展示内容。后台管理入口会保留在首页中，随时可继续整理照片。
+                登录你的账号，继续保存美好回忆。
             </p>
 
             {% with messages = get_flashed_messages() %}
@@ -470,7 +672,7 @@
             </form>
 
             <div class="login-note">
-                <strong>提示：</strong> 首次使用请联系管理员获取账号密码。登录成功后会先进入相框首页，右上角或移动端入口可继续进入后台。
+                <strong>提示：</strong> 默认管理员账号会在首次启动时自动创建，请查看文档了解更多信息。
             </div>
         </div>
     </div>
