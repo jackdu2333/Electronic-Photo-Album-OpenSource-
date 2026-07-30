@@ -37,6 +37,36 @@
     --app-radius-md: 12px;
     --app-radius-lg: 16px;
     --app-font: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', sans-serif;
+
+    /* --- Global Z-Index Token Hierarchy (Prevents Arms-Race & Overlap Chaos) --- */
+    --z-back: -1;
+    --z-base: 1;
+    --z-content: 10;
+    --z-controls: 100;
+    --z-hud-overlay: 200;
+    --z-switcher-hotspot: 400;
+    --z-switcher-menu: 500;
+    --z-modal-overlay: 1000;
+    --z-toast: 10000;
+
+    /* --- Layout Spacing & Typography Guardrails --- */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --font-tabular-nums: "tnum", "cv05", monospaced;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+    /* --- Liquid Glassmorphism & Lighting Tokens (Phase 2) --- */
+    --glass-surface: rgba(255, 255, 255, 0.08);
+    --glass-surface-dark: rgba(10, 14, 22, 0.68);
+    --glass-border-light: 1px solid rgba(255, 255, 255, 0.18);
+    --glass-border-subtle: 1px solid rgba(255, 255, 255, 0.08);
+    --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    --glass-blur: blur(24px) saturate(140%);
+    --shadow-diffuse: 0 24px 70px rgba(0, 0, 0, 0.38), 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
 /* --- Global Reset --- */

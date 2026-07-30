@@ -17,7 +17,10 @@
         { id: 'style13', displayOrder: 12, title: '瀑布流', desc: '多图瀑布墙展示', group: 'curation' },
         { id: 'style14', displayOrder: 13, title: '全景卷轴', desc: '横向叙事与长图浏览', group: 'curation' },
         { id: 'style15', displayOrder: 14, title: '拍立得墙', desc: '便签与翻转卡片交互', group: 'curation' },
-        { id: 'style16', displayOrder: 15, title: '艺术画廊', desc: '策展式展卡浏览', group: 'curation' }
+                { id: 'style16', displayOrder: 15, title: '艺术画廊', desc: '策展式展卡浏览', group: 'curation' },
+        { id: 'style17', displayOrder: 16, title: 'Hi-Fi 黑胶唱片', desc: '黑胶唱片封套与复古 VU 仪表盘', group: 'curation' },
+        { id: 'style18', displayOrder: 17, title: '空间折光光轨', desc: '3D 棱镜折光与环形时间光轨', group: 'curation' },
+        { id: 'style19', displayOrder: 18, title: '建筑折纸双平面', desc: '前后景深错位与建筑学留白', group: 'curation' }
     ];
 
     const GROUPS = [
@@ -115,7 +118,7 @@
                 position: fixed;
                 top: 14px;
                 right: 14px;
-                z-index: 999999;
+                z-index: var(--z-switcher-menu, 500);
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
                 opacity: 0;
                 transform: translate3d(14px, -8px, 0) scale(0.98);
@@ -384,7 +387,7 @@
                 position: fixed;
                 right: 16px;
                 bottom: 16px;
-                z-index: 999980;
+                z-index: var(--z-controls, 100);
                 display: flex;
                 gap: 10px;
             }

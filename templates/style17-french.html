@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Hi-Fi 黑胶唱片 - Vinyl Soundscape</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Space+Mono:wght@400;700&family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --z-controls: 100;
+            --vinyl-gold: #d4af37;
+            --vinyl-amber: #ffaa00;
+            --vinyl-dark: #0b0a09;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', 'Playfair Display', serif;
+            background-color: var(--vinyl-dark);
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(255, 170, 0, 0.05) 0%, transparent 45%),
+                linear-gradient(180deg, #14110e 0%, #090807 100%);
+            color: #e5dac9;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+
+        .vinyl-layout {
+            display: grid;
+            grid-template-columns: minmax(360px, 35vw) 1fr;
+            width: 100%;
+            max-width: 1560px;
+            height: 88vh;
+            gap: 40px;
+            align-items: center;
+        }
+
+        /* 左侧复古唱盘机控制台 */
+        .vinyl-console {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 32px;
+            background: linear-gradient(160deg, rgba(28, 24, 20, 0.85) 0%, rgba(16, 14, 12, 0.92) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.22);
+            border-radius: 28px;
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            position: relative;
+        }
+
+        /* 复古 VU 表头与辉光管时间 */
+        .vu-meter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed rgba(212, 175, 55, 0.2);
+        }
+
+        .vu-badge {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--vinyl-gold);
+        }
+
+        .nixie-time {
+            font-family: 'Space Mono', monospace;
+            font-size: clamp(52px, 5vw, 86px);
+            font-weight: 700;
+            color: var(--vinyl-amber);
+            text-shadow: 0 0 20px rgba(255, 170, 0, 0.5), 0 0 40px rgba(255, 170, 0, 0.2);
+            font-feature-settings: "tnum";
+            line-height: 0.95;
+            margin-top: 14px;
+        }
+
+        .nixie-date {
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            color: rgba(229, 218, 201, 0.65);
+            letter-spacing: 0.1em;
+            margin-top: 10px;
+        }
+
+        /* 旋转黑胶盘与唱针唱臂 (Turntable Disc) */
+        .turntable-deck {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .vinyl-disc {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: 
+                repeating-radial-gradient(
+                    circle at center,
+                    #111 0px, #111 2px,
+                    #222 3px, #111 4px
+                );
+            border: 4px solid #000;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255,255,255,0.1);
+            animation: vinylSpin 20s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        @keyframes vinylSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .vinyl-label {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #d4af37;
+            position: relative;
+        }
+
+        .vinyl-label img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        .vinyl-spindle {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #000;
+            position: absolute;
+            z-index: 5;
+        }
+
+        /* 右侧黑胶唱片封套主画框 */
+        .album-sleeve-stage {
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .album-jacket {
+            width: 100%;
+            height: 100%;
+            background: #181512;
+            border-radius: 24px;
+            position: relative;
+            box-shadow: 0 35px 90px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(212, 175, 55, 0.18);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .album-bg-blur {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: blur(32px) brightness(40%) saturate(1.2);
+            transform: scale(1.1);
+        }
+
+        .album-art-main {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            object-fit: contain;
+            padding: 24px;
+            z-index: 2;
+            filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5));
+        }
+
+        .vinyl-controls {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            z-index: var(--z-controls);
+            display: flex;
+            gap: 12px;
+        }
+
+        .vinyl-controls button {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            background: rgba(28, 24, 20, 0.85);
+            color: var(--vinyl-gold);
+            font-size: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            transition: all 0.25s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .vinyl-controls button:hover {
+            background: var(--vinyl-gold);
+            color: #000;
+            transform: scale(1.08);
+        }
+
+        @media (max-width: 900px) {
+            .vinyl-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            .turntable-deck { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="vinyl-layout">
+        <!-- 控制台面板 -->
+        <aside class="vinyl-console">
+            <div>
+                <div class="vu-meter-header">
+                    <span class="vu-badge">HI-FI SOUNDSCAPE • VOL 33</span>
+                    <span class="vu-badge" id="weather-temp">--°C ☀️</span>
+                </div>
+                <div class="nixie-time" id="clock-time">--:--</div>
+                <div class="nixie-date" id="clock-date">----.----.----</div>
+            </div>
+
+            <!-- 旋转黑胶唱片区 -->
+            <div class="turntable-deck">
+                <div class="vinyl-disc">
+                    <div class="vinyl-label">
+                        <img id="vinyl-label-img" src="" alt="label">
+                    </div>
+                    <div class="vinyl-spindle"></div>
+                </div>
+            </div>
+
+            <div id="chat-messages" style="font-size:13px; opacity:0.8; line-height:1.5;">
+                <div>♫ 采样来自记忆深处的旋律</div>
+            </div>
+        </aside>
+
+        <!-- 唱片封套大图 -->
+        <main class="album-sleeve-stage">
+            <div class="album-jacket" id="slideshow-container">
+                <img id="bg-img" class="album-bg-blur" src="" alt="bg">
+                <img id="main-img" class="album-art-main" src="" alt="photo">
+            </div>
+
+            <div class="vinyl-controls">
+                <button onclick="prevImage()">❮</button>
+                <button onclick="nextImage()">❯</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/unified-style-menu.js"></script>
+    <script>
+        let photos = [];
+        let currentIndex = 0;
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-time').textContent = 
+                String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const weekdays = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+            document.getElementById('clock-date').textContent = 
+                `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} [${weekdays[now.getDay()]}]`;
+        }
+
+        async function fetchPhotos() {
+            try {
+                const res = await fetch('/api/photos');
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    photos = data;
+                    showPhoto(0);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function showPhoto(index) {
+            if (!photos.length) return;
+            currentIndex = (index + photos.length) % photos.length;
+            const p = photos[currentIndex];
+            const url = p.display_url || `/api/photos/${p.id}/image`;
+            document.getElementById('bg-img').src = url;
+            document.getElementById('main-img').src = url;
+            document.getElementById('vinyl-label-img').src = url;
+        }
+
+        function nextImage() { showPhoto(currentIndex + 1); }
+        function prevImage() { showPhoto(currentIndex - 1); }
+
+        setInterval(updateClock, 1000);
+        setInterval(nextImage, 8000);
+        updateClock();
+        fetchPhotos();
+    </script>
+</body>
+</html>

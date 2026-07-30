@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>空间折光光轨 - Spatial Prism & Orbit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --z-controls: 100;
+            --prism-cyan: #00f2fe;
+            --prism-blue: #4facfe;
+            --prism-purple: #7f00ff;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans SC', sans-serif;
+            background: #06070a;
+            color: #ffffff;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1200px;
+        }
+
+        /* 3D 棱镜光轨舞台 */
+        .prism-stage {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        /* 环形时间光轨 (Orbital Clock Ring) */
+        .orbital-clock-container {
+            position: absolute;
+            top: 48px;
+            left: 48px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 20px 28px;
+            border-radius: 30px;
+            background: rgba(15, 20, 32, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(30px) saturate(150%);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        }
+
+        .orbital-time {
+            font-size: clamp(48px, 5vw, 76px);
+            font-weight: 300;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #ffffff 0%, var(--prism-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-feature-settings: "tnum";
+            line-height: 0.95;
+        }
+
+        .orbital-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .orbital-date {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.75);
+            letter-spacing: 0.06em;
+        }
+
+        .orbital-weather {
+            font-size: 13px;
+            color: var(--prism-cyan);
+            font-weight: 600;
+        }
+
+        /* 中央 3D 浮动主相框 */
+        .prism-photo-card {
+            width: 82vw;
+            height: 78vh;
+            max-width: 1400px;
+            position: relative;
+            border-radius: 36px;
+            overflow: hidden;
+            background: rgba(12, 16, 26, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 
+                0 40px 100px rgba(0, 0, 0, 0.6),
+                0 0 80px rgba(79, 172, 254, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(24px);
+            transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+
+        .prism-photo-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: blur(36px) brightness(60%) saturate(1.4);
+            transform: scale(1.12);
+        }
+
+        .prism-photo-main {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            object-fit: contain;
+            padding: 24px;
+            z-index: 2;
+            filter: drop-shadow(0 30px 60px rgba(0,0,0,0.5));
+        }
+
+        .prism-controls {
+            position: absolute;
+            bottom: 48px;
+            right: 48px;
+            z-index: var(--z-controls);
+            display: flex;
+            gap: 14px;
+        }
+
+        .prism-controls button {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 22px;
+            cursor: pointer;
+            backdrop-filter: blur(20px) saturate(140%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 16px 40px rgba(0,0,0,0.3);
+            transition: all 0.25s ease;
+        }
+
+        .prism-controls button:hover {
+            background: #ffffff;
+            color: #06070a;
+            transform: scale(1.1);
+            box-shadow: 0 20px 50px rgba(79, 172, 254, 0.4);
+        }
+
+        @media (max-width: 900px) {
+            .orbital-clock-container { top: 20px; left: 20px; padding: 14px 20px; }
+            .prism-photo-card { width: 94vw; height: 75vh; }
+        }
+    </style>
+</head>
+<body>
+    <div class="prism-stage">
+        <!-- 环形时间光轨挂件 -->
+        <div class="orbital-clock-container">
+            <div class="orbital-time" id="clock-time">--:--</div>
+            <div class="orbital-meta">
+                <div class="orbital-date" id="clock-date">----年--月--日</div>
+                <div class="orbital-weather" id="weather-desc">晴朗 • --°C</div>
+            </div>
+        </div>
+
+        <!-- 3D 浮动折光主相框 -->
+        <main class="prism-photo-card" id="slideshow-container">
+            <img id="bg-img" class="prism-photo-bg" src="" alt="bg">
+            <img id="main-img" class="prism-photo-main" src="" alt="photo">
+        </main>
+
+        <div class="prism-controls">
+            <button onclick="prevImage()">❮</button>
+            <button onclick="nextImage()">❯</button>
+        </div>
+    </div>
+
+    <script src="/static/unified-style-menu.js"></script>
+    <script>
+        let photos = [];
+        let currentIndex = 0;
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-time').textContent = 
+                String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+            document.getElementById('clock-date').textContent = 
+                `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+        }
+
+        async function fetchPhotos() {
+            try {
+                const res = await fetch('/api/photos');
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    photos = data;
+                    showPhoto(0);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function showPhoto(index) {
+            if (!photos.length) return;
+            currentIndex = (index + photos.length) % photos.length;
+            const p = photos[currentIndex];
+            const url = p.display_url || `/api/photos/${p.id}/image`;
+            document.getElementById('bg-img').src = url;
+            document.getElementById('main-img').src = url;
+        }
+
+        function nextImage() { showPhoto(currentIndex + 1); }
+        function prevImage() { showPhoto(currentIndex - 1); }
+
+        // 微 3D 视差效果
+        const card = document.querySelector('.prism-photo-card');
+        window.addEventListener('mousemove', (e) => {
+            if (!card) return;
+            const x = (window.innerWidth / 2 - e.clientX) / 40;
+            const y = (window.innerHeight / 2 - e.clientY) / 40;
+            card.style.transform = `rotateY(${-x}deg) rotateX(${y}deg)`;
+        });
+
+        setInterval(updateClock, 1000);
+        setInterval(nextImage, 8000);
+        updateClock();
+        fetchPhotos();
+    </script>
+</body>
+</html>

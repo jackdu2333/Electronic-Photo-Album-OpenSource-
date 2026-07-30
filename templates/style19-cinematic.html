@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>建筑折纸双平面 - Architectural Dual-Plane</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;1,6..96,400&family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --z-controls: 100;
+            --arch-bg: #eae8e1;
+            --arch-wall: #f4f2ec;
+            --arch-ink: #1c1b18;
+            --arch-subtle: #7a766e;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', 'Bodoni Moda', serif;
+            background-color: var(--arch-bg);
+            color: var(--arch-ink);
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        /* 建筑折纸双平面舞台 */
+        .arch-origami-stage {
+            width: 100%;
+            max-width: 1560px;
+            height: 88vh;
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(340px, 32vw) 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+
+        /* 后景：建筑墙面刻印 */
+        .arch-back-wall {
+            height: 100%;
+            background: var(--arch-wall);
+            border: 1px solid rgba(28, 27, 24, 0.12);
+            border-radius: 28px;
+            padding: 48px 36px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.05),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+            position: relative;
+        }
+
+        .arch-grid-mark {
+            font-family: 'Bodoni Moda', serif;
+            font-size: 12px;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--arch-subtle);
+            margin-bottom: 16px;
+        }
+
+        .arch-time {
+            font-family: 'Bodoni Moda', serif;
+            font-size: clamp(56px, 6vw, 100px);
+            font-weight: 600;
+            line-height: 0.92;
+            letter-spacing: -0.04em;
+            font-feature-settings: "tnum";
+            color: var(--arch-ink);
+        }
+
+        .arch-date {
+            font-size: 15px;
+            color: var(--arch-subtle);
+            margin-top: 16px;
+            letter-spacing: 0.1em;
+        }
+
+        .arch-weather {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(28, 27, 24, 0.1);
+        }
+
+        .arch-weather-temp {
+            font-family: 'Bodoni Moda', serif;
+            font-size: 26px;
+            font-weight: 600;
+        }
+
+        .arch-messages {
+            margin-top: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--arch-subtle);
+            border-left: 2px solid var(--arch-ink);
+            padding-left: 14px;
+        }
+
+        /* 前景：悬浮立体主图平面 */
+        .arch-front-plane {
+            height: 100%;
+            position: relative;
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 
+                24px 35px 80px rgba(28, 27, 24, 0.14),
+                0 4px 16px rgba(28, 27, 24, 0.06);
+            border: 1px solid rgba(28, 27, 24, 0.08);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateZ(20px);
+        }
+
+        .arch-img-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: blur(30px) opacity(0.35);
+        }
+
+        .arch-img-main {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            object-fit: contain;
+            padding: 32px;
+            z-index: 2;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.12));
+        }
+
+        .arch-controls {
+            position: absolute;
+            bottom: 36px;
+            right: 44px;
+            z-index: var(--z-controls);
+            display: flex;
+            gap: 12px;
+        }
+
+        .arch-controls button {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            border: 1px solid rgba(28, 27, 24, 0.16);
+            background: rgba(244, 242, 236, 0.9);
+            color: var(--arch-ink);
+            font-size: 18px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        .arch-controls button:hover {
+            background: var(--arch-ink);
+            color: #ffffff;
+            transform: scale(1.08);
+        }
+
+        @media (max-width: 900px) {
+            .arch-origami-stage { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            .arch-back-wall { padding: 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="arch-origami-stage">
+        <!-- 后景墙面 -->
+        <aside class="arch-back-wall">
+            <div>
+                <div class="arch-grid-mark">ARCHITECTURAL FRAME • NO. 19</div>
+                <div class="arch-time" id="clock-time">--:--</div>
+                <div class="arch-date" id="clock-date">----年--月--日</div>
+
+                <div class="arch-weather" id="weather-widget">
+                    <span id="weather-icon" style="font-size:24px;">☀️</span>
+                    <div>
+                        <span class="arch-weather-temp" id="weather-temp">--°C</span>
+                        <span id="weather-desc" style="font-size:13px; margin-left:6px;">晴朗</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arch-messages" id="chat-messages">
+                <div>前后景深折叠，留白与建筑美学</div>
+            </div>
+        </aside>
+
+        <!-- 前景悬浮主图 -->
+        <main class="arch-front-plane" id="slideshow-container">
+            <img id="bg-img" class="arch-img-bg" src="" alt="bg">
+            <img id="main-img" class="arch-img-main" src="" alt="photo">
+        </main>
+
+        <div class="arch-controls">
+            <button onclick="prevImage()">❮</button>
+            <button onclick="nextImage()">❯</button>
+        </div>
+    </div>
+
+    <script src="/static/unified-style-menu.js"></script>
+    <script>
+        let photos = [];
+        let currentIndex = 0;
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-time').textContent = 
+                String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+            document.getElementById('clock-date').textContent = 
+                `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+        }
+
+        async function fetchPhotos() {
+            try {
+                const res = await fetch('/api/photos');
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    photos = data;
+                    showPhoto(0);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function showPhoto(index) {
+            if (!photos.length) return;
+            currentIndex = (index + photos.length) % photos.length;
+            const p = photos[currentIndex];
+            const url = p.display_url || `/api/photos/${p.id}/image`;
+            document.getElementById('bg-img').src = url;
+            document.getElementById('main-img').src = url;
+        }
+
+        function nextImage() { showPhoto(currentIndex + 1); }
+        function prevImage() { showPhoto(currentIndex - 1); }
+
+        setInterval(updateClock, 1000);
+        setInterval(nextImage, 8000);
+        updateClock();
+        fetchPhotos();
+    </script>
+</body>
+</html>

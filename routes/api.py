@@ -400,7 +400,7 @@ def set_theme():
     valid_themes = [
         'style1', 'style2', 'style3', 'style4', 'style6',
         'style7', 'style8', 'style9', 'style10', 'style11', 'style12',
-        'style13', 'style14', 'style15', 'style16', 'default'
+        'style13', 'style14', 'style15', 'style16', 'style17', 'style18', 'style19', 'default'
     ]
     if theme not in valid_themes:
         return jsonify({'error': 'Invalid theme', 'valid_themes': valid_themes}), 400
@@ -438,6 +438,9 @@ def get_theme():
         {'id': 'style14', 'name': '全景卷轴', 'template': 'style14-panoramic.html', 'display_order': 13, 'group': 'curation'},
         {'id': 'style15', 'name': '拍立得墙', 'template': 'style15-polaroid.html', 'display_order': 14, 'group': 'curation'},
         {'id': 'style16', 'name': '艺术画廊', 'template': 'style16-gallery.html', 'display_order': 15, 'group': 'curation'},
+        {'id': 'style17', 'name': 'Hi-Fi 黑胶唱片', 'template': 'style17-french.html', 'display_order': 16, 'group': 'curation'},
+        {'id': 'style18', 'name': '空间折光光轨', 'template': 'style18-bauhaus.html', 'display_order': 17, 'group': 'curation'},
+        {'id': 'style19', 'name': '建筑折纸双平面', 'template': 'style19-cinematic.html', 'display_order': 18, 'group': 'curation'},
     ]
     
     return jsonify({

@@ -84,7 +84,7 @@
             height: 100%;
             padding: 0;
             padding-left: clamp(24px, 5vw, 60px);
-            padding-top: 15vh;
+            padding-top: clamp(20px, 5vh, 60px);
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -135,22 +135,32 @@
             font-size: 18px;
             font-weight: 500;
             color: rgba(255, 255, 255, 0.82);
-            letter-spacing: 0.08em;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            opacity: 0.88;
             text-transform: uppercase;
             margin-bottom: 0;
         }
 
         .time {
-            font-size: clamp(48px, 10vw, 200px); /* 更平滑的响应式缩放：降低最小值，提高 vw 权重，增加最大值 */
+            font-size: clamp(36px, 4.8vw, 96px);
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap; /* 更平滑的响应式缩放：降低最小值，提高 vw 权重，增加最大值 */
             font-weight: 300;
+            font-feature-settings: var(--font-tabular-nums, "tnum");
             color: #fff;
             line-height: 0.94;
             letter-spacing: -0.04em;
-            text-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+            text-shadow: 0 12px 48px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
         }
 
         .date {
-            font-size: clamp(14px, 2.2vw, 36px); /* 更平滑的响应式缩放 */
+            font-size: clamp(12px, 1.25vw, 20px);
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap; /* 更平滑的响应式缩放 */
             font-weight: 500;
             color: rgba(255, 255, 255, 0.74);
             letter-spacing: 0.04em;
@@ -167,16 +177,15 @@
         .weather-widget {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 16px;
             margin-top: 20px;
-            /* Reduced margin */
-            padding: 16px 18px;
-            padding-left: 20px;
-            border-left: 4px solid #55b6ff;
-            background: rgba(255, 255, 255, 0.045);
-            border-radius: 0 18px 18px 0;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+            border-left: 4px solid #0a84ff;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 18px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 12px 36px rgba(0, 0, 0, 0.20);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px) saturate(135%);
         }
 
         .weather-icon {
@@ -485,22 +494,29 @@
         }
 
         #controls button {
-            background: rgba(255, 255, 255, 0.16);
-            border: 1px solid rgba(255, 255, 255, 0.24);
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.22);
             color: white;
-            font-size: 24px;
+            font-size: 22px;
             padding: 0;
             cursor: pointer;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all 0.3s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             outline: none;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+            backdrop-filter: blur(18px) saturate(130%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 14px 35px rgba(0, 0, 0, 0.24);
+        }
+
+        #controls button:hover {
+            background: rgba(255, 255, 255, 0.92);
+            color: #111;
+            transform: scale(1.08);
+            box-shadow: 0 16px 40px rgba(255, 255, 255, 0.3);
         }
 
         #controls button:hover {
@@ -516,7 +532,7 @@
             left: 0;
             width: 90px;
             height: 90px;
-            z-index: 420;
+            z-index: var(--z-switcher-hotspot, 400);
             background: transparent;
         }
 
@@ -524,7 +540,7 @@
             position: fixed;
             top: 18px;
             left: 18px;
-            z-index: 430;
+            z-index: var(--z-switcher-menu, 500);
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -617,6 +633,20 @@
             color: rgba(255, 255, 255, 0.86);
         }
 
+        
+        /* Style-3: Gallery Label refinement */
+        html[data-home-style="style-3"] .info-panel {
+            background: rgba(14, 16, 22, 0.72);
+            border-right: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(28px) saturate(140%);
+        }
+        html[data-home-style="style-3"] .greeting {
+            font-family: 'Georgia', 'Cinzel', serif;
+            letter-spacing: 0.16em;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.90);
+        }
+
         /* --- Home Style 2: Immersive --- */
         html[data-home-style="style-2"] body {
             color-scheme: dark;
@@ -701,7 +731,9 @@
             font-size: 18px;
             margin-bottom: 0;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            opacity: 0.88;
             color: rgba(255, 255, 255, 0.78);
         }
 
@@ -889,6 +921,35 @@
             color: #161616;
         }
 
+        
+        /* --- Style 3 Card Fit & Bounds --- */
+        html[data-home-style="style-3"] .info-panel {
+            width: clamp(340px, 28vw, 440px);
+            box-sizing: border-box;
+            overflow: visible;
+            padding-left: 40px;
+            padding-right: 28px;
+        }
+        html[data-home-style="style-3"] .greeting {
+            font-size: clamp(14px, 1.3vw, 18px);
+            margin-bottom: 8px;
+        }
+        html[data-home-style="style-3"] .time {
+            font-size: clamp(60px, 6.2vw, 115px);
+            line-height: 0.94;
+            letter-spacing: -0.04em;
+            max-width: 100%;
+            overflow: visible;
+            white-space: nowrap;
+        }
+        html[data-home-style="style-3"] .date {
+            font-size: clamp(14px, 1.4vw, 22px);
+            white-space: nowrap;
+            overflow: visible;
+            opacity: 0.85;
+            margin-top: 10px;
+        }
+
         html[data-home-style="style-3"] .photo-panel {
             width: 72%;
             padding: 42px 42px 42px 10px;
@@ -969,13 +1030,37 @@
                 radial-gradient(circle at top, rgba(255, 232, 208, 0.18), transparent 28%),
                 linear-gradient(180deg, rgba(8, 10, 15, 0.26), rgba(6, 8, 12, 0.72)),
                 #06080c;
-            --style4-card-width: clamp(300px, 21vw, 360px);
+            --style4-card-width: clamp(340px, 26vw, 440px);
             --style4-safe-gap: clamp(28px, 3vw, 54px);
             --style4-card-bottom: clamp(28px, 4vh, 60px);
             --style4-overlay-clearance: calc(var(--style4-card-width) + var(--style4-safe-gap) + 26px);
             --style4-card-color-a: 102, 84, 42;
             --style4-card-color-b: 238, 204, 128;
             --style4-card-color-c: 44, 86, 112;
+        }
+
+        
+        /* --- Style 4 Card Fit & Bounds --- */
+        html[data-home-style="style-4"] .info-panel {
+            box-sizing: border-box;
+            width: var(--style4-card-width);
+            max-width: calc(100vw - 40px);
+            padding: 24px 28px;
+            overflow: visible;
+        }
+        html[data-home-style="style-4"] .time {
+            font-size: clamp(44px, 4.2vw, 76px);
+            line-height: 1.0;
+            max-width: 100%;
+            overflow: visible;
+            white-space: nowrap;
+        }
+        html[data-home-style="style-4"] .date {
+            font-size: clamp(13px, 1.25vw, 18px);
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+            opacity: 0.85;
         }
 
         html[data-home-style="style-4"] .photo-panel {
@@ -1055,6 +1140,7 @@
             line-height: 0.92;
             letter-spacing: -0.04em;
             font-weight: 300;
+            font-feature-settings: var(--font-tabular-nums, "tnum");
             color: rgba(255, 255, 255, 0.97);
         }
 
@@ -1220,6 +1306,7 @@
             line-height: 0.92;
             letter-spacing: -0.06em;
             font-weight: 300;
+            font-feature-settings: var(--font-tabular-nums, "tnum");
             color: #243038;
         }
 
@@ -2216,6 +2303,18 @@
         <button class="style-option" data-style="theme-style16">
             艺术画廊
             <span>独立主题页。</span>
+        </button>
+        <button class="style-option" data-style="theme-style17">
+            Hi-Fi 黑胶唱片
+            <span>黑胶唱片封套与复古 VU 仪表盘。</span>
+        </button>
+        <button class="style-option" data-style="theme-style18">
+            空间折光光轨
+            <span>3D 棱镜折光与环形时间光轨。</span>
+        </button>
+        <button class="style-option" data-style="theme-style19">
+            建筑折纸双平面
+            <span>前后景深错位与建筑学留白。</span>
         </button>
     </div>
 

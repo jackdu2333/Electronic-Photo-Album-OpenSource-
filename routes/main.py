@@ -56,7 +56,10 @@ def index():
         'style13': 'style13-waterfall.html',
         'style14': 'style14-panoramic.html',
         'style15': 'style15-polaroid.html',
-        'style16': 'style16-gallery.html',
+                'style16': 'style16-gallery.html',
+        'style17': 'style17-french.html',
+        'style18': 'style18-bauhaus.html',
+        'style19': 'style19-cinematic.html',
     }
 
     forced_home_style = None
