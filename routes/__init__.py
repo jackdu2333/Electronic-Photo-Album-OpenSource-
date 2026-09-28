@@ -5,13 +5,14 @@
 from flask import Flask
 
 from extensions import csrf
+
 from .api import api_bp
-from .upload import upload_bp
-from .messages import messages_bp
-from .main import main_bp
 from .health import health_bp
-from .recommendation import recommendation_bp
+from .main import main_bp
+from .messages import messages_bp
 from .photos_v3 import photos_v3_bp
+from .recommendation import recommendation_bp
+from .upload import upload_bp
 
 __all__ = [
     'api_bp',

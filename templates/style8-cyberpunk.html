@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>数字相册 - 样式 8：赛博朋克</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -17,7 +17,7 @@
             min-height: 100vh;
             min-height: 100dvh;
             margin: 0;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Orbitron', 'Noto Sans SC', monospace;
             background: #0A0E27;
             overflow: hidden;
             position: relative;
@@ -50,14 +50,14 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(0, 240, 255, 0.6), 
-                rgba(255, 46, 147, 0.6), 
+            /* P1-6：扫描线降级——1px 单色微光，示波器呼吸而非夜店扫灯 */
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(0, 240, 255, 0.35),
                 transparent);
             animation: scanDown 6s linear infinite;
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
             will-change: transform;
             mix-blend-mode: screen;
         }
@@ -144,11 +144,9 @@
             left: 50px;
             font-size: clamp(64px, 4.2vw, 124px);
             font-weight: 900;
-            color: #FF2E93;
-            text-shadow: 
-                0 0 15px rgba(255, 46, 147, 0.9),
-                0 0 30px rgba(255, 46, 147, 0.6),
-                0 0 45px rgba(255, 46, 147, 0.4);
+            /* P1-6：主色收敛为单色青，三层霓虹减为一层微光 */
+            color: #00F0FF;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.55);
             letter-spacing: 6px;
         }
 
@@ -181,8 +179,10 @@
             position: absolute;
             width: 80px;
             height: 80px;
-            border: 3px solid #00F0FF;
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+            /* P1-6：从霓虹管改仪器面板——1px 细线 + 半透明填充 */
+            border: 1px solid rgba(0, 240, 255, 0.7);
+            background: rgba(0, 240, 255, 0.04);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
         }
 
         .hud-tl {
@@ -368,7 +368,24 @@
                 font-size: 11px;
             }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #007AFF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 <body>
     <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: var(--z-switcher-menu, 500); display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">

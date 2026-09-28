@@ -6,7 +6,6 @@
 """
 
 import os
-import sys
 from typing import Dict, Optional
 
 

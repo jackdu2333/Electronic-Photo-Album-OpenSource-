@@ -248,6 +248,8 @@ function startFlaskServer(port) {
       FLASK_DEBUG: 'false',
       FLASK_RUN_PORT: String(port),
       PORT: String(port),
+      // 仅本机访问，避免服务暴露到局域网
+      FLASK_HOST: '127.0.0.1',
       SECRET_KEY: config.secret_key,  // 稳定的 SECRET_KEY
       ADMIN_USERS: config.auth,
     };

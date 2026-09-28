@@ -959,6 +959,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 imageDiv.className = 'gallery-image';
                 imageDiv.style.backgroundImage = `url("${url}")`;
                 imageDiv.title = `${filename}${dateInfo}`;
+                // P1-11：预加载探测，加载失败给出占位背景而不是无提示灰块
+                const probe = new Image();
+                probe.onerror = () => imageDiv.classList.add('gallery-image-error');
+                probe.src = url;
 
                 const overlay = document.createElement('div');
                 overlay.className = 'gallery-overlay';

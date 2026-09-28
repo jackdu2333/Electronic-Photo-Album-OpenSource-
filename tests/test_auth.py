@@ -2,7 +2,6 @@
 认证模块测试
 """
 import os
-import pytest
 import sys
 
 # 添加项目根目录到路径
@@ -18,7 +17,7 @@ class TestAuth:
 
     def test_import_auth_module(self):
         """认证模块可导入"""
-        from auth import hash_password, verify_password, is_password_strong
+        from auth import hash_password, is_password_strong, verify_password
         assert hash_password is not None
         assert verify_password is not None
         assert is_password_strong is not None
@@ -53,7 +52,7 @@ class TestAuth:
         password = 'CorrectPassword456!'
         pwd_hash = hash_password(password)
 
-        assert verify_password(password, pwd_hash) == True
+        assert verify_password(password, pwd_hash)
 
     def test_verify_wrong_password(self):
         """验证错误密码失败"""
@@ -62,7 +61,7 @@ class TestAuth:
         password = 'CorrectPassword456!'
         pwd_hash = hash_password(password)
 
-        assert verify_password('WrongPassword', pwd_hash) == False
+        assert not verify_password('WrongPassword', pwd_hash)
 
     def test_password_strength_requirements(self):
         """密码强度要求"""
@@ -102,7 +101,7 @@ class TestAuth:
         from auth import is_password_strong
 
         is_strong, msg = is_password_strong('')
-        assert is_strong == False
+        assert not is_strong
         assert '长度' in msg
 
     def test_unicode_password(self):
@@ -113,12 +112,13 @@ class TestAuth:
         password = '密码 Password123!'
         pwd_hash = hash_password(password)
 
-        assert verify_password(password, pwd_hash) == True
-        assert verify_password('Wrong', pwd_hash) == False
+        assert verify_password(password, pwd_hash)
+        assert not verify_password('Wrong', pwd_hash)
 
     def test_static_subpaths_are_excluded_from_auth(self):
         """静态资源子路径不应被认证拦截"""
         from flask import Flask
+
         from auth import EnhancedAuth
 
         app = Flask(__name__)

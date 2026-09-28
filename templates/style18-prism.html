@@ -13,7 +13,6 @@
             --z-controls: 100;
             --prism-cyan: #00f2fe;
             --prism-blue: #4facfe;
-            --prism-purple: #7f00ff;
         }
 
         body {
@@ -63,9 +62,7 @@
             font-size: clamp(48px, 5vw, 76px);
             font-weight: 300;
             letter-spacing: -0.04em;
-            background: linear-gradient(135deg, #ffffff 0%, var(--prism-cyan) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ffffff;
             font-feature-settings: "tnum";
             line-height: 0.95;
         }
@@ -105,6 +102,21 @@
             backdrop-filter: blur(24px);
             transform-style: preserve-3d;
             transition: transform 0.4s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+
+        /* P1-11：折光兑现——一道 cyan→blue 光带每 60s 缓慢扫过相框 */
+        .prism-photo-card::after {
+            content: "";
+            position: absolute;
+            inset: -60%;
+            z-index: 5;
+            pointer-events: none;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 242, 254, 0.10) 30deg, rgba(79, 172, 254, 0.12) 60deg, transparent 110deg);
+            animation: prismOrbit 60s linear infinite;
+        }
+
+        @keyframes prismOrbit {
+            to { transform: rotate(360deg); }
         }
 
         .prism-photo-bg {
@@ -159,7 +171,24 @@
             .orbital-clock-container { top: 20px; left: 20px; padding: 14px 20px; }
             .prism-photo-card { width: 94vw; height: 75vh; }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #007AFF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 <body>
     <div class="prism-stage">
@@ -179,8 +208,8 @@
         </main>
 
         <div class="prism-controls">
-            <button onclick="prevImage()">❮</button>
-            <button onclick="nextImage()">❯</button>
+            <button onclick="prevImage()" aria-label="上一张">❮</button>
+            <button onclick="nextImage()" aria-label="下一张">❯</button>
         </div>
     </div>
 
@@ -209,13 +238,25 @@
             } catch (e) { console.error(e); }
         }
 
+        let photoFailStreak = 0; // 连续加载失败计数，避免全部失败时无限跳片
+
         function showPhoto(index) {
             if (!photos.length) return;
             currentIndex = (index + photos.length) % photos.length;
             const p = photos[currentIndex];
             const url = p.display_url || `/api/photos/${p.id}/image`;
+            const mainImg = document.getElementById('main-img');
+            // P1-11：加载失败自动跳下一张，连续失败超过相册数量则停下
+            mainImg.onload = function () { photoFailStreak = 0; };
+            mainImg.onerror = function () {
+                mainImg.onerror = null;
+                photoFailStreak += 1;
+                if (photoFailStreak < photos.length) {
+                    showPhoto(currentIndex + 1);
+                }
+            };
+            mainImg.src = url;
             document.getElementById('bg-img').src = url;
-            document.getElementById('main-img').src = url;
         }
 
         function nextImage() { showPhoto(currentIndex + 1); }
@@ -235,5 +276,6 @@
         updateClock();
         fetchPhotos();
     </script>
+    <script src="/static/weather-widget.js"></script>
 </body>
 </html>

@@ -10,25 +10,20 @@ PhotoMetadataService（JSON 元数据兼容），对上层提供统一的照片 
 - 推荐引擎继续使用 get_photo_index() 获取标准格式
 - 旧接口保持兼容，底层切换到新服务
 """
-import os
-import hashlib
 import logging
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from config import config
-from services.database import PhotoDAO, init_database
+from services.database import PhotoDAO
 from services.metadata import PhotoMetadataService
 from services.photo_source import (
-    PhotoSourceRegistry,
-    PhotoSource,
     DesktopFolderPhotoSource,
     ImportedCopyPhotoSource,
+    PhotoSourceRegistry,
     get_photo_source_registry,
     set_photo_source_registry,
-    _generate_photo_id,
 )
-from services.image import ImageValidator
 
 logger = logging.getLogger(__name__)
 

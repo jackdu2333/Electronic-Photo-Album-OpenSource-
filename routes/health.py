@@ -2,14 +2,15 @@
 健康检查路由模块
 提供 Kubernetes 兼容的健康检查端点
 """
+import logging
 import os
 import shutil
-import logging
 from datetime import datetime
-from flask import Blueprint, jsonify, current_app
 
-from services.database import get_db_connection, DB_FILE
-from services.photo_index import get_photo_index, PhotoIndexService
+from flask import Blueprint, current_app, jsonify
+
+from services.database import get_db_connection
+from services.photo_index import PhotoIndexService
 
 logger = logging.getLogger(__name__)
 

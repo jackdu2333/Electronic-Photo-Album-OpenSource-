@@ -71,10 +71,37 @@
 
         .vu-badge {
             font-family: 'Space Mono', monospace;
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: 0.2em;
             text-transform: uppercase;
             color: var(--vinyl-gold);
+        }
+
+        /* VU 电平条：微幅摆动，让 Hi-Fi 头活起来（原评审：不动的 VU 就是塑料模型） */
+        .vu-levels {
+            display: inline-flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 14px;
+            margin-right: 10px;
+        }
+
+        .vu-levels i {
+            width: 3px;
+            height: 100%;
+            background: var(--vinyl-amber);
+            border-radius: 1px;
+            transform-origin: bottom;
+            animation: vuDance 1.8s ease-in-out infinite;
+        }
+
+        .vu-levels i:nth-child(2) { animation-duration: 1.3s; animation-delay: 0.2s; }
+        .vu-levels i:nth-child(3) { animation-duration: 2.1s; animation-delay: 0.45s; }
+        .vu-levels i:nth-child(4) { animation-duration: 1.6s; animation-delay: 0.7s; }
+
+        @keyframes vuDance {
+            0%, 100% { transform: scaleY(0.35); opacity: 0.65; }
+            50% { transform: scaleY(1); opacity: 1; }
         }
 
         .nixie-time {
@@ -228,7 +255,24 @@
             .vinyl-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
             .turntable-deck { display: none; }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #007AFF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 <body>
     <div class="vinyl-layout">
@@ -236,6 +280,7 @@
         <aside class="vinyl-console">
             <div>
                 <div class="vu-meter-header">
+                    <span class="vu-levels" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
                     <span class="vu-badge">HI-FI SOUNDSCAPE • VOL 33</span>
                     <span class="vu-badge" id="weather-temp">--°C ☀️</span>
                 </div>
@@ -266,8 +311,8 @@
             </div>
 
             <div class="vinyl-controls">
-                <button onclick="prevImage()">❮</button>
-                <button onclick="nextImage()">❯</button>
+                <button onclick="prevImage()" aria-label="上一张">❮</button>
+                <button onclick="nextImage()" aria-label="下一张">❯</button>
             </div>
         </main>
     </div>
@@ -297,13 +342,25 @@
             } catch (e) { console.error(e); }
         }
 
+        let photoFailStreak = 0; // 连续加载失败计数，避免全部失败时无限跳片
+
         function showPhoto(index) {
             if (!photos.length) return;
             currentIndex = (index + photos.length) % photos.length;
             const p = photos[currentIndex];
             const url = p.display_url || `/api/photos/${p.id}/image`;
+            const mainImg = document.getElementById('main-img');
+            // P1-11：加载失败自动跳下一张，连续失败超过相册数量则停下
+            mainImg.onload = function () { photoFailStreak = 0; };
+            mainImg.onerror = function () {
+                mainImg.onerror = null;
+                photoFailStreak += 1;
+                if (photoFailStreak < photos.length) {
+                    showPhoto(currentIndex + 1);
+                }
+            };
+            mainImg.src = url;
             document.getElementById('bg-img').src = url;
-            document.getElementById('main-img').src = url;
             document.getElementById('vinyl-label-img').src = url;
         }
 
@@ -315,5 +372,6 @@
         updateClock();
         fetchPhotos();
     </script>
+    <script src="/static/weather-widget.js"></script>
 </body>
 </html>

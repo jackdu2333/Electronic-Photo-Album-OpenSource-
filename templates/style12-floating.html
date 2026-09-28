@@ -12,7 +12,8 @@
         }
 
         body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            /* P1-10：2018 三段蓝渐变改画廊射灯——纯深灰 + 顶部一道极淡环境光 */
+            background: radial-gradient(120% 60% at 50% 0%, rgba(255, 244, 224, 0.06), transparent 60%), #101012;
             min-height: 100vh;
             min-height: 100dvh;
             display: flex;
@@ -74,7 +75,9 @@
             border: 1px solid rgba(255, 255, 255, 0.16);
             color: rgba(244, 247, 255, 0.92);
             font-size: clamp(13px, 0.9vw, 16px);
-            letter-spacing: 0.06em;
+            letter-spacing: 0.12em;
+            font-variant-numeric: tabular-nums;
+            text-transform: uppercase;
             box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
         }
 
@@ -225,7 +228,24 @@
                 border-width: 15px;
             }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #007AFF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 <body>
     <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: var(--z-switcher-menu, 500); display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
@@ -288,7 +308,19 @@
 
             fetchMainPhoto();
             setInterval(fetchMainPhoto, PHOTO_REFRESH_MS);
-            
+
+            // P1-10：补上极简时钟 chip（此前该风格连时间都没有）；右下角——左下已被 meta chip 占用
+            const clockChip = document.createElement('div');
+            clockChip.style.cssText = 'position:fixed;right:24px;bottom:22px;z-index:30;padding:10px 16px;border-radius:999px;background:rgba(17,22,40,0.58);border:1px solid rgba(255,255,255,0.16);color:rgba(244,247,255,0.92);font-size:13px;letter-spacing:0.12em;font-variant-numeric:tabular-nums;';
+            clockChip.setAttribute('aria-hidden', 'true');
+            document.body.appendChild(clockChip);
+            const tick = () => {
+                const now = new Date();
+                clockChip.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            };
+            tick();
+            setInterval(tick, 1000);
+
             // 添加鼠标移动视差效果（使用 rAF 节流）
             let parallaxRafId = null;
             frame.addEventListener('mousemove', (e) => {
@@ -301,8 +333,8 @@
                     const centerX = rect.width / 2;
                     const centerY = rect.height / 2;
 
-                    const rotateX = (y - centerY) / 20;
-                    const rotateY = (centerX - x) / 20;
+                    const rotateX = (y - centerY) / 12;
+                    const rotateY = (centerX - x) / 12;
 
                     frame.style.transform = `translateY(-15px) scale(1.02) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
                     parallaxRafId = null;

@@ -1,14 +1,14 @@
 """
 推荐算法测试 - V3.0 Memory Curator
 """
-import os
-import pytest
-import sys
-import sqlite3
-import tempfile
 import json
+import os
+import sys
+import tempfile
 from datetime import datetime
 from unittest.mock import patch
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,7 +26,7 @@ class TestRecommendationAlgorithm:
     def app_with_photos(self):
         """创建带有测试照片的 Flask 应用"""
         from app import create_app
-        from services.database import set_db_file, init_database, get_db_connection
+        from services.database import get_db_connection, init_database, set_db_file
         from services.photo_index import clear_photo_index
         from services.recommendation import set_recommendation_config
 
@@ -127,8 +127,8 @@ class TestRecommendationAlgorithm:
         conn.close()
 
         # 多次请求，确保 photo1 不会被推荐
-        from services.recommendation import RecommendationService
         from services import recommendation
+        from services.recommendation import RecommendationService
         with patch.object(recommendation.random, 'randint', return_value=100):
             with patch.object(recommendation.random, 'choices',
                               side_effect=lambda pop, **kw: [pop[0]] if pop else []):
@@ -139,8 +139,8 @@ class TestRecommendationAlgorithm:
 
     def test_recommendation_has_channel_and_reason(self, app_with_photos):
         """推荐结果包含频道和理由"""
-        from services.recommendation import RecommendationService
         from services import recommendation
+        from services.recommendation import RecommendationService
 
         # 固定为随缘漫游频道
         with patch.object(recommendation.random, 'choices',
@@ -178,8 +178,9 @@ class TestRecommendationAlgorithm:
 
     def test_force_show_state_is_persistent(self, app_with_photos):
         """强制展示状态持久化"""
-        from services.recommendation import set_force_show, get_force_show_state
         import time
+
+        from services.recommendation import get_force_show_state, set_force_show
 
         set_force_show('photo1.jpg', time.time() + 60)
         force_url, expiry = get_force_show_state()
@@ -194,7 +195,7 @@ class TestCooldownPool:
     @pytest.fixture
     def setup_db(self):
         """设置测试数据库"""
-        from services.database import set_db_file, init_database, get_db_connection, PhotoDAO
+        from services.database import get_db_connection, init_database, set_db_file
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
         temp_db.close()
@@ -266,7 +267,7 @@ class TestLowExposureCompensation:
 
     @pytest.fixture
     def setup_db(self):
-        from services.database import set_db_file, init_database, get_db_connection
+        from services.database import get_db_connection, init_database, set_db_file
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
         temp_db.close()
@@ -299,8 +300,8 @@ class TestLowExposureCompensation:
 
     def test_low_view_count_gets_boost(self, setup_db):
         """低 view_count 照片在随缘漫游中获得补偿"""
-        from services.recommendation import RecommendationService
         from services.photo_service import PhotoService
+        from services.recommendation import RecommendationService
 
         pool = PhotoService.get_photo_index()
         assert len(pool) == 4
@@ -308,7 +309,6 @@ class TestLowExposureCompensation:
         # 模拟多次随机选择，统计低曝光照片被选中的频率
         import random as real_random
         real_random.seed(42)
-        from services import recommendation as rec_module
 
         counts = {'low': 0, 'high': 0}
         for _ in range(200):
@@ -328,7 +328,6 @@ class TestWeightedScoring:
 
     def test_seasonal_weight_boost(self):
         """季节权重加成"""
-        from datetime import datetime
 
         current_month = 6
         tags = "夏天，露营"
@@ -384,7 +383,7 @@ class TestTodayMemory:
 
     @pytest.fixture
     def setup_db(self):
-        from services.database import set_db_file, init_database, get_db_connection
+        from services.database import get_db_connection, init_database, set_db_file
         from services.recommendation import set_recommendation_config
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
@@ -429,8 +428,8 @@ class TestTodayMemory:
 
     def test_today_memory_boosts_anniversary(self, setup_db):
         """今日回忆频道对往年今天照片加权"""
-        from services.recommendation import RecommendationService
         from services.photo_service import PhotoService
+        from services.recommendation import RecommendationService
 
         pool = PhotoService.get_photo_index()
         assert len(pool) == 3
@@ -453,8 +452,8 @@ class TestTodayMemory:
 
     def test_today_memory_returns_correct_reason(self, setup_db):
         """今日回忆频道返回正确的推荐理由"""
-        from services.recommendation import RecommendationService
         from services.photo_service import PhotoService
+        from services.recommendation import RecommendationService
 
         pool = PhotoService.get_photo_index()
 
@@ -475,7 +474,7 @@ class TestStoryContinuity:
 
     @pytest.fixture
     def setup_db(self):
-        from services.database import set_db_file, init_database, get_db_connection, PhotoDAO
+        from services.database import PhotoDAO, get_db_connection, init_database, set_db_file
         from services.recommendation import set_recommendation_config
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
@@ -517,8 +516,8 @@ class TestStoryContinuity:
 
     def test_story_boosts_same_tag_photos(self, setup_db):
         """故事频道对同标签照片加权"""
-        from services.recommendation import RecommendationService
         from services.photo_service import PhotoService
+        from services.recommendation import RecommendationService
 
         pool = PhotoService.get_photo_index()
 
@@ -541,8 +540,8 @@ class TestStoryContinuity:
 
     def test_story_returns_correct_reason(self, setup_db):
         """故事频道返回正确的推荐理由"""
-        from services.recommendation import RecommendationService
         from services.photo_service import PhotoService
+        from services.recommendation import RecommendationService
 
         pool = PhotoService.get_photo_index()
         import random as real_random
@@ -553,9 +552,9 @@ class TestStoryContinuity:
 
     def test_story_returns_none_without_history(self, setup_db):
         """无播放历史时故事频道返回 None"""
-        from services.database import get_db_connection, PhotoDAO
-        from services.recommendation import RecommendationService
+        from services.database import get_db_connection
         from services.photo_service import PhotoService
+        from services.recommendation import RecommendationService
 
         # 清空播放历史
         conn = get_db_connection()
@@ -574,7 +573,7 @@ class TestLongTimeNoSee:
 
     @pytest.fixture
     def setup_db(self):
-        from services.database import set_db_file, init_database, get_db_connection
+        from services.database import get_db_connection, init_database, set_db_file
         from services.recommendation import set_recommendation_config
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
@@ -612,8 +611,8 @@ class TestLongTimeNoSee:
 
     def test_long_time_prefers_old_low_viewcount(self, setup_db):
         """好久不见频道优先选老的低曝光照片"""
-        from services.recommendation import RecommendationService
         from services.photo_service import PhotoService
+        from services.recommendation import RecommendationService
 
         pool = PhotoService.get_photo_index()
 
@@ -634,8 +633,8 @@ class TestLongTimeNoSee:
 
     def test_long_time_returns_correct_reason(self, setup_db):
         """好久不见频道返回正确的推荐理由"""
-        from services.recommendation import RecommendationService
         from services.photo_service import PhotoService
+        from services.recommendation import RecommendationService
 
         pool = PhotoService.get_photo_index()
         photo, reason = RecommendationService._long_time_no_see(pool)
@@ -648,7 +647,7 @@ class TestPlayHistory:
 
     @pytest.fixture
     def setup_db(self):
-        from services.database import set_db_file, init_database, get_db_connection
+        from services.database import init_database, set_db_file
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
         temp_db.close()
@@ -684,7 +683,7 @@ class TestPlayHistory:
 
     def test_cleanup_old_records(self, setup_db):
         """清理过期播放记录"""
-        from services.database import get_db_connection, PhotoDAO
+        from services.database import PhotoDAO, get_db_connection
 
         # 手动插入一条过期记录
         conn = get_db_connection()
@@ -709,7 +708,7 @@ class TestChannelFallback:
 
     @pytest.fixture
     def setup_db(self):
-        from services.database import set_db_file, init_database, get_db_connection
+        from services.database import get_db_connection, init_database, set_db_file
         from services.recommendation import set_recommendation_config
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
@@ -745,9 +744,8 @@ class TestChannelFallback:
 
     def test_fallback_updates_channel_to_random(self, setup_db):
         """频道选不出照片降级到随机漫游时，recommend_channel 应为 random"""
-        from services.recommendation import RecommendationService, CHANNEL_STORY, CHANNEL_RANDOM
-        from services.photo_service import PhotoService
         from services.photo_index import clear_photo_index
+        from services.recommendation import CHANNEL_RANDOM, CHANNEL_STORY, RecommendationService
 
         clear_photo_index()
 

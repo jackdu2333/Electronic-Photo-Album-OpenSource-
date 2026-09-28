@@ -2,19 +2,20 @@
 照片索引服务模块
 管理内存中的照片索引，构建和同步照片数据
 """
-import os
+import hashlib
 import logging
+import os
+import tempfile
 import threading
 import time
-import tempfile
-import hashlib
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from config import config
+
 from .database import PhotoDAO, init_database
-from .metadata import PhotoMetadataService
 from .image import ImageValidator
+from .metadata import PhotoMetadataService
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +148,7 @@ class PhotoIndexService:
 
         logger.info("Building Photo Index...")
 
-        for root, dirs, files in os.walk(upload_folder):
+        for root, _dirs, files in os.walk(upload_folder):
             for filename in files:
                 if ImageValidator.is_allowed(filename):
                     full_path = os.path.join(root, filename)

@@ -3,10 +3,21 @@
 首页、登录页等基础页面
 """
 import time
-from flask import Blueprint, render_template, request, make_response, session, redirect, url_for, flash, current_app
 
-from config import config
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+
 from auth import auth
+from config import config
 
 main_bp = Blueprint('main', __name__, url_prefix='/')
 
@@ -58,8 +69,10 @@ def index():
         'style15': 'style15-polaroid.html',
                 'style16': 'style16-gallery.html',
         'style17': 'style17-french.html',
-        'style18': 'style18-bauhaus.html',
-        'style19': 'style19-cinematic.html',
+        'style18': 'style18-prism.html',
+        'style19': 'style19-origami.html',
+        'style20': 'style20-vhs.html',
+        'style21': 'style21-bento.html',
     }
 
     forced_home_style = None

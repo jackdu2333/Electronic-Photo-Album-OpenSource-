@@ -4,26 +4,26 @@ Digital Photo Frame - 主应用入口
 模块化架构版本 2.0
 从单体结构重构为模块化结构，保持向后兼容
 """
-import os
 import logging
+import os
+from datetime import timedelta
 from logging.handlers import RotatingFileHandler
-from datetime import datetime, timedelta
 
 from flask import Flask
 from werkzeug.exceptions import HTTPException
 
+from auth import auth
 from config import config
-from auth import auth, hash_password
 from extensions import init_extensions
 from routes import register_blueprints
 
 # 导入服务层用于初始化
 from services.database import init_database, set_db_file
-from services.metadata import PhotoMetadataService, set_metadata_file
-from services.photo_index import PhotoIndexService, set_photo_index
-from services.recommendation import set_recommendation_config, set_force_show, get_force_show_state
 from services.image import ImageValidator
+from services.metadata import set_metadata_file
+from services.photo_index import PhotoIndexService
 from services.photo_service import PhotoService
+from services.recommendation import set_recommendation_config
 
 
 def setup_logging(app: Flask):
@@ -154,7 +154,7 @@ def create_app(config_obj=None):
 
     @app.errorhandler(404)
     def not_found(error):
-        from flask import request, render_template, jsonify
+        from flask import jsonify, render_template, request
         if request.path.startswith('/api/'):
             return jsonify({'error': '资源不存在', 'path': request.path}), 404
         # 渲染首页模板（不依赖 url_for）
@@ -165,7 +165,7 @@ def create_app(config_obj=None):
 
     @app.errorhandler(500)
     def internal_error(error):
-        from flask import request, render_template, jsonify
+        from flask import jsonify, render_template, request
         app.logger.error(f'Internal server error: {error}')
         if request.path.startswith('/api/'):
             return jsonify({'error': '服务器内部错误'}), 500
@@ -177,7 +177,7 @@ def create_app(config_obj=None):
 
     @app.errorhandler(HTTPException)
     def handle_http_exception(error):
-        from flask import request, render_template, jsonify
+        from flask import jsonify, render_template, request
         if request.path.startswith('/api/'):
             return jsonify({'error': error.description}), error.code
 
@@ -191,7 +191,7 @@ def create_app(config_obj=None):
 
     @app.errorhandler(Exception)
     def handle_exception(error):
-        from flask import request, render_template, jsonify
+        from flask import jsonify, render_template, request
         app.logger.error(f'Unhandled exception: {error}')
         if request.path.startswith('/api/'):
             return jsonify({'error': '服务器内部错误'}), 500
@@ -221,5 +221,8 @@ app = create_app()
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
     port = int(os.environ.get('PORT', os.environ.get('FLASK_RUN_PORT', '5000')))
-    app.logger.info(f"Starting in {'DEBUG' if debug_mode else 'PRODUCTION'} mode on port {port}")
-    app.run(host='0.0.0.0', port=port, debug=debug_mode)
+    # 绑定地址可配：默认 0.0.0.0 兼容 Docker/云平台部署；
+    # 桌面客户端（desktop/main.js）会显式传 FLASK_HOST=127.0.0.1 避免局域网暴露
+    host = os.environ.get('FLASK_HOST', '0.0.0.0')
+    app.logger.info(f"Starting in {'DEBUG' if debug_mode else 'PRODUCTION'} mode on {host}:{port}")
+    app.run(host=host, port=port, debug=debug_mode)

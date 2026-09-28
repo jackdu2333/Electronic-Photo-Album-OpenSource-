@@ -4,7 +4,8 @@
 """
 import io
 import logging
-from typing import Tuple, Optional
+from typing import Tuple
+
 from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
@@ -186,7 +187,7 @@ class ImageProcessor:
 
             # 4. 第二轮：第一轮失败 (即 quality=75 仍 > target_size)
             # 分辨率降级 -> 2560px
-            logger.warning(f"Compress: High quality failed, resizing to 2560px...")
+            logger.warning("Compress: High quality failed, resizing to 2560px...")
             current_img = resize_to_limit(_round2_source, 2560)
 
             quality = 90

@@ -1,11 +1,11 @@
 """
 API 路由测试
 """
-import os
-import io
 import json
-import pytest
+import os
 import sys
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

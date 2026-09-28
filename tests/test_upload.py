@@ -1,10 +1,11 @@
 """
 上传功能测试
 """
-import os
 import io
-import pytest
+import os
 import sys
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,7 +23,7 @@ class TestMIMEValidation:
         jpeg_io = io.BytesIO(jpeg_data)
 
         is_valid, result = validate_image_mime(jpeg_io)
-        assert is_valid == True
+        assert is_valid
         assert 'jpeg' in result.lower()
 
     def test_validate_png(self):
@@ -34,7 +35,7 @@ class TestMIMEValidation:
         png_io = io.BytesIO(png_data)
 
         is_valid, result = validate_image_mime(png_io)
-        assert is_valid == True
+        assert is_valid
         assert 'png' in result.lower()
 
     def test_validate_gif(self):
@@ -46,7 +47,7 @@ class TestMIMEValidation:
         gif_io = io.BytesIO(gif_data)
 
         is_valid, result = validate_image_mime(gif_io)
-        assert is_valid == True
+        assert is_valid
         assert 'gif' in result.lower()
 
     def test_validate_invalid_file(self):
@@ -58,7 +59,7 @@ class TestMIMEValidation:
         text_io = io.BytesIO(text_data)
 
         is_valid, result = validate_image_mime(text_io)
-        assert is_valid == False
+        assert not is_valid
         assert '无法识别' in result or '验证失败' in result or 'not an image' in result.lower()
 
     def test_validate_empty_file(self):
@@ -68,7 +69,7 @@ class TestMIMEValidation:
         empty_io = io.BytesIO()
 
         is_valid, result = validate_image_mime(empty_io)
-        assert is_valid == False
+        assert not is_valid
 
     def test_validate_webp(self):
         """WebP 图片验证"""
@@ -79,7 +80,7 @@ class TestMIMEValidation:
         webp_io = io.BytesIO(webp_data)
 
         is_valid, result = validate_image_mime(webp_io)
-        assert is_valid == True
+        assert is_valid
         assert 'webp' in result.lower()
 
 
@@ -95,6 +96,7 @@ class TestFileUpload:
         os.environ['ADMIN_USERS'] = 'admin:TestPass123!'
 
         import importlib
+
         import app
         importlib.reload(app)
 

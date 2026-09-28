@@ -12,10 +12,10 @@ V3.0 Memory Curator 多频道推荐引擎
   - recommend_channel / recommend_reason 可解释推荐
   - view_count 按 id 更新
 """
-import random
 import logging
+import random
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from .database import AppStateDAO, PhotoDAO
 
@@ -243,7 +243,6 @@ class RecommendationService:
         """
         today = datetime.now()
         current_month = today.month
-        current_day = today.day
 
         # 筛选有日期的照片
         dated = [p for p in pool if p.get('date')]

@@ -2,7 +2,6 @@
 配置模块测试
 """
 import os
-import pytest
 import sys
 
 # 添加项目根目录到路径
@@ -29,6 +28,7 @@ class TestConfig:
 
             # 强制重新导入配置模块
             import importlib
+
             import pytest
             with pytest.raises(Exception) as exc_info:
                 import config
@@ -42,6 +42,7 @@ class TestConfig:
                 os.environ['FLASK_DEBUG'] = original_debug
             # 重新加载配置模块恢复原始状态
             import importlib
+
             import config
             importlib.reload(config)
 
@@ -55,10 +56,11 @@ class TestConfig:
             os.environ['FLASK_DEBUG'] = 'true'
 
             import importlib
+
             import config
             importlib.reload(config)
 
-            assert config.config.DEBUG == True
+            assert config.config.DEBUG
             assert len(config.config.SECRET_KEY) == 64  # 32 字节 hex = 64 字符
         finally:
             if original:
@@ -104,8 +106,8 @@ class TestConfig:
 
         config = Config()
 
-        assert config._get_bool('NON_EXISTENT', True) == True
-        assert config._get_bool('NON_EXISTENT', False) == False
+        assert config._get_bool('NON_EXISTENT', True)
+        assert not config._get_bool('NON_EXISTENT', False)
         assert config._get_bool('FLASK_DEBUG', False) == config.DEBUG
 
     def test_integer_config(self):
@@ -154,9 +156,9 @@ class TestPasswordUtils:
         pwd_hash = hash_password(password)
 
         # 正确密码
-        assert verify_password(password, pwd_hash) == True
+        assert verify_password(password, pwd_hash)
         # 错误密码
-        assert verify_password('WrongPassword', pwd_hash) == False
+        assert not verify_password('WrongPassword', pwd_hash)
 
     def test_password_strength(self):
         """密码强度检查"""
@@ -164,21 +166,21 @@ class TestPasswordUtils:
 
         # 强密码
         is_strong, _ = is_password_strong('SecurePass123!')
-        assert is_strong == True
+        assert is_strong
 
         # 太短
         is_strong, msg = is_password_strong('Ab1!')
-        assert is_strong == False
+        assert not is_strong
         assert '长度' in msg
 
         # 只有小写
         is_strong, msg = is_password_strong('abcdefgh')
-        assert is_strong == False
+        assert not is_strong
 
         # 只有大写
         is_strong, msg = is_password_strong('ABCDEFGH')
-        assert is_strong == False
+        assert not is_strong
 
         # 只有数字
         is_strong, msg = is_password_strong('12345678')
-        assert is_strong == False
+        assert not is_strong

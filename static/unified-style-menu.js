@@ -20,7 +20,9 @@
                 { id: 'style16', displayOrder: 15, title: '艺术画廊', desc: '策展式展卡浏览', group: 'curation' },
         { id: 'style17', displayOrder: 16, title: 'Hi-Fi 黑胶唱片', desc: '黑胶唱片封套与复古 VU 仪表盘', group: 'curation' },
         { id: 'style18', displayOrder: 17, title: '空间折光光轨', desc: '3D 棱镜折光与环形时间光轨', group: 'curation' },
-        { id: 'style19', displayOrder: 18, title: '建筑折纸双平面', desc: '前后景深错位与建筑学留白', group: 'curation' }
+        { id: 'style19', displayOrder: 18, title: '建筑折纸双平面', desc: '前后景深错位与建筑学留白', group: 'curation' },
+        { id: 'style20', displayOrder: 19, title: '家庭录像带', desc: 'REC 取景器、走带时间码与磁带日期戳', group: 'curation' },
+        { id: 'style21', displayOrder: 20, title: '生活便当', desc: '照片主菜配时钟天气留言的磁贴网格', group: 'curation' }
     ];
 
     const GROUPS = [
@@ -39,7 +41,7 @@
         if (theme === 'style5') {
             return 'style4';
         }
-        if (/^style([1-9]|1[0-6])$/.test(theme || '')) {
+        if (/^style\d+$/.test(theme || '')) {
             return theme;
         }
 
@@ -144,6 +146,7 @@
             }
 
             .usm-toggle {
+                position: relative;
                 display: inline-flex;
                 align-items: center;
                 gap: 10px;
@@ -159,6 +162,14 @@
                 backdrop-filter: blur(14px);
                 box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
                 pointer-events: auto;
+            }
+
+            /* P0-5：视觉尺寸不变，命中区扩大至 >=44px */
+            .usm-toggle::after {
+                content: "";
+                position: absolute;
+                inset: -5px;
+                border-radius: 999px;
             }
 
             .usm-toggle-badge {

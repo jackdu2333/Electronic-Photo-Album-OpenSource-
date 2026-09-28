@@ -90,6 +90,13 @@
             letter-spacing: 0.06em;
         }
 
+        /* P2-17b：胶片边印字——KODAK 式刻字前缀（评审 ③ 的低配实现） */
+        .film-caption::before {
+            content: "PORTRA 400 — FRAME ";
+            opacity: 0.5;
+            letter-spacing: 0.12em;
+        }
+
         .film-salvage-badge {
             top: 22px;
             right: 48px;
@@ -98,7 +105,7 @@
             background: rgba(139, 64, 64, 0.76);
             color: rgba(255, 244, 224, 0.94);
             border: 1px solid rgba(244, 228, 193, 0.14);
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: 0.18em;
         }
 
@@ -115,12 +122,6 @@
 
         body.has-salvaged-photo .film-photo {
             filter: sepia(0.22) contrast(1.04) saturate(0.92) brightness(0.94);
-        }
-
-        body.has-salvaged-photo .light-leak {
-            background:
-                radial-gradient(ellipse at 20% 30%, rgba(139, 64, 64, 0.16) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 70%, rgba(244, 228, 193, 0.08) 0%, transparent 50%);
         }
 
         .film-strip::before,
@@ -350,20 +351,6 @@
             opacity: 0.9;
         }
 
-        /* 漏光效果 */
-        .light-leak {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 5;
-            background: 
-                radial-gradient(ellipse at 20% 30%, rgba(139, 64, 64, 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 70%, rgba(244, 228, 193, 0.05) 0%, transparent 50%);
-        }
-
         /* 照片加载失败兜底 */
         .film-strip {
             background-color: #2A1F15;
@@ -409,7 +396,24 @@
                 justify-content: center;
             }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #007AFF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 <body>
     <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: var(--z-switcher-menu, 500); display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
@@ -460,8 +464,7 @@
                 <div class="hole"></div>
             </div>
             
-            <!-- 漏光效果 -->
-            <div class="light-leak"></div>
+            <!-- 漏光效果已在 P2 评审中移除（噪点保留、漏光删除，做减法） -->
         </div>
 
         <!-- 信息面板 -->

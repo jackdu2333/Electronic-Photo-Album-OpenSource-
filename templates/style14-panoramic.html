@@ -155,8 +155,9 @@
             position: fixed;
             top: 0;
             left: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bff6b);
+            height: 2px;
+            /* P1-10：彩虹渐变进度条改单色金线 */
+            background: #d4af37;
             width: 0%;
             z-index: 100;
             transition: width 0.1s ease;
@@ -193,13 +194,30 @@
                 gap: 2.5rem;
             }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #007AFF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 <body>
     <div class="panoramic-wrapper">
         <div class="progress-bar" id="progress"></div>
         <div class="batch-chip" id="batchChip">已展开 0 / 0</div>
-        <div class="scroll-container" id="scrollContainer">
+        <div class="scroll-container" id="scrollContainer" tabindex="0" aria-label="横向照片卷轴，可用左右方向键滚动">
             <div class="photo-strip" id="photoStrip">
                 <!-- 照片将通过JavaScript动态加载 -->
             </div>
@@ -425,6 +443,15 @@
                 touchStartX = 0;
             });
             
+            // P1-10：键盘左右键滚动（此前焦点样式存在却无任何可聚焦滚动通道）
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    scrollContainer.scrollBy({ left: Math.max(420, scrollContainer.clientWidth * 0.8), behavior: 'smooth' });
+                } else if (e.key === 'ArrowLeft') {
+                    scrollContainer.scrollBy({ left: -Math.max(420, scrollContainer.clientWidth * 0.8), behavior: 'smooth' });
+                }
+            });
+
             // 初始化进度条
             updateProgress();
             updateBatchChip();

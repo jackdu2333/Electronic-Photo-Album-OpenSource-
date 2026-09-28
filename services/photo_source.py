@@ -9,11 +9,11 @@ v3.0 照片源适配层（Photo Source Adapter）
 - photo id 不暴露真实路径
 - 删除操作默认只删索引，不删原图
 """
-import os
 import hashlib
 import logging
+import os
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from services.image import ImageValidator
 
@@ -147,7 +147,7 @@ class DesktopFolderPhotoSource(PhotoSource):
                 logger.warning(f"Folder no longer exists: {folder}")
                 continue
 
-            for root, dirs, files in os.walk(folder):
+            for root, _dirs, files in os.walk(folder):
                 for filename in files:
                     if not ImageValidator.is_allowed(filename):
                         continue
@@ -218,7 +218,7 @@ class ImportedCopyPhotoSource(PhotoSource):
         if not os.path.isdir(self._upload_folder):
             return results
 
-        for root, dirs, files in os.walk(self._upload_folder):
+        for root, _dirs, files in os.walk(self._upload_folder):
             for filename in files:
                 if not ImageValidator.is_allowed(filename):
                     continue

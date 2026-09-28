@@ -3,6 +3,7 @@
 V3.0 Memory Curator 多频道推荐引擎
 """
 import logging
+
 from flask import Blueprint, jsonify
 
 from services.recommendation import RecommendationService

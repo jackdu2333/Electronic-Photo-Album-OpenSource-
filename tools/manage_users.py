@@ -13,13 +13,13 @@
     python tools/manage_users.py list
 """
 
-import sys
 import os
+import sys
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from auth import hash_password, verify_password, is_password_strong
+from auth import hash_password, is_password_strong, verify_password
 
 
 def print_usage():

@@ -13,10 +13,11 @@ v3.0 照片 API 路由
 - POST /api/photo-sources/folders  添加桌面端文件夹
 - DELETE /api/photo-sources/folders 移除桌面端文件夹
 """
-import os
 import logging
+import os
 from pathlib import Path
-from flask import Blueprint, jsonify, request, send_file, abort
+
+from flask import Blueprint, abort, jsonify, request, send_file
 
 from auth import auth
 from services.photo_service import PhotoService
@@ -315,7 +316,7 @@ def add_folder():
         resolved_path == parent or parent in resolved_path.parents
         for parent in allowed_parent_paths
     ):
-        return jsonify({'error': f'不允许添加该路径，仅允许用户目录及外部存储目录'}), 403
+        return jsonify({'error': '不允许添加该路径，仅允许用户目录及外部存储目录'}), 403
 
     if not os.path.isdir(folder):
         return jsonify({'error': f'文件夹不存在: {folder}'}), 400
@@ -338,6 +339,8 @@ def remove_folder():
         folder: 文件夹绝对路径
     """
     data = request.get_json()
+    if not data:
+        return jsonify({'error': '请求体不能为空'}), 400
     folder = data.get('folder', '').strip()
 
     if not folder:

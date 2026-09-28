@@ -2,15 +2,15 @@
 文件上传路由模块
 处理照片上传，支持批量上传和强制展示模式
 """
+import logging
 import os
 import time
 import uuid
-import logging
 from datetime import datetime
-from flask import Blueprint, request, jsonify, current_app
 
-from auth import EnhancedAuth
-from services.image import ImageValidator, ImageProcessor
+from flask import Blueprint, current_app, jsonify, request
+
+from services.image import ImageProcessor, ImageValidator
 from services.metadata import PhotoMetadataService
 from services.photo_index import PhotoIndexService
 from services.recommendation import set_force_show

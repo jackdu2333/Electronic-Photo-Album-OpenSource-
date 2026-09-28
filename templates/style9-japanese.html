@@ -69,16 +69,16 @@
             z-index: 1;
         }
 
-        /* 木质边框 */
+        /* 木质边框（P2-15b：拟物渐变扁平化——纯木色 + 深木描边 + 轻内高光） */
         .wood-frame {
             width: min(92vw, 1600px);
-            background: linear-gradient(135deg, var(--wood-color) 0%, var(--dark-wood) 100%);
+            background: var(--wood-color);
+            border: 1px solid var(--dark-wood);
             border-radius: 8px;
             padding: 15px;
-            box-shadow: 
-                inset 0 2px 4px rgba(255, 255, 255, 0.3),
-                inset 0 -2px 4px rgba(0, 0, 0, 0.2),
-                0 8px 20px rgba(0, 0, 0, 0.15);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                0 12px 28px rgba(0, 0, 0, 0.12);
             margin: 0 auto 20px;
             position: relative;
             overflow: hidden;
@@ -135,7 +135,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: blur(20px) sepia(0.18) saturate(0.88) brightness(0.76);
+            filter: blur(14px) sepia(0.18) saturate(0.88) brightness(0.76);
             transform: scale(1.05);
             opacity: 0.34;
             z-index: 1;
@@ -315,7 +315,9 @@
             font-size: 48px;
             font-weight: 500;
             color: var(--dark-wood);
-            font-family: 'Yuji Syuku', serif;
+            /* P2：书法体退居标题，数字回归可读衬线 + 等宽数字 */
+            font-family: 'Noto Serif JP', serif;
+            font-variant-numeric: tabular-nums;
             line-height: 1;
             margin-bottom: 5px;
         }
@@ -439,7 +441,24 @@
                 justify-content: center;
             }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #007AFF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 <body>
     <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: var(--z-switcher-menu, 500); display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
@@ -570,16 +589,18 @@
         function initSakuraPetals() {
             const layer = document.getElementById('sakura-layer');
             if (!layer) return;
-            const count = window.innerWidth >= 2400 ? 12 : 10;
+            // P2 评审：花瓣从「下雪」减到「偶尔飘落」——更少、更慢、更透明
+            const count = window.innerWidth >= 2400 ? 7 : 5;
             // 清理旧花瓣，防止 DOM 累积
-            while (layer.children.length > 12) {
+            while (layer.children.length > 7) {
                 layer.removeChild(layer.firstChild);
             }
             for (let i = 0; i < count; i++) {
                 const petal = document.createElement('span');
                 petal.className = 'petal';
                 petal.style.left = `${Math.random() * 100}%`;
-                petal.style.animationDuration = `${14 + Math.random() * 10}s`;
+                petal.style.opacity = '0.6';
+                petal.style.animationDuration = `${25 + Math.random() * 15}s`;
                 petal.style.animationDelay = `${-Math.random() * 20}s`;
                 petal.style.setProperty('--drift-x', `${(Math.random() * 180 - 90).toFixed(0)}px`);
                 layer.appendChild(petal);

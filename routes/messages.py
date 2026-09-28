@@ -2,16 +2,15 @@
 留言板路由模块
 获取留言、发送留言等 API
 """
-import os
 import json
-import time
 import logging
+import os
 import threading
 import uuid
 from datetime import datetime
+
 from flask import Blueprint, jsonify, request, session
 
-from auth import EnhancedAuth
 from config import config
 from services.database import MessageDAO
 

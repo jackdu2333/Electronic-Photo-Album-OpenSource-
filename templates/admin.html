@@ -45,10 +45,10 @@
             </div>
             <div class="ios-card" style="padding: 16px;">
                 <div id="folder-list" style="margin-bottom: 12px;">
-                    <div style="color: #888; font-size: 13px;">加载中...</div>
+                    <div class="admin-muted">加载中...</div>
                 </div>
-                <div id="scan-status" style="font-size: 12px; color: #666; display: none;"></div>
-                <p style="font-size: 12px; color: #999; margin: 8px 0 0; line-height: 1.6;">
+                <div id="scan-status" class="admin-hint" style="display: none;"></div>
+                <p class="admin-hint">
                     引用本地文件夹中的照片，原图不会被复制或修改。<br>
                     桌面客户端可通过系统托盘选择文件夹，也可在此处管理。
                 </p>
@@ -118,7 +118,7 @@
         <section class="ios-section">
             <div class="ios-section-header">
                 <span class="ios-section-label">相册</span>
-                <span id="gallery-count" style="font-size: 12px; color: #888;"></span>
+                <span id="gallery-count" class="admin-count"></span>
                 <button id="refresh-gallery-btn" class="ios-link-btn">刷新</button>
             </div>
             <div class="ios-card gallery-outer-card">
@@ -145,36 +145,51 @@
             return div.innerHTML;
         }
 
+        // 属性上下文转义（P0-1：文本转义不覆盖引号，属性值必须单独转义）
+        function escapeAttr(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        const FOLDER_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>';
+        const PACKAGE_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>';
+
         async function loadSources() {
             try {
                 const res = await fetch('/api/photo-sources');
                 const data = await res.json();
 
-                // 渲染文件夹列表
+                // 渲染文件夹列表（P0-1：弃用内联 onclick 字符串拼接，改 data-* + 事件委托）
                 let html = '';
                 for (const src of data.sources) {
                     if (src.type === 'desktop_folder' && src.folders) {
                         for (const f of src.folders) {
-                            const escapedF = f.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                             const safeF = escapeHtml(f);
-                            html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;background:rgba(0,0,0,0.03);border-radius:8px;font-size:13px;gap:8px;">
-                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${safeF}</span>
-                                <span style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-                                    <span style="color:${src.authorized ? '#27ae60' : '#e74c3c'};font-size:11px;">${src.authorized ? '已授权' : '未授权'}</span>
-                                    <button class="ios-link-btn" style="font-size:11px;padding:2px 8px;color:#e74c3c;" onclick="removeFolder('${escapedF}')">移除</button>
+                            const attrF = escapeAttr(f);
+                            const statusCls = src.authorized ? 'folder-status ok' : 'folder-status blocked';
+                            const statusText = src.authorized ? '已授权' : '未授权';
+                            html += `<div class="folder-row">
+                                <span class="folder-name">${FOLDER_ICON}<span>${safeF}</span></span>
+                                <span class="folder-actions">
+                                    <span class="${statusCls}">${statusText}</span>
+                                    <button type="button" class="folder-remove" data-path="${attrF}">移除</button>
                                 </span>
                             </div>`;
                         }
                     }
                     if (src.type === 'imported_copy') {
-                        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;background:rgba(0,0,0,0.03);border-radius:8px;font-size:13px;">
-                            <span>📦 导入副本存储</span>
-                            <span style="color:#27ae60;font-size:11px;">已启用</span>
+                        html += `<div class="folder-row">
+                            <span class="folder-name">${PACKAGE_ICON}<span>导入副本存储</span></span>
+                            <span class="folder-actions"><span class="folder-status ok">已启用</span></span>
                         </div>`;
                     }
                 }
                 if (!html) {
-                    html = '<div style="color:#888;font-size:13px;">暂未配置本地文件夹。桌面客户端可通过系统托盘选择，或点击上方"添加文件夹"。</div>';
+                    html = '<div class="admin-muted">暂未配置本地文件夹。桌面客户端可通过系统托盘选择，或点击上方"添加文件夹"。</div>';
                 }
                 folderList.innerHTML = html;
 
@@ -183,9 +198,19 @@
                     galleryCount.textContent = `${data.photo_count} 张照片`;
                 }
             } catch (e) {
-                folderList.innerHTML = '<div style="color:#e74c3c;font-size:13px;">加载失败</div>';
+                folderList.innerHTML = '<div class="admin-error">加载失败</div>';
             }
         }
+
+        // 事件委托：移除按钮（P0-1）
+        folderList.addEventListener('click', (e) => {
+            const btn = e.target.closest('.folder-remove');
+            if (!btn) return;
+            const path = btn.dataset.path;
+            if (path && typeof window.removeFolder === 'function') {
+                window.removeFolder(path);
+            }
+        });
 
         window.addFolder = async function() {
             const folder = prompt('请输入文件夹的绝对路径：\n例如: /Users/jackdu/Photos');

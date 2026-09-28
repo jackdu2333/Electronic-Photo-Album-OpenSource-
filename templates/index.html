@@ -38,7 +38,7 @@
     <!-- Google Font 'Inter' -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         /* NOTE: Selector specificity chains throughout are technical debt.
            Consider refactoring with @layer for cleaner cascade management. */
@@ -49,8 +49,8 @@
             margin: 0;
             padding: 0;
             background:
-                radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.05), transparent 22%),
-                radial-gradient(circle at 82% 16%, rgba(66, 94, 145, 0.10), transparent 26%),
+                radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.03), transparent 22%),
+                radial-gradient(circle at 82% 16%, rgba(66, 94, 145, 0.06), transparent 26%),
                 #030405;
             color: #fff;
             width: 100%;
@@ -379,6 +379,11 @@
                 opacity: 1;
                 visibility: visible;
             }
+
+            /* P0-2：触屏设备（含横屏）下翻页控制必须常显 */
+            #controls {
+                opacity: 1;
+            }
         }
 
         #slideshow-container {
@@ -507,7 +512,6 @@
             justify-content: center;
             align-items: center;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            outline: none;
             backdrop-filter: blur(18px) saturate(130%);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 14px 35px rgba(0, 0, 0, 0.24);
         }
@@ -523,6 +527,17 @@
             background: rgba(255, 255, 255, 0.8);
             color: #333;
             transform: scale(1.1);
+        }
+
+        /* P0-4：键盘焦点可见（替代被移除的 outline: none） */
+        #controls button:focus-visible {
+            outline: 2px solid #0a84ff;
+            outline-offset: 3px;
+        }
+
+        /* 键盘聚焦控制组时整体显现 */
+        #controls:focus-within {
+            opacity: 1;
         }
 
         /* --- Hidden Home Style Switcher --- */
@@ -634,14 +649,9 @@
         }
 
         
-        /* Style-3: Gallery Label refinement */
-        html[data-home-style="style-3"] .info-panel {
-            background: rgba(14, 16, 22, 0.72);
-            border-right: 1px solid rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(28px) saturate(140%);
-        }
+        /* Style-3: Gallery Label refinement（P1-9：清理暗底残留——浅色面板不该背 blur(28px) 暗玻璃） */
         html[data-home-style="style-3"] .greeting {
-            font-family: 'Georgia', 'Cinzel', serif;
+            font-family: 'Georgia', serif;
             letter-spacing: 0.16em;
             font-size: 16px;
             color: rgba(255, 255, 255, 0.90);
@@ -659,8 +669,8 @@
             --style2-panel-offset: calc(var(--style2-panel-width) + (var(--style2-frame-gap) * 2) + 8px);
             --style2-chat-height: clamp(210px, 27vh, 320px);
             --style2-chat-bottom-gap: 74px;
-            --style2-panel-color-a: 26, 34, 46;
-            --style2-panel-color-b: 82, 119, 186;
+            --style2-panel-color-a: 255, 189, 120;
+            --style2-panel-color-b: 255, 189, 120;
             --style2-panel-color-c: 255, 189, 120;
         }
 
@@ -682,8 +692,12 @@
             border-radius: 34px;
             background:
                 linear-gradient(180deg, rgba(8, 11, 18, 0.36), rgba(8, 11, 18, 0.18));
-            backdrop-filter: blur(18px);
-            box-shadow: 0 28px 90px rgba(0, 0, 0, 0.40);
+            backdrop-filter: blur(10px) saturate(1.2);
+            box-shadow:
+                0 2px 6px rgba(0, 0, 0, 0.14),
+                0 14px 36px rgba(0, 0, 0, 0.22),
+                0 28px 90px rgba(0, 0, 0, 0.16),
+                inset 0 1px 0 rgba(255, 255, 255, 0.14);
             border: 1px solid rgba(255, 255, 255, 0.10);
             justify-content: flex-start;
             overflow: hidden;
@@ -959,7 +973,9 @@
             border-radius: 38px;
             background: #f8f3ea;
             box-shadow:
-                0 34px 90px rgba(63, 47, 26, 0.14),
+                0 1px 2px rgba(63, 47, 26, 0.08),
+                0 10px 24px rgba(63, 47, 26, 0.10),
+                0 34px 90px rgba(63, 47, 26, 0.12),
                 inset 0 0 0 1px rgba(48, 36, 20, 0.06);
         }
 
@@ -1012,6 +1028,10 @@
             color: rgba(22, 22, 22, 0.42);
         }
 
+        html[data-home-style="style-3"] #controls {
+            opacity: 0.9;
+        }
+
         html[data-home-style="style-3"] #controls button {
             background: rgba(255, 249, 241, 0.64);
             color: #3a2f25;
@@ -1034,9 +1054,9 @@
             --style4-safe-gap: clamp(28px, 3vw, 54px);
             --style4-card-bottom: clamp(28px, 4vh, 60px);
             --style4-overlay-clearance: calc(var(--style4-card-width) + var(--style4-safe-gap) + 26px);
-            --style4-card-color-a: 102, 84, 42;
+            --style4-card-color-a: 238, 204, 128;
             --style4-card-color-b: 238, 204, 128;
-            --style4-card-color-c: 44, 86, 112;
+            --style4-card-color-c: 238, 204, 128;
         }
 
         
@@ -1082,12 +1102,12 @@
             gap: 12px;
             border-radius: 32px;
             background: rgba(12, 15, 22, 0.42);
-            backdrop-filter: blur(30px) saturate(1.14);
-            -webkit-backdrop-filter: blur(30px) saturate(1.14);
+            backdrop-filter: blur(12px) saturate(1.4);
+            -webkit-backdrop-filter: blur(12px) saturate(1.4);
             border: 1px solid rgba(255, 255, 255, 0.14);
             box-shadow:
                 0 20px 56px rgba(0, 0, 0, 0.24),
-                inset 0 1px 0 rgba(255, 255, 255, 0.10);
+                inset 0 1px 0 rgba(255, 255, 255, 0.18);
             justify-content: flex-start;
             overflow: hidden;
         }
@@ -1176,10 +1196,10 @@
         }
 
         html[data-home-style="style-4"] .weather-desc {
-            font-size: 10px;
+            font-size: 12px;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.42);
+            color: rgba(255, 255, 255, 0.75);
         }
 
         /* Style 4 极简信息卡：去掉留言区，仅保留问候/时间/天气 */
@@ -1297,11 +1317,11 @@
             font-size: 12px;
             letter-spacing: 0.22em;
             text-transform: uppercase;
-            color: rgba(43, 52, 56, 0.42);
+            color: rgba(43, 52, 56, 0.75);
         }
 
         html[data-home-style="style-6"] .time {
-            font-family: Georgia, "Times New Roman", serif;
+            font-family: 'Fraunces', Georgia, "Times New Roman", serif;
             font-size: clamp(64px, 9vw, 150px); /* 更平滑的响应式缩放 */
             line-height: 0.92;
             letter-spacing: -0.06em;
@@ -1311,7 +1331,7 @@
         }
 
         html[data-home-style="style-6"] .date {
-            font-family: Georgia, "Times New Roman", serif;
+            font-family: 'Fraunces', Georgia, "Times New Roman", serif;
             font-size: clamp(18px, 2.6vw, 42px); /* 更平滑的响应式缩放 */
             line-height: 1.14;
             letter-spacing: -0.02em;
@@ -1344,7 +1364,7 @@
 
         html[data-home-style="style-6"] .weather-desc,
         html[data-home-style="style-6"] .sender-name {
-            color: rgba(43, 52, 56, 0.48);
+            color: rgba(43, 52, 56, 0.62);
         }
 
         html[data-home-style="style-6"] .info-bottom {
@@ -1450,7 +1470,7 @@
         }
 
         html[data-home-style="style-6"] #chat-input::placeholder {
-            color: rgba(36, 48, 56, 0.34);
+            color: rgba(36, 48, 56, 0.55);
         }
 
         html[data-home-style="style-6"] #chat-send-btn {
@@ -1992,7 +2012,7 @@
             html[data-home-style="style-3"] .time,
             html[data-home-style="style-4"] .time,
             html[data-home-style="style-6"] .time {
-                font-size: clamp(52px, 10vw, 84px); /* 小屏设备更平滑的缩放 */
+                font-size: clamp(64px, 10vw, 84px); /* 小屏设备更平滑的缩放（P2：下限 52→64 保住海报感） */
             }
 
             html[data-home-style="style-2"] .date,
@@ -2230,7 +2250,24 @@
                 transform: translateY(0);
             }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #0a84ff;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 
 
@@ -2352,7 +2389,7 @@
             </div>
 
             <div id="chat-input-area">
-                <input type="text" id="chat-input" placeholder="留个言..." autocomplete="off">
+                <input type="text" id="chat-input" placeholder="留个言..." autocomplete="off" aria-label="给相框留言">
                 <button id="chat-send-btn">➤</button>
             </div>
         </div>
@@ -2366,8 +2403,8 @@
         </div>
         <!-- Controls outside container -->
         <div id="controls">
-            <button id="prev-btn" onclick="prevImage()">&#10094;</button>
-            <button id="next-btn" onclick="nextImage()">&#10095;</button>
+            <button id="prev-btn" onclick="prevImage()" aria-label="上一张">&#10094;</button>
+            <button id="next-btn" onclick="nextImage()" aria-label="下一张">&#10095;</button>
         </div>
     </div>
 

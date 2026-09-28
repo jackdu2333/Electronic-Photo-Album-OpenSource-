@@ -15,7 +15,7 @@
             --panel-border: rgba(255, 255, 255, 0.74);
             --text-primary: #111827;
             --text-secondary: #5f6c7d;
-            --accent: #6d5dfc;
+            --accent: var(--color-primary, #007AFF);
             --accent-blue: #2f80ed;
             --accent-soft: rgba(18, 24, 33, 0.06);
             --danger-bg: rgba(182, 41, 59, 0.08);
@@ -34,7 +34,7 @@
             padding: 32px 18px;
             background:
                 radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.96), transparent 24%),
-                radial-gradient(circle at 78% 12%, rgba(238, 224, 255, 0.5), transparent 26%),
+                radial-gradient(circle at 78% 12%, rgba(224, 238, 255, 0.5), transparent 26%),
                 radial-gradient(circle at 16% 90%, rgba(206, 227, 255, 0.44), transparent 30%),
                 radial-gradient(circle at 50% 100%, rgba(170, 184, 220, 0.2), transparent 34%),
                 linear-gradient(180deg, var(--bg-top), var(--bg-mid) 52%, var(--bg-bottom));
@@ -125,8 +125,8 @@
             place-items: center;
             border-radius: 13px;
             color: #fff;
-            background: linear-gradient(145deg, #7c5cff, #3f7cff);
-            box-shadow: 0 14px 30px rgba(93, 92, 255, 0.26);
+            background: linear-gradient(145deg, #007AFF, #0051D8);
+            box-shadow: 0 14px 30px rgba(0, 98, 255, 0.22);
             flex: 0 0 auto;
         }
         .brand-logo svg {
@@ -236,7 +236,7 @@
             place-items: center;
             border-radius: 8px;
             color: var(--accent);
-            background: rgba(109, 93, 252, 0.1);
+            background: rgba(0, 122, 255, 0.1);
             font-size: 15px;
         }
         /* ─── 照片相框预览区：纯渐变模拟记忆卡片 ─── */
@@ -378,8 +378,8 @@
         }
         .form-group input:focus {
             outline: none;
-            border-color: rgba(109, 93, 252, 0.42);
-            box-shadow: 0 0 0 4px rgba(109, 93, 252, 0.1);
+            border-color: rgba(0, 122, 255, 0.42);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
             transform: translateY(-1px);
         }
         .form-group input::placeholder {
@@ -428,7 +428,7 @@
             margin: 0;
         }
         .remember-hint {
-            color: #738194;
+            color: var(--text-secondary);
             font-size: 12px;
             line-height: 1.5;
             text-align: right;
@@ -437,7 +437,7 @@
             width: 100%;
             padding: 16px;
             margin-top: 20px;
-            background: linear-gradient(90deg, #7c4dff, #1f83ff);
+            background: var(--color-primary, #007AFF);
             color: white;
             border: none;
             border-radius: 8px;
@@ -466,7 +466,7 @@
             color: var(--text-secondary);
             font-size: 14px;
             line-height: 1.8;
-            box-shadow: inset 3px 0 0 rgba(109, 93, 252, 0.38);
+            box-shadow: inset 3px 0 0 rgba(0, 122, 255, 0.38);
         }
         .login-note strong {
             color: var(--text-primary);

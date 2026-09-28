@@ -61,7 +61,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: sepia(0.15) contrast(0.95);
+            filter: sepia(0.08) contrast(0.97);
             transition: filter 0.45s ease;
         }
 
@@ -238,9 +238,20 @@
             text-align: center;
         }
 
+        /* P2：盖章入场——0.6s 后一次「啪」落下，克制动效的正确用法 */
+        .seal {
+            animation: sealStamp 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both;
+        }
+
+        @keyframes sealStamp {
+            from { opacity: 0; transform: scale(1.6) rotate(-6deg); }
+            /* 终帧对齐基础 opacity 0.85（墨色感），避免 both 填充永久提亮 */
+            to { opacity: 0.85; transform: scale(1) rotate(0deg); }
+        }
+
         .zen-meta-item {
-            font-size: 10px;
-            color: rgba(92, 92, 92, 0.78);
+            font-size: 12px;
+            color: rgba(92, 92, 92, 0.9);
             letter-spacing: 0.08em;
             line-height: 1.45;
             white-space: nowrap;
@@ -351,7 +362,7 @@
             }
 
             .zen-meta-item {
-                font-size: 9px;
+                font-size: 11px;
                 letter-spacing: 0.04em;
                 line-height: 1.45;
             }
@@ -396,7 +407,24 @@
                 height: 56px;
             }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #007AFF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 <body>
     <div id="quick-theme-nav" style="position: fixed; top: 12px; right: 12px; z-index: var(--z-switcher-menu, 500); display: none; gap: 6px; flex-wrap: wrap; padding: 8px 10px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font: 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">

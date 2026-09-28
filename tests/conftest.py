@@ -2,8 +2,9 @@
 Pytest 测试夹具和共享配置
 """
 import os
-import pytest
 import sys
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,6 +41,7 @@ def test_env():
 def app_instance(test_env):
     """创建 Flask 应用实例"""
     import importlib
+
     import app
     importlib.reload(app)
 

@@ -16,8 +16,8 @@
             --card-bg: #fff;
             --text-main: #333;
             --text-sub: #666;
-            --primary: #3498db;
-            --primary-hover: #2980b9;
+            --primary: #007AFF;
+            --primary-hover: #0062CC;
             --border: #e1e4e8;
         }
 
@@ -252,7 +252,7 @@
         }
         .source-badge.desktop_folder {
             background: rgba(52, 152, 219, 0.12);
-            color: #2980b9;
+            color: #1a5f8a;
         }
         .source-badge.imported_copy {
             background: rgba(155, 89, 182, 0.12);
@@ -460,7 +460,7 @@
     <div class="filter-toolbar">
         <div class="search-container">
 
-            <input type="text" id="search-input" class="search-input" placeholder="智能搜索: '6月', '25年6月', '宝宝' ...">
+            <input type="text" id="search-input" class="search-input" placeholder="智能搜索: '6月', '25年6月', '宝宝' ..." aria-label="搜索照片">
         </div>
         <div class="filter-tips">
             支持搜索: 2025年, 6月, 旅行 等关键词
@@ -725,6 +725,11 @@
             image.src = thumbUrl;
             image.loading = 'lazy';
             image.alt = photo.url;
+            // P1-11：缩略图加载失败时显示斜纹占位，避免静默空白
+            image.addEventListener('error', () => {
+                image.style.opacity = '0';
+                imageContainer.style.background = 'repeating-linear-gradient(45deg, #f2f2f7, #f2f2f7 8px, #e5e5ea 8px, #e5e5ea 16px)';
+            });
             if (isMissing) image.style.opacity = '0.3';
             imageContainer.appendChild(image);
 

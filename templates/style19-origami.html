@@ -40,6 +40,8 @@
             grid-template-columns: minmax(340px, 32vw) 1fr;
             gap: 48px;
             align-items: center;
+            /* P0-2：没有 perspective 就没有 3D，translateZ 一直是空转 */
+            perspective: 1600px;
         }
 
         /* 后景：建筑墙面刻印 */
@@ -114,15 +116,41 @@
             position: relative;
             background: #ffffff;
             border-radius: 28px;
-            box-shadow: 
+            box-shadow:
                 24px 35px 80px rgba(28, 27, 24, 0.14),
                 0 4px 16px rgba(28, 27, 24, 0.06);
             border: 1px solid rgba(28, 27, 24, 0.08);
+            border-right-color: rgba(28, 27, 24, 0.18);
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             transform: translateZ(20px);
+            transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+            animation: origamiUnfold 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .arch-front-plane:hover {
+            transform: translateZ(28px);
+        }
+
+        /* P1-11：入场「折纸展开」一次即收 */
+        @keyframes origamiUnfold {
+            from { transform: translateZ(20px) rotateY(8deg); }
+            to { transform: translateZ(20px) rotateY(0deg); }
+        }
+
+        /* P1-11：纸折痕——前平面左缘内侧一道细折线 */
+        .arch-front-plane::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, transparent, rgba(28, 27, 24, 0.16) 10%, rgba(28, 27, 24, 0.16) 90%, transparent);
+            pointer-events: none;
+            z-index: 3;
         }
 
         .arch-img-bg {
@@ -175,7 +203,24 @@
             .arch-origami-stage { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
             .arch-back-wall { padding: 28px; }
         }
-    </style>
+            /* ═══ 无障碍基线（uiteam 评审 P0-4/P1-7）：键盘焦点可见 + 动效减弱 ═══ */
+        :focus-visible {
+            outline: 2px solid #007AFF;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
 </head>
 <body>
     <div class="arch-origami-stage">
@@ -207,8 +252,8 @@
         </main>
 
         <div class="arch-controls">
-            <button onclick="prevImage()">❮</button>
-            <button onclick="nextImage()">❯</button>
+            <button onclick="prevImage()" aria-label="上一张">❮</button>
+            <button onclick="nextImage()" aria-label="下一张">❯</button>
         </div>
     </div>
 
@@ -237,13 +282,25 @@
             } catch (e) { console.error(e); }
         }
 
+        let photoFailStreak = 0; // 连续加载失败计数，避免全部失败时无限跳片
+
         function showPhoto(index) {
             if (!photos.length) return;
             currentIndex = (index + photos.length) % photos.length;
             const p = photos[currentIndex];
             const url = p.display_url || `/api/photos/${p.id}/image`;
+            const mainImg = document.getElementById('main-img');
+            // P1-11：加载失败自动跳下一张，连续失败超过相册数量则停下
+            mainImg.onload = function () { photoFailStreak = 0; };
+            mainImg.onerror = function () {
+                mainImg.onerror = null;
+                photoFailStreak += 1;
+                if (photoFailStreak < photos.length) {
+                    showPhoto(currentIndex + 1);
+                }
+            };
+            mainImg.src = url;
             document.getElementById('bg-img').src = url;
-            document.getElementById('main-img').src = url;
         }
 
         function nextImage() { showPhoto(currentIndex + 1); }
@@ -254,5 +311,6 @@
         updateClock();
         fetchPhotos();
     </script>
+    <script src="/static/weather-widget.js"></script>
 </body>
 </html>

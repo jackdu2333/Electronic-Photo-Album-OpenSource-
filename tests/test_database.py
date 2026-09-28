@@ -2,10 +2,11 @@
 数据库操作测试
 """
 import os
-import pytest
 import sqlite3
-import tempfile
 import sys
+import tempfile
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,7 +21,7 @@ class TestDatabaseInit:
 
     def test_init_db_creates_table(self):
         """初始化数据库创建表"""
-        from services.database import init_database, set_db_file
+        from services.database import init_database
 
         # 创建临时数据库
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
@@ -70,7 +71,7 @@ class TestDatabaseInit:
 
     def test_init_db_applies_pragmas(self):
         """初始化数据库应用稳定性 PRAGMA"""
-        from services.database import init_database, set_db_file, get_db_connection
+        from services.database import get_db_connection, init_database, set_db_file
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
         temp_db.close()
@@ -130,9 +131,10 @@ class TestBuildPhotoIndex:
 
     def test_build_index_empty_folder(self, test_upload_folder):
         """构建索引 - 空目录"""
-        from services.photo_index import PhotoIndexService, clear_photo_index, get_photo_index
-        from services.database import init_database, set_db_file
         import tempfile
+
+        from services.database import init_database, set_db_file
+        from services.photo_index import PhotoIndexService, clear_photo_index
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
         temp_db.close()
@@ -157,10 +159,12 @@ class TestBuildPhotoIndex:
 
     def test_build_index_with_photos(self, test_upload_folder):
         """构建索引 - 有照片"""
-        from services.photo_index import PhotoIndexService, clear_photo_index
-        from services.database import init_database, set_db_file
-        from PIL import Image
         import tempfile
+
+        from PIL import Image
+
+        from services.database import init_database, set_db_file
+        from services.photo_index import PhotoIndexService, clear_photo_index
 
         # 创建测试照片
         img = Image.new('RGB', (100, 100), color='blue')
@@ -200,8 +204,9 @@ class TestMetadataOperations:
 
     def test_save_and_load_metadata(self):
         """保存和加载元数据"""
-        from services.metadata import PhotoMetadataService, set_metadata_file
         import tempfile
+
+        from services.metadata import PhotoMetadataService, set_metadata_file
 
         # 创建临时文件
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
@@ -229,9 +234,11 @@ class TestSmartCompress:
 
     def test_smart_compress_jpeg(self):
         """智能压缩 JPEG"""
-        from services.image import ImageProcessor
-        from PIL import Image
         import io
+
+        from PIL import Image
+
+        from services.image import ImageProcessor
 
         # 创建测试图片
         img = Image.new('RGB', (500, 500), color='red')
@@ -251,9 +258,11 @@ class TestSmartCompress:
 
     def test_smart_compress_preserves_format(self):
         """压缩保留图片格式"""
-        from services.image import ImageProcessor
-        from PIL import Image
         import io
+
+        from PIL import Image
+
+        from services.image import ImageProcessor
 
         # 创建 PNG 图片
         img = Image.new('RGBA', (100, 100), color=(255, 0, 0, 128))
@@ -275,9 +284,10 @@ class TestDatabaseConcurrency:
 
     def test_concurrent_reads(self):
         """并发读取测试"""
-        from services.database import init_database, set_db_file, get_db_connection
-        import threading
         import tempfile
+        import threading
+
+        from services.database import get_db_connection, init_database, set_db_file
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
         temp_db.close()
@@ -328,8 +338,9 @@ class TestAppStateDAO:
     """应用状态存储测试"""
 
     def test_force_show_state_persists_in_db(self):
-        from services.database import init_database, set_db_file, AppStateDAO
         import tempfile
+
+        from services.database import AppStateDAO, init_database, set_db_file
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
         temp_db.close()
@@ -351,8 +362,9 @@ class TestMessageDAO:
     """留言存储测试"""
 
     def test_insert_message_keeps_recent_records(self):
-        from services.database import init_database, set_db_file, MessageDAO
         import tempfile
+
+        from services.database import MessageDAO, init_database, set_db_file
 
         temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
         temp_db.close()

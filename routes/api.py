@@ -2,19 +2,18 @@
 通用 API 路由模块
 照片状态、列表、删除、天气等 API
 """
-import os
 import json
 import logging
+import os
 import ssl
 import urllib.request
 from datetime import datetime
-from flask import Blueprint, jsonify, request
 
-from auth import EnhancedAuth
+from flask import Blueprint, jsonify, request, session
+
 from config import config
 from services.photo_index import PhotoIndexService, get_photo_index
 from services.recommendation import get_force_show_state
-from flask import session
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +151,7 @@ def _merge_note_fields(photos):
     使用 mtime 缓存，仅在文件变化时重新加载
     """
     global _metadata_mtime
-    from services.metadata import PhotoMetadataService, METADATA_FILE
+    from services.metadata import METADATA_FILE, PhotoMetadataService
 
     current_mtime = None
     if os.path.exists(METADATA_FILE):
@@ -227,7 +226,6 @@ def update_photo():
         JSON: {message: str}
     """
     from services.metadata import PhotoMetadataService
-    from services.photo_index import PhotoIndexService
 
     data = request.get_json()
     if not data:
@@ -305,7 +303,6 @@ def delete_image(filename):
     Returns:
         JSON: {message: str} 或 {error: str}
     """
-    from services.photo_index import PhotoIndexService
     from services.image import ImageValidator
 
     if not ImageValidator.is_allowed(filename):
@@ -345,7 +342,8 @@ def weather_config():
     try:
         # 调用 Open-Meteo API 获取天气
         url = f'https://api.open-meteo.com/v1/forecast?latitude={config.WEATHER_LAT}&longitude={config.WEATHER_LON}&current=temperature_2m,weather_code&timezone=auto'
-        ssl_context = ssl.create_default_context() if not os.environ.get('FLASK_DEBUG', '').lower() == 'true' else ssl._create_unverified_context()
+        # 始终使用系统默认证书链进行 SSL 验证（与 _fetch_json 保持一致）
+        ssl_context = ssl.create_default_context()
         with urllib.request.urlopen(url, timeout=5, context=ssl_context) as response:
             data = json.loads(response.read().decode())
 
@@ -396,7 +394,7 @@ def set_theme():
     theme = data.get('theme', 'default')
     if theme == 'style5':
         theme = 'style4'
-    
+
     valid_themes = [
         'style1', 'style2', 'style3', 'style4', 'style6',
         'style7', 'style8', 'style9', 'style10', 'style11', 'style12',
@@ -404,7 +402,7 @@ def set_theme():
     ]
     if theme not in valid_themes:
         return jsonify({'error': 'Invalid theme', 'valid_themes': valid_themes}), 400
-    
+
     session['theme'] = theme
     return jsonify({'success': True, 'theme': theme})
 
@@ -439,10 +437,12 @@ def get_theme():
         {'id': 'style15', 'name': '拍立得墙', 'template': 'style15-polaroid.html', 'display_order': 14, 'group': 'curation'},
         {'id': 'style16', 'name': '艺术画廊', 'template': 'style16-gallery.html', 'display_order': 15, 'group': 'curation'},
         {'id': 'style17', 'name': 'Hi-Fi 黑胶唱片', 'template': 'style17-french.html', 'display_order': 16, 'group': 'curation'},
-        {'id': 'style18', 'name': '空间折光光轨', 'template': 'style18-bauhaus.html', 'display_order': 17, 'group': 'curation'},
-        {'id': 'style19', 'name': '建筑折纸双平面', 'template': 'style19-cinematic.html', 'display_order': 18, 'group': 'curation'},
+        {'id': 'style18', 'name': '空间折光光轨', 'template': 'style18-prism.html', 'display_order': 17, 'group': 'curation'},
+        {'id': 'style19', 'name': '建筑折纸双平面', 'template': 'style19-origami.html', 'display_order': 18, 'group': 'curation'},
+        {'id': 'style20', 'name': '家庭录像带', 'template': 'style20-vhs.html', 'display_order': 19, 'group': 'curation'},
+        {'id': 'style21', 'name': '生活便当', 'template': 'style21-bento.html', 'display_order': 20, 'group': 'curation'},
     ]
-    
+
     return jsonify({
         'theme': current_theme,
         'available_themes': available_themes
